@@ -34,6 +34,7 @@
 		941A6E148FEF39314F1A09F6 /* ChettinadCareStaffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B7F0256B2669424BF4754C /* ChettinadCareStaffTests.swift */; };
 		9DB99C2D3C97857E2FAB84DD /* OTPRequestEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */; };
 		9ECBAC18F295CBD3C5EF2225 /* ChettinadCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9CCC565614361145DF65A /* ChettinadCore.swift */; };
+		AD0F9C60D79E35222D54E1A6 /* PatientViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */; };
 		AD723F699218286A6486DD3F /* LogoutEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146A78CAED3201570D881234 /* LogoutEndpoint.swift */; };
 		B2276E1D6C1A9BD2B5C27CD9 /* StaffLoginEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA136E06A6420F9E7F890069 /* StaffLoginEndpoint.swift */; };
 		BB06B4E3BDEFE26EE40D9649 /* BackendIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */; };
@@ -143,6 +144,7 @@
 		A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendIntegrationTests.swift; sourceTree = "<group>"; };
 		ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientViews.swift; sourceTree = "<group>"; };
 		AE4F85494BDF60C306018C8D /* StaffViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffViews.swift; sourceTree = "<group>"; };
+		AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientViewModel.swift; sourceTree = "<group>"; };
 		B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamePostgreSQLProofTests.swift; sourceTree = "<group>"; };
 		C07BE791CF27F51EFC84CB9B /* TokenRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRefreshTests.swift; sourceTree = "<group>"; };
 		D2B7F0256B2669424BF4754C /* ChettinadCareStaffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCareStaffTests.swift; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 			children = (
 				A60190ADFFCFD5DCC5171A22 /* LoginView.swift */,
 				8837F515753F7E3D4B49BF2C /* MainTabView.swift */,
+				AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */,
 				ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */,
 			);
 			path = Features;
@@ -493,6 +496,7 @@
 				635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */,
 				0715CF879F30DC1312570593 /* LoginView.swift in Sources */,
 				02562C291B9ED397F1E5B02D /* MainTabView.swift in Sources */,
+				AD0F9C60D79E35222D54E1A6 /* PatientViewModel.swift in Sources */,
 				E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

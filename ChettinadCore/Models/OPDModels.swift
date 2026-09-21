@@ -108,9 +108,25 @@ public struct TriageRecord: Codable, Identifiable {
     public let id: String
     public let encounter_id: String
     public let version: Int
-    // public let data: String or custom struct if parsed
-    public let nurse_id: String
+    public let data: TriageData?
+    public let nurse_id: String?
     public let created_at: String
+}
+
+public struct TriageData: Codable, Sendable {
+    public let temperature: Double?
+    public let systolic: Int?
+    public let diastolic: Int?
+    public let pulse: Int?
+    public let spo2: Int?
+    public let weight: Double?
+    public let height: Double?
+    public let complaint: String?
+    public let allergies: String?
+    public let pain: Int?
+    public let notes: String?
+    public let priority: Int?
+    public let bmi: Double?
 }
 
 public struct Note: Codable, Identifiable {
@@ -119,6 +135,37 @@ public struct Note: Codable, Identifiable {
     public let status: String
     public let author_id: String
     public let created_at: String
+    public let draft_content: NoteContent?
+    public let author_name: String?
+}
+
+public struct NoteDiagnosis: Codable, Sendable {
+    public let id: String
+    public let name: String
+}
+
+public struct NoteMedication: Codable, Sendable {
+    public let drug_id: String
+    public let dose: String
+    public let frequency: String
+    public let duration: String
+    public let instructions: String?
+    public let name: String
+    public let strength: String
+    public let form: String
+    public let route: String
+}
+
+public struct NoteContent: Codable, Sendable {
+    public let complaint: String?
+    public let history: String?
+    public let previous_history: String?
+    public let examination: String?
+    public let assessment: String?
+    public let diagnoses: [NoteDiagnosis]?
+    public let treatment: String?
+    public let advice: String?
+    public let medications: [NoteMedication]?
 }
 
 public struct Prescription: Codable, Identifiable {
@@ -127,6 +174,14 @@ public struct Prescription: Codable, Identifiable {
     public let status: String
     public let authorizing_user_id: String
     public let created_at: String
+    public let rx_content: PrescriptionContent?
+    public let doctor_name: String?
+}
+
+public struct PrescriptionContent: Codable, Sendable {
+    public let medications: [NoteMedication]?
+    public let diagnoses: [NoteDiagnosis]?
+    public let advice: String?
 }
 
 public struct LabOrder: Codable, Identifiable {
@@ -138,8 +193,11 @@ public struct LabOrder: Codable, Identifiable {
     public let status: String
     public let patient_name: String?
     public let name: String? // test name
+    public let code: String?
+    public let unit: String?
+    public let reference_range: String?
+    public let result: String?
 }
-
 
 public struct QueueEntry: Codable, Identifiable {
     public var id: String { encounter_id }
@@ -159,4 +217,16 @@ public struct QueueEndpoint: APIEndpoint {
     public var path: String { "/api/v1/opd/queue" }
     public var method: HTTPMethod { .get }
     public init() {}
+}
+
+public struct Appointment: Codable, Identifiable {
+    public let id: String
+    public let patient_id: String
+    public let doctor_id: String
+    public let scheduled_at: String
+    public let status: String
+    public let reason: String?
+    public let encounter_id: String?
+    public let follow_up_of: String?
+    public let __v: Int?
 }
