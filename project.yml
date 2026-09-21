@@ -1,0 +1,76 @@
+name: ChettinadCare-iOS
+options:
+  bundleIdPrefix: com.chettinadcare
+  deploymentTarget:
+    iOS: 16.0
+targets:
+  ChettinadCore:
+    type: framework
+    platform: iOS
+    sources: [ChettinadCore]
+    settings:
+      base:
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1,2
+        GENERATE_INFOPLIST_FILE: YES
+
+  ChettinadCoreTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [ChettinadCoreTests]
+    dependencies:
+      - target: ChettinadCore
+    settings:
+      base:
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: YES
+
+  ChettinadCarePatient:
+    type: application
+    platform: iOS
+    sources: [ChettinadCarePatient]
+    dependencies:
+      - target: ChettinadCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.patient
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1,2
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        GENERATE_INFOPLIST_FILE: YES
+
+  ChettinadCarePatientTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [ChettinadCarePatientTests]
+    dependencies:
+      - target: ChettinadCarePatient
+    settings:
+      base:
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: YES
+
+  ChettinadCareStaff:
+    type: application
+    platform: iOS
+    sources: [ChettinadCareStaff]
+    dependencies:
+      - target: ChettinadCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.staff
+        SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1,2
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        GENERATE_INFOPLIST_FILE: YES
+
+  ChettinadCareStaffTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [ChettinadCareStaffTests]
+    dependencies:
+      - target: ChettinadCareStaff
+    settings:
+      base:
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: YES
