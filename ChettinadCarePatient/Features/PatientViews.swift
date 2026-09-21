@@ -5,79 +5,91 @@ struct PatientDashboardView: View {
     @EnvironmentObject var viewModel: PatientViewModel
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            AppHeader(title: "Chettinad Patient")
+            
             ScrollView {
                 if viewModel.isLoading {
                     ProgressView("Loading Dashboard...")
                         .padding()
                 } else if let error = viewModel.errorMessage {
-                    Text(error).foregroundColor(.red).padding()
+                    Text(error).foregroundColor(.chettinadError).padding()
                 } else if let bundle = viewModel.recordBundle {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 24) {
                         
-                        // Welcome Card
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Welcome,")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Text(bundle.patient.name)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                            }
-                            Spacer()
-                            Image(systemName: "person.circle.fill")
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                                .foregroundColor(.blue)
+                        // Welcome Section
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Welcome back,")
+                                .textStyle(Typography.titleMedium, color: .chettinadSecondary)
+                            Text(bundle.patient.name)
+                                .textStyle(Typography.headlineMedium, color: .chettinadPrimary)
                         }
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
                         
-                        // Encounters Summary
+                        // Quick Stats
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            MetricsCard(title: "Encounters", value: "\(bundle.encounters.count)", iconName: "doc.text")
+                            MetricsCard(title: "Notes", value: "\(bundle.notes.count)", iconName: "note.text")
+                            MetricsCard(title: "Prescriptions", value: "\(bundle.prescriptions.count)", iconName: "pills.fill")
+                            MetricsCard(title: "Lab Orders", value: "\(bundle.labs.count)", iconName: "testtube.2")
+                        }
+                        .padding(.horizontal, 16)
+                        
+                        // Active Encounters
                         let activeEncounters = bundle.encounters.filter { !$0.is_discharged }
                         if !activeEncounters.isEmpty {
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 12) {
                                 Text("Active Encounters")
-                                    .font(.headline)
+                                    .textStyle(Typography.titleMedium, color: .chettinadPrimary)
+                                    .padding(.horizontal, 16)
+                                
                                 ForEach(activeEncounters) { encounter in
                                     HStack {
-                                        VStack(alignment: .leading) {
+                                        VStack(alignment: .leading, spacing: 4) {
                                             Text(encounter.chief_complaint ?? "General Consultation")
-                                                .font(.subheadline)
-                                                .fontWeight(.medium)
+                                                .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
                                             Text(encounter.phase)
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
                                         }
                                         Spacer()
                                         Image(systemName: "chevron.right")
-                                            .foregroundColor(.secondary)
+                                            .foregroundColor(.chettinadSecondary)
                                     }
                                     .padding()
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(8)
+                                    .background(Color.surfaceContainerLowest)
+                                    .cornerRadius(12)
+                                    .padding(.horizontal, 16)
                                 }
                             }
                         }
                         
-                        // Quick Stats
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            StatCard(title: "Encounters", count: bundle.encounters.count, icon: "doc.text")
-                            StatCard(title: "Notes", count: bundle.notes.count, icon: "note.text")
-                            StatCard(title: "Prescriptions", count: bundle.prescriptions.count, icon: "pills.fill")
-                            StatCard(title: "Lab Orders", count: bundle.labs.count, icon: "testtube.2")
+                        // About Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("About Chettinad")
+                                .textStyle(Typography.titleMedium, color: .chettinadPrimary)
+                                .padding(.horizontal, 16)
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Chettinad Hospital and Research Institute")
+                                    .textStyle(Typography.titleSmall, color: .chettinadPrimary)
+                                Text("Located at Kelambakkam, Tamil Nadu within the Chettinad Health City campus. 24/7 Trauma Care available.")
+                                    .textStyle(Typography.bodyMedium, color: .chettinadTextSecondary)
+                            }
+                            .padding()
+                            .background(Color.surfaceContainerLow)
+                            .cornerRadius(12)
+                            .padding(.horizontal, 16)
                         }
+                        .padding(.bottom, 24)
                     }
-                    .padding()
                 } else {
                     Text("No records found.")
-                        .foregroundColor(.secondary)
+                        .textStyle(Typography.bodyLarge, color: .chettinadSecondary)
                         .padding()
                 }
             }
-            .navigationTitle("Dashboard")
+            .background(Color.chettinadBackground)
             .refreshable {
                 await viewModel.fetchRecords()
             }
@@ -85,118 +97,163 @@ struct PatientDashboardView: View {
     }
 }
 
-struct StatCard: View {
-    let title: String
-    let count: Int
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title)
-                .foregroundColor(.blue)
-            Text("\(count)")
-                .font(.title2)
-                .fontWeight(.bold)
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
-    }
-}
 
 struct PatientRecordsView: View {
     @EnvironmentObject var viewModel: PatientViewModel
     
     var body: some View {
-        NavigationView {
-            List {
+        VStack(spacing: 0) {
+            AppHeader(title: "Medical Records")
+            
+            ScrollView {
                 if viewModel.isLoading {
                     ProgressView()
+                        .padding()
                 } else if let bundle = viewModel.recordBundle {
-                    if !bundle.notes.isEmpty {
-                        Section(header: Text("Clinical Notes")) {
-                            ForEach(bundle.notes) { note in
-                                NavigationLink(destination: NoteDetailView(note: note)) {
-                                    VStack(alignment: .leading) {
-                                        Text(note.author_name ?? "Doctor Note")
-                                            .font(.headline)
-                                        Text(note.created_at.prefix(10))
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
+                    VStack(alignment: .leading, spacing: 24) {
+                        
+                        // Header
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(bundle.patient.name)
+                                .textStyle(Typography.titleLarge, color: .chettinadPrimary)
+                            Text("MRN: \(bundle.patient.mrn) • \(bundle.patient.gender)")
+                                .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
                         }
-                    }
-                    
-                    if !bundle.prescriptions.isEmpty {
-                        Section(header: Text("Prescriptions")) {
-                            ForEach(bundle.prescriptions) { rx in
-                                NavigationLink(destination: PrescriptionDetailView(prescription: rx)) {
-                                    VStack(alignment: .leading) {
-                                        Text(rx.doctor_name ?? "Prescription")
-                                            .font(.headline)
-                                        Text(rx.created_at.prefix(10))
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    if !bundle.labs.isEmpty {
-                        Section(header: Text("Lab Orders")) {
-                            ForEach(bundle.labs) { lab in
-                                VStack(alignment: .leading) {
-                                    Text(lab.name ?? lab.code ?? "Lab Test")
-                                        .font(.headline)
-                                    HStack {
-                                        Text("Status: \(lab.status)")
-                                        Spacer()
-                                        if let result = lab.result {
-                                            Text(result)
-                                                .fontWeight(.bold)
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.surfaceContainerLowest)
+                        .padding(.top, 16)
+                        
+                        // Sections
+                        VStack(alignment: .leading, spacing: 24) {
+                            
+                            if !bundle.notes.isEmpty {
+                                SectionView(title: "Clinical Notes") {
+                                    ForEach(bundle.notes) { note in
+                                        NavigationLink(destination: NoteDetailView(note: note)) {
+                                            RecordCard {
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(note.author_name ?? "Doctor Note")
+                                                        .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                    Text(String(note.created_at.prefix(10)))
+                                                        .textStyle(Typography.bodySmall, color: .chettinadTextSecondary)
+                                                }
+                                            }
                                         }
                                     }
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
                                 }
                             }
-                        }
-                    }
-                    
-                    if !bundle.triage.isEmpty {
-                        Section(header: Text("Triage History")) {
-                            ForEach(bundle.triage) { tr in
-                                VStack(alignment: .leading) {
-                                    Text("Triage by \(tr.nurse_id ?? "Nurse")")
-                                        .font(.subheadline)
-                                    if let d = tr.data {
-                                        HStack {
-                                            if let t = d.temperature { Text("Temp: \(String(format: "%.1f", t))") }
-                                            if let s = d.systolic, let dia = d.diastolic { Text("BP: \(s)/\(dia)") }
+                            
+                            if !bundle.prescriptions.isEmpty {
+                                SectionView(title: "Prescriptions") {
+                                    ForEach(bundle.prescriptions) { rx in
+                                        NavigationLink(destination: PrescriptionDetailView(prescription: rx)) {
+                                            RecordCard {
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(rx.doctor_name ?? "Prescription")
+                                                        .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                    Text(String(rx.created_at.prefix(10)))
+                                                        .textStyle(Typography.bodySmall, color: .chettinadTextSecondary)
+                                                }
+                                            }
                                         }
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            
+                            if !bundle.labs.isEmpty {
+                                SectionView(title: "Lab Orders") {
+                                    ForEach(bundle.labs) { lab in
+                                        RecordCard {
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                HStack {
+                                                    Text(lab.name ?? lab.code ?? "Lab Test")
+                                                        .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                    Spacer()
+                                                    Text(lab.status)
+                                                        .textStyle(Typography.labelSmall, color: .chettinadSecondary)
+                                                        .padding(.horizontal, 8)
+                                                        .padding(.vertical, 4)
+                                                        .background(Color.surfaceContainerHigh)
+                                                        .cornerRadius(8)
+                                                }
+                                                if let result = lab.result {
+                                                    Text("Result: \(result)")
+                                                        .textStyle(Typography.bodyMedium, color: .chettinadPrimary)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if !bundle.triage.isEmpty {
+                                SectionView(title: "Latest Triage") {
+                                    if let tr = bundle.triage.first {
+                                        RecordCard {
+                                            VStack(alignment: .leading, spacing: 8) {
+                                                Text("Triage by \(tr.nurse_id ?? "Nurse")")
+                                                    .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                
+                                                if let d = tr.data {
+                                                    HStack(spacing: 16) {
+                                                        if let t = d.temperature { Text("Temp: \(String(format: "%.1f", t))") }
+                                                        if let s = d.systolic, let dia = d.diastolic { Text("BP: \(s)/\(dia)") }
+                                                    }
+                                                    .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 24)
                     }
-                    
                 }
             }
-            .navigationTitle("Records")
+            .background(Color.chettinadBackground)
             .refreshable {
                 await viewModel.fetchRecords()
             }
         }
+        .navigationBarHidden(true)
+    }
+}
+
+struct SectionView<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .textStyle(Typography.titleMedium, color: .chettinadPrimary)
+            content
+        }
+    }
+}
+
+struct RecordCard<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        content
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(Color.surfaceContainerLowest)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 

@@ -1,0 +1,214 @@
+import SwiftUI
+import ChettinadCore
+
+struct PatientDossierView: View {
+    @StateObject var viewModel: DoctorConsultationViewModel
+    @State private var showConsultation = false
+    @Environment(\.dismiss) var dismiss
+    let patientName: String
+    
+    var body: some View {
+        ScrollView {
+            if viewModel.isLoading {
+                ProgressView("Loading Dossier...")
+                    .padding(.top, 40)
+            } else if let error = viewModel.errorMessage {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+            } else if let bundle = viewModel.recordBundle {
+                VStack(alignment: .leading, spacing: 20) {
+                    
+                    // Patient Header
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(bundle.patient.name)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            Text("MRN: \(bundle.patient.mrn)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Text("\(bundle.patient.dob) • \(bundle.patient.gender)")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            if let allergies = bundle.patient.allergies, !allergies.isEmpty {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.red)
+                                    Text(allergies)
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "person.text.rectangle")
+                            .font(.largeTitle)
+                            .foregroundColor(.blue)
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(12)
+                    
+                    // Current Encounter Triage
+                    if let triage = bundle.triage.last(where: { $0.encounter_id == viewModel.encounterId }) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Current Triage")
+                                .font(.headline)
+                            if let d = triage.data {
+                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                                    VitalCell(label: "Temp", value: d.temperature.map { String(format: "%.1f °C", $0) } ?? "—")
+                                    VitalCell(label: "BP", value: "\(d.systolic ?? 0)/\(d.diastolic ?? 0)")
+                                    VitalCell(label: "Pulse", value: d.pulse.map { "\($0) bpm" } ?? "—")
+                                    VitalCell(label: "SpO2", value: d.spo2.map { "\($0)%" } ?? "—")
+                                    VitalCell(label: "Weight", value: d.weight.map { "\($0) kg" } ?? "—")
+                                    VitalCell(label: "BMI", value: d.bmi.map { String(format: "%.1f", $0) } ?? "—")
+                                }
+                                if let complaint = d.complaint {
+                                    Text("Complaint: \(complaint)")
+                                        .font(.subheadline)
+                                        .padding(.top, 4)
+                                }
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(12)
+                    }
+                    
+                    // Start Consultation Button
+                    Button(action: {
+                        Task {
+                            if await viewModel.startConsultation() {
+                                showConsultation = true
+                            }
+                        }
+                    }) {
+                        HStack {
+                            if viewModel.isSubmitting {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Image(systemName: "stethoscope")
+                                Text("Start Consultation")
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                    }
+                    .disabled(viewModel.isSubmitting)
+                    
+                    // Historical Summary
+                    if !bundle.encounters.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("History")
+                                .font(.headline)
+                            Text("\(bundle.encounters.count) encounters • \(bundle.notes.count) notes • \(bundle.prescriptions.count) prescriptions • \(bundle.labs.count) labs")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding()
+            }
+        }
+        .navigationTitle("Dossier")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await viewModel.fetchPatientDossier()
+        }
+        .sheet(isPresented: $showConsultation, onDismiss: {
+            dismiss()
+        }) {
+            ConsultationWorkspaceView(viewModel: viewModel)
+        }
+    }
+}
+
+struct VitalCell: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.headline)
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(8)
+        .background(Color(.tertiarySystemBackground))
+        .cornerRadius(8)
+    }
+}
+
+struct ConsultationWorkspaceView: View {
+    @ObservedObject var viewModel: DoctorConsultationViewModel
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                if let error = viewModel.errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundColor(.red)
+                    }
+                }
+                
+                Section(header: Text("Clinical Note")) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Chief Complaint").font(.caption).foregroundColor(.secondary)
+                        TextEditor(text: $viewModel.noteComplaint)
+                            .frame(height: 80)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Examination Findings").font(.caption).foregroundColor(.secondary)
+                        TextEditor(text: $viewModel.noteExamination)
+                            .frame(height: 80)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Assessment / Diagnosis").font(.caption).foregroundColor(.secondary)
+                        TextEditor(text: $viewModel.noteAssessment)
+                            .frame(height: 80)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Advice / Follow-up").font(.caption).foregroundColor(.secondary)
+                        TextEditor(text: $viewModel.noteAdvice)
+                            .frame(height: 80)
+                    }
+                }
+            }
+            .navigationTitle("Consultation")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Complete & Sign") {
+                        Task {
+                            if await viewModel.completeConsultation() {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(viewModel.isSubmitting || viewModel.noteComplaint.isEmpty)
+                }
+            }
+        }
+    }
+}
