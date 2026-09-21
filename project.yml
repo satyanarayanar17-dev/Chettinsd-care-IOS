@@ -1,8 +1,10 @@
 name: ChettinadCare-iOS
 options:
   bundleIdPrefix: com.chettinadcare
+  createTestSchemes: true
   deploymentTarget:
     iOS: 16.0
+    macOS: 13.0
 targets:
   ChettinadCore:
     type: framework
@@ -11,7 +13,8 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
-        TARGETED_DEVICE_FAMILY: 1,2
+        TARGETED_DEVICE_FAMILY: 1,2,6
+        SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
 
   ChettinadCoreTests:
@@ -23,6 +26,8 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1,2,6
+        SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
 
   ChettinadCarePatient:
@@ -35,7 +40,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.patient
         SWIFT_VERSION: 6.0
-        TARGETED_DEVICE_FAMILY: 1,2
+        TARGETED_DEVICE_FAMILY: 1,2,6
+        SUPPORTS_MACCATALYST: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         GENERATE_INFOPLIST_FILE: YES
 
@@ -48,6 +54,8 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1,2,6
+        SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
 
   ChettinadCareStaff:
@@ -60,7 +68,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.staff
         SWIFT_VERSION: 6.0
-        TARGETED_DEVICE_FAMILY: 1,2
+        TARGETED_DEVICE_FAMILY: 1,2,6
+        SUPPORTS_MACCATALYST: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         GENERATE_INFOPLIST_FILE: YES
 
@@ -73,4 +82,6 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        TARGETED_DEVICE_FAMILY: 1,2,6
+        SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
