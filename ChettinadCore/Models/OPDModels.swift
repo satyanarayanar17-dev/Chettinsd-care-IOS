@@ -127,6 +127,22 @@ public struct TriageData: Codable, Sendable {
     public let notes: String?
     public let priority: Int?
     public let bmi: Double?
+    
+    public init(temperature: Double? = nil, systolic: Int? = nil, diastolic: Int? = nil, pulse: Int? = nil, spo2: Int? = nil, weight: Double? = nil, height: Double? = nil, complaint: String? = nil, allergies: String? = nil, pain: Int? = nil, notes: String? = nil, priority: Int? = nil, bmi: Double? = nil) {
+        self.temperature = temperature
+        self.systolic = systolic
+        self.diastolic = diastolic
+        self.pulse = pulse
+        self.spo2 = spo2
+        self.weight = weight
+        self.height = height
+        self.complaint = complaint
+        self.allergies = allergies
+        self.pain = pain
+        self.notes = notes
+        self.priority = priority
+        self.bmi = bmi
+    }
 }
 
 public struct Note: Codable, Identifiable {

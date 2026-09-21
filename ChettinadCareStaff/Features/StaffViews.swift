@@ -70,70 +70,58 @@ struct DoctorQueueView: View {
 }
 
 struct NurseTriageView: View {
-    @State private var queue: [QueueEntry] = []
-    @State private var isLoading = true
-    let apiClient = APIClient()
+    @StateObject private var viewModel = NurseTriageViewModel()
     
     var body: some View {
-        VStack(spacing: 0) {
-            AppHeader(title: "Nurse Triage")
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Awaiting Triage")
-                            .textStyle(Typography.titleMedium, color: .chettinadSecondary)
-                        Text("Emergency & OPD")
-                            .textStyle(Typography.headlineMedium, color: .chettinadPrimary)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    
-                    if isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                    } else if queue.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "cross.case.fill")
-                                .font(.system(size: 48))
-                                .foregroundColor(.chettinadSecondary.opacity(0.5))
-                            Text("No patients currently waiting.")
-                                .textStyle(Typography.bodyLarge, color: .chettinadSecondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 40)
-                    } else {
-                        ForEach(queue, id: \.id) { entry in
-                            QueueCard(entry: entry)
+        NavigationView {
+            VStack(spacing: 0) {
+                AppHeader(title: "Nurse Triage")
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Awaiting Triage")
+                                .textStyle(Typography.titleMedium, color: .chettinadSecondary)
+                            Text("Emergency & OPD")
+                                .textStyle(Typography.headlineMedium, color: .chettinadPrimary)
                         }
                         .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else if viewModel.queue.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "cross.case.fill")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(.chettinadSecondary.opacity(0.5))
+                                Text("No patients currently waiting.")
+                                    .textStyle(Typography.bodyLarge, color: .chettinadSecondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 40)
+                        } else {
+                            ForEach(viewModel.queue, id: \.id) { entry in
+                                NavigationLink(destination: TriageFormView(viewModel: TriageFormViewModel(encounterId: entry.encounter_id, initialVersion: entry.__v), patientName: entry.patient_name)) {
+                                    QueueCard(entry: entry)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                            .padding(.horizontal, 16)
+                        }
                     }
                 }
+                .background(Color.chettinadBackground)
+                .task {
+                    await viewModel.fetchQueue()
+                }
+                .refreshable {
+                    await viewModel.fetchQueue()
+                }
             }
-            .background(Color.chettinadBackground)
-            .task {
-                await loadQueue()
-            }
-            .refreshable {
-                await loadQueue()
-            }
-        }
-    }
-    
-    func loadQueue() async {
-        isLoading = true
-        do {
-            let fetchedQueue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
-            DispatchQueue.main.async {
-                self.queue = fetchedQueue.filter { $0.status == "WAITING" || $0.status == "TRIAGE" }
-                self.isLoading = false
-            }
-        } catch {
-            print("Failed to load queue: \(error)")
-            DispatchQueue.main.async {
-                self.isLoading = false
-            }
+            .navigationBarHidden(true)
         }
     }
 }
