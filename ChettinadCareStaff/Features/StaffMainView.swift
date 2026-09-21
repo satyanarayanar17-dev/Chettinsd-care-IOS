@@ -11,7 +11,7 @@ struct StaffMainView: View {
             } else if appState.role == "NURSE" {
                 NurseTriageView()
             } else if appState.role == "ADMIN" {
-                AdminStaffListView()
+                AdminTabView()
             } else {
                 Text("Invalid Role: \(appState.role)")
             }

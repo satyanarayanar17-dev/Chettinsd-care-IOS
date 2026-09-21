@@ -28,29 +28,38 @@ struct StartConsultEndpoint: APIEndpoint {
 struct CompleteConsultEndpoint: APIEndpoint {
     let encounterId: String
     let v: Int
+    let data: ConsultationData
     var path: String { "/api/v1/opd/encounters/\(encounterId)/complete" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": v]) }
+    var body: Data? {
+        let payload = CompletePayload(__v: v, data: data)
+        return try? JSONEncoder().encode(payload)
+    }
 }
 
-struct SubmitNoteEndpoint: APIEndpoint {
-    let encounterId: String
-    let draftContent: NoteSubmission
-    var path: String { "/api/v1/opd/encounters/\(encounterId)/notes" }
-    var method: HTTPMethod { .post }
-    var body: Data? { try? JSONEncoder().encode(draftContent) }
+struct CompletePayload: Codable {
+    let __v: Int
+    let data: ConsultationData
 }
 
-struct NoteSubmission: Codable {
-    let draft_content: NoteSubmissionContent
-    let status: String
+struct ConsultationData: Codable {
+    let complaint: String?
+    let history: String?
+    let previous_history: String?
+    let examination: String?
+    let assessment: String?
+    let diagnosis_ids: [String]
+    let treatment: String?
+    let advice: String?
+    let medications: [PrescriptionDrug]
 }
 
-struct NoteSubmissionContent: Codable {
-    let complaint: String
-    let examination: String
-    let assessment: String
-    let advice: String
+struct PrescriptionDrug: Codable {
+    let drug_id: String
+    let dose: String
+    let frequency: String
+    let duration: String
+    let instructions: String?
 }
 
 struct PatientRecordEndpoint: APIEndpoint {
@@ -74,7 +83,7 @@ class DoctorQueueViewModel: ObservableObject {
         errorMessage = nil
         do {
             let fetchedQueue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
-            self.queue = fetchedQueue
+            self.queue = fetchedQueue.filter { $0.status == "WAITING_DOCTOR" || $0.status == "DOCTOR_READY" || $0.status == "CONSULTATION" }
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -101,12 +110,26 @@ class DoctorConsultationViewModel: ObservableObject {
     @Published var noteAdvice = ""
     @Published var isSubmitting = false
     
+    // Catalogues
+    @Published var catalogues: CataloguesResponse?
+    @Published var selectedDiagnoses: Set<String> = []
+    @Published var medications: [PrescriptionDrug] = []
+    
     let apiClient = APIClient()
     
     init(encounterId: String, patientId: String, initialVersion: Int) {
         self.encounterId = encounterId
         self.patientId = patientId
         self.currentVersion = initialVersion
+    }
+    
+    func fetchCatalogues() async {
+        do {
+            let cat: CataloguesResponse = try await apiClient.execute(endpoint: CataloguesEndpoint())
+            self.catalogues = cat
+        } catch {
+            print("Failed to fetch catalogues: \(error)")
+        }
     }
     
     func fetchPatientDossier() async {
@@ -144,27 +167,35 @@ class DoctorConsultationViewModel: ObservableObject {
         return false
     }
     
+    func orderLab(testId: String) async {
+        do {
+            struct LabResponse: Codable {}
+            let _: LabResponse = try await apiClient.execute(endpoint: OrderLabEndpoint(encounterId: encounterId, testId: testId))
+            // Refresh dossier to show new lab
+            await fetchPatientDossier()
+        } catch {
+            self.errorMessage = "Failed to order lab: \(error.localizedDescription)"
+        }
+    }
+    
     func completeConsultation() async -> Bool {
         isSubmitting = true
         errorMessage = nil
         do {
-            // 1. Submit Note
-            let submission = NoteSubmission(
-                draft_content: NoteSubmissionContent(
-                    complaint: noteComplaint,
-                    examination: noteExamination,
-                    assessment: noteAssessment,
-                    advice: noteAdvice
-                ),
-                status: "FINALIZED"
-            )
-            let _: NoteResponse = try await apiClient.execute(
-                endpoint: SubmitNoteEndpoint(encounterId: encounterId, draftContent: submission)
+            let cData = ConsultationData(
+                complaint: noteComplaint.isEmpty ? nil : noteComplaint,
+                history: nil,
+                previous_history: nil,
+                examination: noteExamination.isEmpty ? nil : noteExamination,
+                assessment: noteAssessment.isEmpty ? nil : noteAssessment,
+                diagnosis_ids: Array(selectedDiagnoses),
+                treatment: nil,
+                advice: noteAdvice.isEmpty ? nil : noteAdvice,
+                medications: medications
             )
             
-            // 2. Complete Encounter
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: currentVersion)
+                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData)
             )
             if let newV = response.__v {
                 self.currentVersion = newV
@@ -194,4 +225,39 @@ class DoctorConsultationViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+}
+
+struct CataloguesResponse: Codable {
+    struct Drug: Codable, Identifiable {
+        let id: String
+        let name: String
+        let strength: String
+        let form: String
+        let route: String
+    }
+    struct Diagnosis: Codable, Identifiable {
+        let id: String
+        let name: String
+    }
+    struct Test: Codable, Identifiable {
+        let id: String
+        let name: String
+        let code: String
+    }
+    let drugs: [Drug]
+    let diagnoses: [Diagnosis]
+    let tests: [Test]
+}
+
+struct CataloguesEndpoint: APIEndpoint {
+    var path: String { "/api/v1/opd/catalogues" }
+    var method: HTTPMethod { .get }
+}
+
+struct OrderLabEndpoint: APIEndpoint {
+    let encounterId: String
+    let testId: String
+    var path: String { "/api/v1/opd/encounters/\(encounterId)/labs" }
+    var method: HTTPMethod { .post }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: ["test_id": testId]) }
 }

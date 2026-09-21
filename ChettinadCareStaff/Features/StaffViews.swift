@@ -160,17 +160,4 @@ struct QueueCard: View {
     }
 }
 
-struct AdminStaffListView: View {
-    var body: some View {
-        VStack(spacing: 0) {
-            AppHeader(title: "Admin Dashboard")
-            
-            ScrollView {
-                Text("Admin Staff Management")
-                    .textStyle(Typography.headlineSmall, color: .chettinadPrimary)
-                    .padding()
-            }
-            .background(Color.chettinadBackground)
-        }
-    }
-}
+// AdminStaffListView was removed because it's replaced by AdminDashboardView

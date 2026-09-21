@@ -19,6 +19,7 @@
 		3656D9B3DC8A42CD69F7CFFC /* OTPVerifyEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D4584A04050BD564BBA0C1 /* OTPVerifyEndpoint.swift */; };
 		3C19DCE0B6A22D3A75D8F3F1 /* ChettinadCarePatientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 995C105780D6A137DA20FC8A /* ChettinadCarePatientTests.swift */; };
 		3D59BAECD00BD0C5D6F4A08D /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
+		45D88E09A48A88006DE66266 /* AdminViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 659FA317211EBF6712303679 /* AdminViewModels.swift */; };
 		4751E66647003D5677A099ED /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */; };
 		4F3643EC90233CB201E13102 /* ChettinadCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		51BE94964F5D8156108B4FD3 /* ChettinadCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */; };
@@ -34,6 +35,7 @@
 		8130C3D7B18AD2ABBCEBE071 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 463CBB4A1A0E6785099DF985 /* APIClient.swift */; };
 		84B4629CE8ADADC87493F21A /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E23D3B04BB4C16326E145C1 /* AppHeader.swift */; };
 		86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */; };
+		8FB9D309AAEBD3FE5486CF93 /* AdminViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */; };
 		941A6E148FEF39314F1A09F6 /* ChettinadCareStaffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B7F0256B2669424BF4754C /* ChettinadCareStaffTests.swift */; };
 		9DB99C2D3C97857E2FAB84DD /* OTPRequestEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */; };
 		9ECBAC18F295CBD3C5EF2225 /* ChettinadCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9CCC565614361145DF65A /* ChettinadCore.swift */; };
@@ -141,8 +143,10 @@
 		5231D311394C779EB2CDE00C /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		5767C83F0B469A23F7AD8EC1 /* MetricsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricsCard.swift; sourceTree = "<group>"; };
 		58EE8F6B447B641EE36E6184 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViews.swift; sourceTree = "<group>"; };
 		5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRequestEndpoint.swift; sourceTree = "<group>"; };
+		659FA317211EBF6712303679 /* AdminViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViewModels.swift; sourceTree = "<group>"; };
 		680C59F078267ED61F6609C0 /* StaffLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffLoginView.swift; sourceTree = "<group>"; };
 		69D4584A04050BD564BBA0C1 /* OTPVerifyEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPVerifyEndpoint.swift; sourceTree = "<group>"; };
 		6DC9CCC565614361145DF65A /* ChettinadCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCore.swift; sourceTree = "<group>"; };
@@ -245,6 +249,8 @@
 		1E5B5D4AB62D351847D57790 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				659FA317211EBF6712303679 /* AdminViewModels.swift */,
+				5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */,
 				4A8406B2B66CA1FE64E0E853 /* DoctorConsultationViews.swift */,
 				E364ED96535DF98EB5A40AB8 /* DoctorViewModels.swift */,
 				3D7EBE307CB379EDB4764443 /* NurseTriageViews.swift */,
@@ -537,6 +543,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45D88E09A48A88006DE66266 /* AdminViewModels.swift in Sources */,
+				8FB9D309AAEBD3FE5486CF93 /* AdminViews.swift in Sources */,
 				DE6FED09318C2A52A86FC7C7 /* ChettinadCareStaffApp.swift in Sources */,
 				D932AC18C2E3A39546313EBE /* DoctorConsultationViews.swift in Sources */,
 				DE7128CEE5F06F273781D193 /* DoctorViewModels.swift in Sources */,

@@ -159,6 +159,13 @@ struct ConsultationWorkspaceView: View {
     @ObservedObject var viewModel: DoctorConsultationViewModel
     @Environment(\.dismiss) var dismiss
     
+    @State private var showingAddMedication = false
+    @State private var newMedDrugId: String? = nil
+    @State private var newMedDose = ""
+    @State private var newMedFreq = ""
+    @State private var newMedDuration = ""
+    @State private var newMedInstr = ""
+    
     var body: some View {
         NavigationView {
             Form {
@@ -191,6 +198,55 @@ struct ConsultationWorkspaceView: View {
                             .frame(height: 80)
                     }
                 }
+                
+                if let cat = viewModel.catalogues {
+                    Section(header: Text("Diagnoses (ICD-10)")) {
+                        ForEach(cat.diagnoses) { dx in
+                            Toggle(dx.name, isOn: Binding(
+                                get: { viewModel.selectedDiagnoses.contains(dx.id) },
+                                set: { isOn in
+                                    if isOn { viewModel.selectedDiagnoses.insert(dx.id) }
+                                    else { viewModel.selectedDiagnoses.remove(dx.id) }
+                                }
+                            ))
+                        }
+                    }
+                    
+                    Section(header: Text("Prescription")) {
+                        ForEach(viewModel.medications, id: \.drug_id) { med in
+                            VStack(alignment: .leading) {
+                                Text(cat.drugs.first(where: { $0.id == med.drug_id })?.name ?? med.drug_id)
+                                    .font(.headline)
+                                Text("\(med.dose) • \(med.frequency) • \(med.duration)")
+                                    .font(.subheadline)
+                                if let inst = med.instructions, !inst.isEmpty {
+                                    Text(inst).font(.caption).foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        
+                        Button("Add Medication") { showingAddMedication = true }
+                    }
+                    
+                    Section(header: Text("Order Labs")) {
+                        ForEach(cat.tests) { test in
+                            Button(action: {
+                                Task { await viewModel.orderLab(testId: test.id) }
+                            }) {
+                                HStack {
+                                    Text(test.name)
+                                    Spacer()
+                                    Image(systemName: "plus.circle")
+                                }
+                            }
+                            .foregroundColor(.primary)
+                        }
+                    }
+                } else {
+                    Section {
+                        ProgressView("Loading Catalogues...")
+                    }
+                }
             }
             .navigationTitle("Consultation")
             .navigationBarTitleDisplayMode(.inline)
@@ -206,7 +262,43 @@ struct ConsultationWorkspaceView: View {
                             }
                         }
                     }
-                    .disabled(viewModel.isSubmitting || viewModel.noteComplaint.isEmpty)
+                    .disabled(viewModel.isSubmitting || viewModel.noteComplaint.isEmpty || viewModel.selectedDiagnoses.isEmpty)
+                }
+            }
+            .task {
+                await viewModel.fetchCatalogues()
+            }
+            .sheet(isPresented: $showingAddMedication) {
+                NavigationView {
+                    Form {
+                        if let cat = viewModel.catalogues {
+                            Picker("Drug", selection: $newMedDrugId) {
+                                Text("Select Drug").tag(String?.none)
+                                ForEach(cat.drugs) { drug in
+                                    Text("\(drug.name) (\(drug.strength))").tag(String?.some(drug.id))
+                                }
+                            }
+                            TextField("Dose (e.g. 1 tab)", text: $newMedDose)
+                            TextField("Frequency (e.g. BID)", text: $newMedFreq)
+                            TextField("Duration (e.g. 5 days)", text: $newMedDuration)
+                            TextField("Instructions", text: $newMedInstr)
+                        }
+                    }
+                    .navigationTitle("New Prescription")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showingAddMedication = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Add") {
+                                if let id = newMedDrugId {
+                                    viewModel.medications.append(PrescriptionDrug(drug_id: id, dose: newMedDose, frequency: newMedFreq, duration: newMedDuration, instructions: newMedInstr.isEmpty ? nil : newMedInstr))
+                                }
+                                showingAddMedication = false
+                            }
+                            .disabled(newMedDrugId == nil || newMedDose.isEmpty || newMedFreq.isEmpty || newMedDuration.isEmpty)
+                        }
+                    }
                 }
             }
         }
