@@ -85,3 +85,30 @@ targets:
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  ChettinadCarePatient:
+    build:
+      targets:
+        ChettinadCarePatient: all
+        ChettinadCore: all
+    test:
+      targets:
+        - ChettinadCarePatientTests
+        - ChettinadCoreTests
+  ChettinadCareStaff:
+    build:
+      targets:
+        ChettinadCareStaff: all
+        ChettinadCore: all
+    test:
+      targets:
+        - ChettinadCareStaffTests
+        - ChettinadCoreTests
+  ChettinadCore:
+    build:
+      targets:
+        ChettinadCore: all
+    test:
+      targets:
+        - ChettinadCoreTests

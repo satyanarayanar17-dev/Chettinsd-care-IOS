@@ -4,7 +4,7 @@ public final class APIClient: @unchecked Sendable {
     public let baseURL: URL
     private let urlSession: URLSession
     
-    public init(baseURL: URL = URL(string: "http://127.0.0.1:3001")!, urlSession: URLSession = .shared) {
+    public init(baseURL: URL = EnvironmentConfig.current.baseURL, urlSession: URLSession = .shared) {
         self.baseURL = baseURL
         self.urlSession = urlSession
     }
@@ -16,10 +16,15 @@ public final class APIClient: @unchecked Sendable {
     private func executeWithRetry<T: Codable>(endpoint: APIEndpoint, retryCount: Int) async throws -> T {
         do {
             return try await executeInternal(endpoint: endpoint)
-        } catch let APIError.httpError(statusCode, _) where statusCode == 401 && retryCount > 0 {
-            // Attempt refresh
-            _ = try await SessionManager.shared.refreshToken(apiClient: self)
-            return try await executeWithRetry(endpoint: endpoint, retryCount: retryCount - 1)
+        } catch let error as APIError {
+            if error.isUnauthorized && retryCount > 0 {
+                // Attempt refresh
+                _ = try await SessionManager.shared.refreshToken(apiClient: self)
+                return try await executeWithRetry(endpoint: endpoint, retryCount: retryCount - 1)
+            }
+            throw error
+        } catch {
+            throw error
         }
     }
     
@@ -71,7 +76,7 @@ public final class APIClient: @unchecked Sendable {
         
         if !(200...299).contains(httpResponse.statusCode) {
             if let apiErrorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: data) {
-                throw APIError.apiError(apiErrorResponse)
+                throw APIError.apiError(statusCode: httpResponse.statusCode, response: apiErrorResponse)
             }
             throw APIError.httpError(statusCode: httpResponse.statusCode, data: data)
         }

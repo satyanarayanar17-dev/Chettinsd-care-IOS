@@ -26,5 +26,5 @@ public struct LoginResponse: Codable {
     public let account_type: String
     public let userId: String
     public let name: String?
-    public let must_change_password: Bool
+    @FlexibleBool public var must_change_password: Bool
 }

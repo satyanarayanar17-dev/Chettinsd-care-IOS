@@ -39,6 +39,14 @@ public actor SessionManager {
         }
     }
     
+    public func logout(apiClient: APIClient) async {
+        do {
+            let endpoint = LogoutEndpoint()
+            let _: [String: String]? = try? await apiClient.executeRaw(endpoint: endpoint)
+        }
+        clearSession()
+    }
+    
     public func clearSession() {
         self.currentSession = nil
         KeychainHelper.shared.delete(service: service, account: account)

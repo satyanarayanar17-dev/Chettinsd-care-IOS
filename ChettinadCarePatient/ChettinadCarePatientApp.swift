@@ -38,7 +38,7 @@ class AppState: ObservableObject {
     
     func logout() {
         Task {
-            await SessionManager.shared.clearSession()
+            await SessionManager.shared.logout(apiClient: APIClient())
             self.isAuthenticated = false
         }
     }

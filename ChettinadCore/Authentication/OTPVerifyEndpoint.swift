@@ -1,43 +1,55 @@
 import Foundation
 
+public struct PatientProfilePayload: Codable, Sendable {
+    public let name: String
+    public let dob: String
+    public let gender: String
+    public let address: String
+    public let city: String
+    public let state: String
+    public let pin_code: String
+    public let emergency_contact: String
+    public let preferred_language: String
+    
+    public init(name: String, dob: String, gender: String, address: String, city: String, state: String, pin_code: String, emergency_contact: String, preferred_language: String) {
+        self.name = name
+        self.dob = dob
+        self.gender = gender
+        self.address = address
+        self.city = city
+        self.state = state
+        self.pin_code = pin_code
+        self.emergency_contact = emergency_contact
+        self.preferred_language = preferred_language
+    }
+}
+
 public struct OTPVerifyEndpoint: APIEndpoint {
     public var path: String { "/api/v1/auth/opd/otp/verify" }
     public var method: HTTPMethod { .post }
     public var body: Data? {
-        var payload: [String: String] = [
-            "phone": phone,
-            "code": code
-        ]
-        
-        if let name = profileName {
-            // Note: If profile is required (isNewPatient), we can pass a nested profile object
-            // Just sending name in profile as a workaround. Real object depends on schema.
-            // Wait, schema requires "profile" object if patient doesn't exist.
-            // Actually I should make a struct for it.
-        }
-        
-        return try? JSONEncoder().encode(OTPVerifyPayload(phone: phone, code: code, profile: profileName != nil ? OTPProfile(name: profileName!) : nil))
+        return try? JSONEncoder().encode(OTPVerifyPayload(
+            phone: phone,
+            code: code,
+            profile: profile
+        ))
     }
     
     private let phone: String
     private let code: String
-    private let profileName: String?
+    private let profile: PatientProfilePayload?
     
-    public init(phone: String, code: String, profileName: String? = nil) {
+    public init(phone: String, code: String, profile: PatientProfilePayload? = nil) {
         self.phone = phone
         self.code = code
-        self.profileName = profileName
+        self.profile = profile
     }
 }
 
 private struct OTPVerifyPayload: Codable {
     let phone: String
     let code: String
-    let profile: OTPProfile?
-}
-
-private struct OTPProfile: Codable {
-    let name: String
+    let profile: PatientProfilePayload?
 }
 
 public struct OTPVerifyResponse: Codable {
@@ -46,5 +58,5 @@ public struct OTPVerifyResponse: Codable {
     public let account_type: String
     public let userId: String
     public let name: String?
-    public let must_change_password: Bool
+    @FlexibleBool public var must_change_password: Bool
 }

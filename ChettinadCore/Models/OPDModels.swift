@@ -6,7 +6,7 @@ public struct UserSession: Codable {
     public let role: String
     public let department: String?
     public let patient_id: String?
-    public let must_change_password: Bool
+    @FlexibleBool public var must_change_password: Bool
 }
 
 public struct OPDSessionEndpoint: APIEndpoint {
@@ -93,4 +93,70 @@ public struct Encounter: Codable, Identifiable {
         try container.encode(__v, forKey: .__v)
         try container.encode(is_discharged, forKey: .is_dischargedBool)
     }
+}
+
+public struct RecordBundle: Codable {
+    public let patient: Patient
+    public let encounters: [Encounter]
+    public let triage: [TriageRecord]
+    public let notes: [Note]
+    public let prescriptions: [Prescription]
+    public let labs: [LabOrder]
+}
+
+public struct TriageRecord: Codable, Identifiable {
+    public let id: String
+    public let encounter_id: String
+    public let version: Int
+    // public let data: String or custom struct if parsed
+    public let nurse_id: String
+    public let created_at: String
+}
+
+public struct Note: Codable, Identifiable {
+    public let id: String
+    public let encounter_id: String
+    public let status: String
+    public let author_id: String
+    public let created_at: String
+}
+
+public struct Prescription: Codable, Identifiable {
+    public let id: String
+    public let encounter_id: String
+    public let status: String
+    public let authorizing_user_id: String
+    public let created_at: String
+}
+
+public struct LabOrder: Codable, Identifiable {
+    public let id: String
+    public let encounter_id: String
+    public let test_id: String
+    public let ordered_by: String
+    public let ordered_at: String
+    public let status: String
+    public let patient_name: String?
+    public let name: String? // test name
+}
+
+
+public struct QueueEntry: Codable, Identifiable {
+    public var id: String { encounter_id }
+    public let encounter_id: String
+    public let patient_id: String
+    public let patient_name: String
+    public let mrn: String
+    public let status: String
+    public let token: String
+    public let doctor_id: String
+    public let doctor_name: String
+    public let priority: Int
+    public let __v: Int
+}
+
+public struct QueueEndpoint: APIEndpoint {
+    public var path: String { "/api/v1/opd/queue" }
+    public var method: HTTPMethod { .get }
+    public init() {}
 }

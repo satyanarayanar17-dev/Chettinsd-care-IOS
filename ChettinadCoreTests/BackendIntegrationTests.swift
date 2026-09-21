@@ -18,10 +18,6 @@ final class BackendIntegrationTests: XCTestCase {
         XCTAssertEqual(httpResponse.statusCode, 200)
     }
     
-    func testStaffLoginRejectsPatient() async throws {
-        // Try to login as patient on staff endpoint
-        // Assuming we don't have patient credentials, but if we did, it would fail
-    }
     
     func testPatientRoleRejectedInStaffApp() throws {
         let jsonPatient = """

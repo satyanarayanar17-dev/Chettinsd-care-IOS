@@ -10,6 +10,7 @@
 		02562C291B9ED397F1E5B02D /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8837F515753F7E3D4B49BF2C /* MainTabView.swift */; };
 		0529EFD3817EDEE0B1EA5988 /* ChettinadCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0715CF879F30DC1312570593 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60190ADFFCFD5DCC5171A22 /* LoginView.swift */; };
+		07260D67A972DD3EAA8BE964 /* FlexibleBool.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7CC4E20925096B379872B67 /* FlexibleBool.swift */; };
 		13852648CF327ACD5528F72F /* StaffMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DEE6773E5751FEC1F4360C8 /* StaffMainView.swift */; };
 		157BB82489CB36C9EF4E20C0 /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
 		31617DD668D1EC2425CB0199 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5231D311394C779EB2CDE00C /* APIEndpoint.swift */; };
@@ -20,19 +21,25 @@
 		4751E66647003D5677A099ED /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */; };
 		4F3643EC90233CB201E13102 /* ChettinadCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		51BE94964F5D8156108B4FD3 /* ChettinadCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */; };
+		5B445A5DCAF9186F2BE2E928 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90C3B002A974BD2D70F641B7 /* MockURLProtocol.swift */; };
 		5F2ADCBF2F3AA4E94FDBE109 /* StaffLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680C59F078267ED61F6609C0 /* StaffLoginView.swift */; };
 		635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */; };
 		6818CD8C6DDAFA06E94D3FE7 /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
+		6A41A7F8DF8B0CF03C42C1B2 /* StaffViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE4F85494BDF60C306018C8D /* StaffViews.swift */; };
+		707B9C89DC77522FE7FEB4C3 /* SamePostgreSQLProofTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */; };
 		77DB227BC6351335922C0D4B /* TokenRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07BE791CF27F51EFC84CB9B /* TokenRefreshTests.swift */; };
 		798912C36E877ACE698D3C51 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B3F221F432D33170B31C0 /* APIError.swift */; };
 		8130C3D7B18AD2ABBCEBE071 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 463CBB4A1A0E6785099DF985 /* APIClient.swift */; };
+		86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */; };
 		941A6E148FEF39314F1A09F6 /* ChettinadCareStaffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B7F0256B2669424BF4754C /* ChettinadCareStaffTests.swift */; };
 		9DB99C2D3C97857E2FAB84DD /* OTPRequestEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */; };
 		9ECBAC18F295CBD3C5EF2225 /* ChettinadCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9CCC565614361145DF65A /* ChettinadCore.swift */; };
+		AD723F699218286A6486DD3F /* LogoutEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146A78CAED3201570D881234 /* LogoutEndpoint.swift */; };
 		B2276E1D6C1A9BD2B5C27CD9 /* StaffLoginEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA136E06A6420F9E7F890069 /* StaffLoginEndpoint.swift */; };
 		BB06B4E3BDEFE26EE40D9649 /* BackendIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */; };
 		D7DFA7879034500A0B2504B1 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED113C90AF4FD739C0E068F4 /* SessionManager.swift */; };
 		DE6FED09318C2A52A86FC7C7 /* ChettinadCareStaffApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8921557351524ED41CF8887E /* ChettinadCareStaffApp.swift */; };
+		E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */; };
 		FAC0752AF680C26BCD448D82 /* OPDModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C4E1C4514065784F2686C17 /* OPDModels.swift */; };
 /* End PBXBuildFile section */
 
@@ -112,6 +119,7 @@
 
 /* Begin PBXFileReference section */
 		0ED7C4197D65A7C5E48D574A /* ChettinadCareStaffTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCareStaffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		146A78CAED3201570D881234 /* LogoutEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoutEndpoint.swift; sourceTree = "<group>"; };
 		39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCoreTests.swift; sourceTree = "<group>"; };
 		3B02288037FB94426AA7D51B /* ChettinadCarePatient.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCarePatient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B446A8A97827B3AB1760656 /* ChettinadCareStaff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCareStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -125,16 +133,22 @@
 		69D4584A04050BD564BBA0C1 /* OTPVerifyEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPVerifyEndpoint.swift; sourceTree = "<group>"; };
 		6DC9CCC565614361145DF65A /* ChettinadCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCore.swift; sourceTree = "<group>"; };
 		7A5B3F221F432D33170B31C0 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvironmentConfig.swift; sourceTree = "<group>"; };
 		8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ChettinadCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8837F515753F7E3D4B49BF2C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		8921557351524ED41CF8887E /* ChettinadCareStaffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCareStaffApp.swift; sourceTree = "<group>"; };
+		90C3B002A974BD2D70F641B7 /* MockURLProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
 		995C105780D6A137DA20FC8A /* ChettinadCarePatientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCarePatientTests.swift; sourceTree = "<group>"; };
 		A60190ADFFCFD5DCC5171A22 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendIntegrationTests.swift; sourceTree = "<group>"; };
+		ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientViews.swift; sourceTree = "<group>"; };
+		AE4F85494BDF60C306018C8D /* StaffViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffViews.swift; sourceTree = "<group>"; };
+		B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamePostgreSQLProofTests.swift; sourceTree = "<group>"; };
 		C07BE791CF27F51EFC84CB9B /* TokenRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRefreshTests.swift; sourceTree = "<group>"; };
 		D2B7F0256B2669424BF4754C /* ChettinadCareStaffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCareStaffTests.swift; sourceTree = "<group>"; };
 		DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCarePatientApp.swift; sourceTree = "<group>"; };
 		E0B92CF0704960BFAA8503A5 /* ChettinadCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7CC4E20925096B379872B67 /* FlexibleBool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexibleBool.swift; sourceTree = "<group>"; };
 		EA136E06A6420F9E7F890069 /* StaffLoginEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffLoginEndpoint.swift; sourceTree = "<group>"; };
 		ED113C90AF4FD739C0E068F4 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		FD0029DD98CDB95FF61AEE9D /* ChettinadCarePatientTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCarePatientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -184,6 +198,7 @@
 				1130AD6280AB8A2E861D5A4B /* Models */,
 				17F8BE3E2ED527734635BBD5 /* Networking */,
 				52DD4FF7BF467FE8CF57EDF7 /* Security */,
+				3AC19524FE2C776B723236E2 /* Utils */,
 			);
 			path = ChettinadCore;
 			sourceTree = "<group>";
@@ -194,6 +209,7 @@
 				463CBB4A1A0E6785099DF985 /* APIClient.swift */,
 				5231D311394C779EB2CDE00C /* APIEndpoint.swift */,
 				7A5B3F221F432D33170B31C0 /* APIError.swift */,
+				8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -212,8 +228,17 @@
 			children = (
 				680C59F078267ED61F6609C0 /* StaffLoginView.swift */,
 				3DEE6773E5751FEC1F4360C8 /* StaffMainView.swift */,
+				AE4F85494BDF60C306018C8D /* StaffViews.swift */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		3AC19524FE2C776B723236E2 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				E7CC4E20925096B379872B67 /* FlexibleBool.swift */,
+			);
+			path = Utils;
 			sourceTree = "<group>";
 		};
 		44F5379F4258AE251CE2B541 /* ChettinadCarePatientTests */ = {
@@ -243,6 +268,7 @@
 		72E91BC069C764854112DBF6 /* Authentication */ = {
 			isa = PBXGroup;
 			children = (
+				146A78CAED3201570D881234 /* LogoutEndpoint.swift */,
 				620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */,
 				69D4584A04050BD564BBA0C1 /* OTPVerifyEndpoint.swift */,
 				ED113C90AF4FD739C0E068F4 /* SessionManager.swift */,
@@ -256,6 +282,7 @@
 			children = (
 				A60190ADFFCFD5DCC5171A22 /* LoginView.swift */,
 				8837F515753F7E3D4B49BF2C /* MainTabView.swift */,
+				ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -287,6 +314,8 @@
 			children = (
 				A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */,
 				39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */,
+				90C3B002A974BD2D70F641B7 /* MockURLProtocol.swift */,
+				B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */,
 				C07BE791CF27F51EFC84CB9B /* TokenRefreshTests.swift */,
 			);
 			path = ChettinadCoreTests;
@@ -429,6 +458,8 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = 022980EA5AFA727CF5DD4066 /* Build configuration list for PBXProject "ChettinadCare-iOS" */;
 			developmentRegion = en;
@@ -462,6 +493,7 @@
 				635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */,
 				0715CF879F30DC1312570593 /* LoginView.swift in Sources */,
 				02562C291B9ED397F1E5B02D /* MainTabView.swift in Sources */,
+				E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,6 +504,7 @@
 				DE6FED09318C2A52A86FC7C7 /* ChettinadCareStaffApp.swift in Sources */,
 				5F2ADCBF2F3AA4E94FDBE109 /* StaffLoginView.swift in Sources */,
 				13852648CF327ACD5528F72F /* StaffMainView.swift in Sources */,
+				6A41A7F8DF8B0CF03C42C1B2 /* StaffViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -483,7 +516,10 @@
 				31617DD668D1EC2425CB0199 /* APIEndpoint.swift in Sources */,
 				798912C36E877ACE698D3C51 /* APIError.swift in Sources */,
 				9ECBAC18F295CBD3C5EF2225 /* ChettinadCore.swift in Sources */,
+				86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */,
+				07260D67A972DD3EAA8BE964 /* FlexibleBool.swift in Sources */,
 				4751E66647003D5677A099ED /* KeychainHelper.swift in Sources */,
+				AD723F699218286A6486DD3F /* LogoutEndpoint.swift in Sources */,
 				FAC0752AF680C26BCD448D82 /* OPDModels.swift in Sources */,
 				9DB99C2D3C97857E2FAB84DD /* OTPRequestEndpoint.swift in Sources */,
 				3656D9B3DC8A42CD69F7CFFC /* OTPVerifyEndpoint.swift in Sources */,
@@ -514,6 +550,8 @@
 			files = (
 				BB06B4E3BDEFE26EE40D9649 /* BackendIntegrationTests.swift in Sources */,
 				51BE94964F5D8156108B4FD3 /* ChettinadCoreTests.swift in Sources */,
+				5B445A5DCAF9186F2BE2E928 /* MockURLProtocol.swift in Sources */,
+				707B9C89DC77522FE7FEB4C3 /* SamePostgreSQLProofTests.swift in Sources */,
 				77DB227BC6351335922C0D4B /* TokenRefreshTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -729,11 +767,9 @@
 		90B2C5F41FBCD3B44E9F21CE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "";
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -744,7 +780,6 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCore;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
@@ -889,11 +924,9 @@
 		E595CB78454864432BD2E30B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "";
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -904,7 +937,6 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCore;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTS_MACCATALYST = YES;
