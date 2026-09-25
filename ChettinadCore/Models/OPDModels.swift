@@ -239,6 +239,7 @@ public struct QueueEndpoint: APIEndpoint {
 public struct Appointment: Codable, Identifiable {
     public let doctor_name: String?
     public let department_name: String?
+    public let patient_name: String?
     public let id: String
     public let patient_id: String
     public let doctor_id: String

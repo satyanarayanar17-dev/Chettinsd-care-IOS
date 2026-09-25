@@ -74,6 +74,7 @@ class AdminDashboardViewModel: ObservableObject {
             let fetched: [Appointment] = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: dateString))
             self.appointments = fetched
         } catch {
+            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
             self.errorMessage = error.localizedDescription
         }
         isLoading = false
@@ -225,6 +226,7 @@ class StaffManagementViewModel: ObservableObject {
             let list: [StaffMember] = try await apiClient.execute(endpoint: StaffListEndpoint())
             self.staffMembers = list
         } catch {
+            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
             self.errorMessage = error.localizedDescription
         }
         isLoading = false
@@ -250,6 +252,7 @@ class StaffManagementViewModel: ObservableObject {
             let _: AnyResponse = try await apiClient.execute(endpoint: ToggleStaffEndpoint(staffId: staffId, active: active))
             await fetchStaff()
         } catch {
+            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
             self.errorMessage = error.localizedDescription
         }
     }
@@ -305,6 +308,7 @@ class AdminMetricsViewModel: ObservableObject {
             let res: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
             self.metrics = res
         } catch {
+            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
             self.errorMessage = error.localizedDescription
         }
     }

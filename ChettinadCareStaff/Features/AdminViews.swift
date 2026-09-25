@@ -79,7 +79,7 @@ struct AppointmentAdminCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Patient: \(appointment.patient_id.prefix(8))")
+                Text(appointment.patient_name ?? "Patient: \(appointment.patient_id.prefix(8))")
                     .font(.headline)
                 Spacer()
                 Text(appointment.status)

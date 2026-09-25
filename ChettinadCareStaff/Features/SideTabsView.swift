@@ -8,8 +8,8 @@ struct SideTabsView: View {
     private var destinations: [(String, String)] {
         switch appState.role {
         case "ADMIN": return [("Overview", "chart.bar"), ("Appointments", "calendar"), ("Doctor schedules", "clock"), ("Administration", "gearshape"), ("Audit trail", "doc.text.magnifyingglass"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
-        case "DOCTOR": return [("Overview", "chart.bar"), ("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
-        case "NURSE": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
+        case "DOCTOR": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My profile & sessions", "person.crop.circle")]
+        case "NURSE": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My profile & sessions", "person.crop.circle")]
         default: return [("Overview", "chart.bar")]
         }
     }
@@ -37,6 +37,8 @@ struct SideTabsView: View {
                 } else {
                     Text("Overview & Administration requires Admin access")
                 }
+            } else if selectedTab == "Appointments" {
+                AdminDashboardView()
             } else if selectedTab == "Live queue" {
                 if appState.role == "DOCTOR" {
                     DoctorQueueView()
@@ -49,6 +51,6 @@ struct SideTabsView: View {
                 VStack(spacing: 12) { Image(systemName: "building.2").font(.largeTitle).foregroundColor(.secondary); Text(selectedTab ?? "Chettinad Care").font(.title2); Text("Obstetrics & Gynaecology pilot data will appear here when available.").foregroundColor(.secondary) }.padding()
             }
         }
-        .onAppear { if appState.role == "NURSE" { selectedTab = "Live queue" } }
+        .onAppear { if appState.role == "NURSE" || appState.role == "DOCTOR" { selectedTab = "Live queue" } }
     }
 }
