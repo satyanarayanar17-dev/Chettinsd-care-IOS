@@ -3,7 +3,7 @@ import ChettinadCore
 
 struct SideTabsView: View {
     @EnvironmentObject var appState: AppState
-    @State private var selectedTab: String? = "Overview"
+    @State var selectedTab: String?
 
     private var destinations: [(String, String)] {
         switch appState.role {
