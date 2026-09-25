@@ -246,6 +246,26 @@ class StaffManagementViewModel: ObservableObject {
         }
     }
     
+    func updateStaff(staffId: String, name: String, role: String, department: String) async -> Bool {
+        isSubmitting = true
+        errorMessage = nil
+        do {
+            struct Empty: Codable {}
+            let _: Empty = try await apiClient.execute(endpoint: UpdateStaffEndpoint(staffId: staffId, payload: [
+                "name": name,
+                "role": role,
+                "department": department
+            ]))
+            await fetchStaff()
+            isSubmitting = false
+            return true
+        } catch {
+            self.errorMessage = error.localizedDescription
+            isSubmitting = false
+            return false
+        }
+    }
+
     func toggleStaff(staffId: String, active: Bool) async {
         do {
             struct AnyResponse: Codable {}
@@ -262,6 +282,14 @@ struct CreateStaffEndpoint: APIEndpoint {
     let payload: [String: String]
     var path: String { "/api/v1/opd/staff" }
     var method: HTTPMethod { .post }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: payload) }
+}
+
+struct UpdateStaffEndpoint: APIEndpoint {
+    let staffId: String
+    let payload: [String: String]
+    var path: String { "/api/v1/opd/staff/\(staffId)" }
+    var method: HTTPMethod { .put }
     var body: Data? { try? JSONSerialization.data(withJSONObject: payload) }
 }
 

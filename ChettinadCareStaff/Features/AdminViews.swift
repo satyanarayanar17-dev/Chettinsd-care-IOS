@@ -273,7 +273,8 @@ struct StaffManagementView: View {
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(viewModel.staffMembers) { staff in
-                            HStack {
+                            NavigationLink(destination: EditStaffView(viewModel: viewModel, staff: staff)) {
+                                HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(staff.name)
                                         .font(.headline)
@@ -305,7 +306,8 @@ struct StaffManagementView: View {
                                             .cornerRadius(8)
                                     }
                                 }
-                                .buttonStyle(PlainButtonStyle())
+                                .buttonStyle(BorderlessButtonStyle())
+                            }
                             }
                             .padding(.vertical, 4)
                         }
@@ -429,6 +431,58 @@ struct CreateStaffView: View {
                     }
                     .disabled(id.isEmpty || name.isEmpty || password.isEmpty)
                 }
+            }
+        }
+    }
+}
+
+
+struct EditStaffView: View {
+    @ObservedObject var viewModel: StaffManagementViewModel
+    @Environment(\.dismiss) var dismiss
+    
+    let staffId: String
+    @State private var name: String
+    @State private var role: String
+    @State private var department: String
+    
+    init(viewModel: StaffManagementViewModel, staff: Staff) {
+        self.viewModel = viewModel
+        self.staffId = staff.id
+        self._name = State(initialValue: staff.name)
+        self._role = State(initialValue: staff.role)
+        self._department = State(initialValue: staff.department ?? "")
+    }
+    
+    var body: some View {
+        Form {
+            Section(header: Text("Edit Staff Details")) {
+                TextField("Full Name", text: $name)
+                Picker("Role", selection: $role) {
+                    Text("Doctor").tag("DOCTOR")
+                    Text("Nurse").tag("NURSE")
+                    Text("Admin").tag("ADMIN")
+                }
+                Picker("Department", selection: $department) {
+                    Text("None").tag("")
+                    ForEach(viewModel.departments) { d in
+                        Text(d.name).tag(d.name)
+                    }
+                }
+            }
+        }
+        .navigationTitle("Edit Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    Task {
+                        if await viewModel.updateStaff(staffId: staffId, name: name, role: role, department: department) {
+                            dismiss()
+                        }
+                    }
+                }
+                .disabled(name.isEmpty)
             }
         }
     }
