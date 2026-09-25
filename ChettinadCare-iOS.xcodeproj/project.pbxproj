@@ -20,6 +20,7 @@
 		3C19DCE0B6A22D3A75D8F3F1 /* ChettinadCarePatientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 995C105780D6A137DA20FC8A /* ChettinadCarePatientTests.swift */; };
 		3D59BAECD00BD0C5D6F4A08D /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
 		3E078C996FA99C192824364C /* CarePlanEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = C06DD70B5CD4766B36A5C70D /* CarePlanEndpoints.swift */; };
+		458E6646118B5010E96F3B7E /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371488B1F40F465A3B63E8CB /* NotificationManager.swift */; };
 		45D88E09A48A88006DE66266 /* AdminViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 659FA317211EBF6712303679 /* AdminViewModels.swift */; };
 		4751E66647003D5677A099ED /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */; };
 		4F3643EC90233CB201E13102 /* ChettinadCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -56,8 +57,10 @@
 		DC09FD46FA6C4A6D940AD0DB /* NurseTriageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7EBE307CB379EDB4764443 /* NurseTriageViews.swift */; };
 		DE6FED09318C2A52A86FC7C7 /* ChettinadCareStaffApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8921557351524ED41CF8887E /* ChettinadCareStaffApp.swift */; };
 		DE7128CEE5F06F273781D193 /* DoctorViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E364ED96535DF98EB5A40AB8 /* DoctorViewModels.swift */; };
+		E211E8A947075BC7E4DA979C /* ISODate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F53AFF6EE28DF0B83FFC31 /* ISODate.swift */; };
 		E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */; };
 		E496357C14C799390032FE4C /* PatientCarePlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */; };
+		E8FA0D4B61E9318BEBD5955E /* PatientTrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05D979F2B95D92E189C62EDB /* PatientTrendsView.swift */; };
 		F2D70BED513EC1DE9E09AFA3 /* CarePlanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10E0DDAA488C3EAA7A0D3376 /* CarePlanViewModel.swift */; };
 		F4832CDA3466BFDB6416AE09 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D53A36DD55C131BBB205D7AA /* Color+Theme.swift */; };
 		F6E44F12DF55FD9ED52A7EF4 /* Manrope-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 509CF0D3DD046E805845683A /* Manrope-LICENSE.txt */; };
@@ -141,6 +144,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		05D979F2B95D92E189C62EDB /* PatientTrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientTrendsView.swift; sourceTree = "<group>"; };
 		0E23D3B04BB4C16326E145C1 /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
 		0ED7C4197D65A7C5E48D574A /* ChettinadCareStaffTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCareStaffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		10B5B357A6406D1C008FB53D /* StitchComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StitchComponents.swift; sourceTree = "<group>"; };
@@ -148,6 +152,7 @@
 		146A78CAED3201570D881234 /* LogoutEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoutEndpoint.swift; sourceTree = "<group>"; };
 		204116B3828F504B56AD96DC /* PatientCarePlanMonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientCarePlanMonitoringView.swift; sourceTree = "<group>"; };
 		31C07BCFCE4E5F3AC48D7304 /* SideTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideTabsView.swift; sourceTree = "<group>"; };
+		371488B1F40F465A3B63E8CB /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCoreTests.swift; sourceTree = "<group>"; };
 		3B02288037FB94426AA7D51B /* ChettinadCarePatient.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCarePatient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B446A8A97827B3AB1760656 /* ChettinadCareStaff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCareStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -198,6 +203,7 @@
 		EA136E06A6420F9E7F890069 /* StaffLoginEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffLoginEndpoint.swift; sourceTree = "<group>"; };
 		ED113C90AF4FD739C0E068F4 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
 		EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientCarePlanView.swift; sourceTree = "<group>"; };
+		F6F53AFF6EE28DF0B83FFC31 /* ISODate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ISODate.swift; sourceTree = "<group>"; };
 		F7064BAAC03DD101978E8B3C /* NurseViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NurseViewModels.swift; sourceTree = "<group>"; };
 		FD0029DD98CDB95FF61AEE9D /* ChettinadCarePatientTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCarePatientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -308,6 +314,8 @@
 			isa = PBXGroup;
 			children = (
 				E7CC4E20925096B379872B67 /* FlexibleBool.swift */,
+				F6F53AFF6EE28DF0B83FFC31 /* ISODate.swift */,
+				371488B1F40F465A3B63E8CB /* NotificationManager.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -355,6 +363,7 @@
 				A60190ADFFCFD5DCC5171A22 /* LoginView.swift */,
 				8837F515753F7E3D4B49BF2C /* MainTabView.swift */,
 				EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */,
+				05D979F2B95D92E189C62EDB /* PatientTrendsView.swift */,
 				AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */,
 				ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */,
 				7AFA814DADA9BEACBA5CAE9D /* SelfRecordSheet.swift */,
@@ -646,6 +655,7 @@
 				0715CF879F30DC1312570593 /* LoginView.swift in Sources */,
 				02562C291B9ED397F1E5B02D /* MainTabView.swift in Sources */,
 				E496357C14C799390032FE4C /* PatientCarePlanView.swift in Sources */,
+				E8FA0D4B61E9318BEBD5955E /* PatientTrendsView.swift in Sources */,
 				AD0F9C60D79E35222D54E1A6 /* PatientViewModel.swift in Sources */,
 				E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */,
 				B6E1B8206E35733217E3A562 /* SelfRecordSheet.swift in Sources */,
@@ -685,9 +695,11 @@
 				F4832CDA3466BFDB6416AE09 /* Color+Theme.swift in Sources */,
 				86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */,
 				07260D67A972DD3EAA8BE964 /* FlexibleBool.swift in Sources */,
+				E211E8A947075BC7E4DA979C /* ISODate.swift in Sources */,
 				4751E66647003D5677A099ED /* KeychainHelper.swift in Sources */,
 				AD723F699218286A6486DD3F /* LogoutEndpoint.swift in Sources */,
 				33410990F2F9735D6D2DEB8C /* MetricsCard.swift in Sources */,
+				458E6646118B5010E96F3B7E /* NotificationManager.swift in Sources */,
 				FAC0752AF680C26BCD448D82 /* OPDModels.swift in Sources */,
 				9DB99C2D3C97857E2FAB84DD /* OTPRequestEndpoint.swift in Sources */,
 				3656D9B3DC8A42CD69F7CFFC /* OTPVerifyEndpoint.swift in Sources */,

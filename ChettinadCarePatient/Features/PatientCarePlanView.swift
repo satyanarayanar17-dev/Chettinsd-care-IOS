@@ -25,6 +25,14 @@ struct PatientCarePlanView: View {
                         VStack(spacing: 16) {
                             progressHeader
 
+                            if let error = viewModel.errorMessage {
+                                Text(error)
+                                    .font(.footnote)
+                                    .foregroundColor(.red)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                            }
+
                             Button { showingSelfRecord = true } label: { Label("Add Record", systemImage: "plus.circle.fill").frame(maxWidth: .infinity).padding(12) }
                                 .buttonStyle(.borderedProminent).padding(.horizontal)
                             
@@ -255,6 +263,7 @@ struct PatientCarePlanView: View {
     private func handleTaskAction(_ occurrence: CarePlanOccurrenceDTO) {
         if occurrence.task_type == .MEASUREMENT {
             selectedTask = occurrence
+            viewModel.errorMessage = nil
             measurementValue = ""
             measurementNote = ""
             showingMeasurementSheet = true
@@ -271,6 +280,11 @@ struct PatientCarePlanView: View {
     private var measurementSheet: some View {
         NavigationView {
             Form {
+                if let error = viewModel.errorMessage {
+                    Section {
+                        Text(error).foregroundColor(.red)
+                    }
+                }
                 if let task = selectedTask {
                     Section(header: Text("Details")) {
                         Text(task.title).font(.headline)
@@ -296,8 +310,10 @@ struct PatientCarePlanView: View {
                     if let occ = selectedTask, let val = Double(measurementValue) {
                         let payload = RecordAdherencePayload(__v: occ.__v, date: occ.occurrence_date, status: "RECORDED", value: val, unit: occ.target_unit, note: measurementNote.isEmpty ? nil : measurementNote)
                         Task {
-                            _ = await viewModel.recordAdherence(resourceId: occ.id, payload: payload)
-                            showingMeasurementSheet = false
+                            // Only close the sheet once the reading has actually been saved.
+                            if await viewModel.recordAdherence(resourceId: occ.id, payload: payload) {
+                                showingMeasurementSheet = false
+                            }
                         }
                     }
                 }.disabled(Double(measurementValue) == nil)
@@ -337,7 +353,7 @@ struct PatientCarePlanView: View {
                     if record.record_type == "ACTIVITY" { Text("\(record.activity_name ?? "Activity") · \(record.duration_minutes ?? 0) min") }
                     else if record.record_type == "BLOOD_PRESSURE" { Text("\(record.numeric_value ?? 0, specifier: "%.0f")/\(record.secondary_numeric_value ?? 0, specifier: "%.0f") mmHg") }
                     else { Text("\(record.numeric_value ?? 0, specifier: "%.1f") \(record.unit ?? "")") }
-                    Text("Patient self-recorded · \(String(record.observed_at.prefix(16)))").font(.caption).foregroundColor(.secondary)
+                    Text("Patient self-recorded · \(ISODate.display(record.observed_at))").font(.caption).foregroundColor(.secondary)
                 }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(10)
             }
         }.padding(.horizontal)

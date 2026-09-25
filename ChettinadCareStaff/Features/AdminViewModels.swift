@@ -5,7 +5,7 @@ struct DirectoryResponse: Codable {
     struct Doctor: Codable, Identifiable {
         let id: String
         let name: String
-        let department: String
+        let department: String?
     }
     struct Department: Codable, Identifiable {
         let id: String

@@ -105,19 +105,38 @@ class TriageFormViewModel: ObservableObject {
     func submitTriage() async -> Bool {
         isSubmitting = true
         errorMessage = nil
-        
+
+        // Never silently drop a vital the nurse typed: reject anything that isn't a number.
+        let numericFields: [(label: String, value: String, isInteger: Bool)] = [
+            ("Temperature", temperature, false), ("Systolic BP", systolic, true), ("Diastolic BP", diastolic, true),
+            ("Pulse", pulse, true), ("SpO2", spo2, true), ("Weight", weight, false), ("Height", height, false), ("Pain", pain, true)
+        ]
+        let invalid = numericFields.filter { Self.isInvalidNumber($0.value, integer: $0.isInteger) }.map { $0.label }
+        guard invalid.isEmpty else {
+            errorMessage = "Please correct: \(invalid.joined(separator: ", ")) (numbers only)."
+            isSubmitting = false
+            return false
+        }
+        let trimmedComplaint = complaint.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard numericFields.contains(where: { !Self.clean($0.value).isEmpty }) || !trimmedComplaint.isEmpty else {
+            errorMessage = "Enter at least one vital sign or the complaint before submitting."
+            isSubmitting = false
+            return false
+        }
+        let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+
         let tData = TriageData(
-            temperature: Double(temperature),
-            systolic: Int(systolic),
-            diastolic: Int(diastolic),
-            pulse: Int(pulse),
-            spo2: Int(spo2),
-            weight: Double(weight),
-            height: Double(height),
-            complaint: complaint.isEmpty ? nil : complaint,
+            temperature: Self.decimal(temperature),
+            systolic: Self.integer(systolic),
+            diastolic: Self.integer(diastolic),
+            pulse: Self.integer(pulse),
+            spo2: Self.integer(spo2),
+            weight: Self.decimal(weight),
+            height: Self.decimal(height),
+            complaint: trimmedComplaint.isEmpty ? nil : trimmedComplaint,
             allergies: nil,
-            pain: Int(pain),
-            notes: notes,
+            pain: Self.integer(pain),
+            notes: trimmedNotes.isEmpty ? nil : trimmedNotes,
             priority: priority,
             bmi: nil
         )
@@ -140,6 +159,26 @@ class TriageFormViewModel: ObservableObject {
         return false
     }
     
+    private static func clean(_ s: String) -> String {
+        s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func decimal(_ s: String) -> Double? {
+        let t = clean(s).replacingOccurrences(of: ",", with: ".")
+        return t.isEmpty ? nil : Double(t)
+    }
+
+    private static func integer(_ s: String) -> Int? {
+        let t = clean(s)
+        return t.isEmpty ? nil : Int(t)
+    }
+
+    private static func isInvalidNumber(_ s: String, integer isInteger: Bool) -> Bool {
+        let t = clean(s)
+        guard !t.isEmpty else { return false }
+        return isInteger ? integer(t) == nil : decimal(t) == nil
+    }
+
     private func handleAPIError(_ error: APIError) {
         switch error {
         case .apiError(_, let response):

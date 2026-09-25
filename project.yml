@@ -52,14 +52,7 @@ targets:
       properties:
         UILaunchScreen: {}
         NSAppTransportSecurity:
-          NSExceptionDomains:
-            Sids-MacBook-Pro.local:
-              NSExceptionAllowsInsecureHTTPLoads: true
-              NSIncludesSubdomains: true
-            localhost:
-              NSExceptionAllowsInsecureHTTPLoads: true
-            127.0.0.1:
-              NSExceptionAllowsInsecureHTTPLoads: true
+          NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: "Connect to the Chettinad Care backend."
         CC_API_BASE_URL: "$(CC_API_BASE_URL)"
         APP_ENV: "$(APP_ENV)"
@@ -115,14 +108,7 @@ targets:
       properties:
         UILaunchScreen: {}
         NSAppTransportSecurity:
-          NSExceptionDomains:
-            Sids-MacBook-Pro.local:
-              NSExceptionAllowsInsecureHTTPLoads: true
-              NSIncludesSubdomains: true
-            localhost:
-              NSExceptionAllowsInsecureHTTPLoads: true
-            127.0.0.1:
-              NSExceptionAllowsInsecureHTTPLoads: true
+          NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: "Connect to the Chettinad Care backend."
         CC_API_BASE_URL: "$(CC_API_BASE_URL)"
         APP_ENV: "$(APP_ENV)"

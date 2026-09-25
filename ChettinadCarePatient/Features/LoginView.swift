@@ -60,12 +60,12 @@ struct LoginView: View {
                 DispatchQueue.main.async {
                     self.isCodeSent = response.sent
                     self.isLoading = false
+                    #if DEBUG
                     if let devCode = response.development_code {
-                        #if DEBUG
                         print("Dev OTP Code: \(devCode)")
-                        #endif
-                        self.code = devCode // auto-fill for convenience
+                        self.code = devCode // auto-fill for convenience (Debug builds only)
                     }
+                    #endif
                 }
             } catch {
                 DispatchQueue.main.async {

@@ -1,5 +1,10 @@
 import Foundation
 
+public extension Notification.Name {
+    /// Posted on the main actor whenever the stored session is cleared (logout or rejected refresh).
+    static let chettinadSessionEnded = Notification.Name("ChettinadSessionEnded")
+}
+
 public struct AuthSession: Codable, Sendable {
     public let accessToken: String
     public let role: String
@@ -64,6 +69,9 @@ public actor SessionManager {
                 HTTPCookieStorage.shared.deleteCookie(cookie)
             }
         }
+        Task { @MainActor in
+            NotificationCenter.default.post(name: .chettinadSessionEnded, object: nil)
+        }
     }
     
     public func getSession() -> AuthSession? {
@@ -101,13 +109,22 @@ public actor SessionManager {
                 try self.saveSession(newSession)
                 return newSession
             } catch {
-                self.clearSession()
+                // Only a rejected refresh ends the session; offline/timeouts keep the user signed in.
+                if Self.shouldEndSession(after: error) {
+                    self.clearSession()
+                }
                 throw error
             }
         }
         
         self.refreshTask = task
         return try await task.value
+    }
+
+    private static func shouldEndSession(after error: Error) -> Bool {
+        guard let apiError = error as? APIError else { return false }
+        if case .unauthenticated = apiError { return true }
+        return apiError.isUnauthorized
     }
 }
 

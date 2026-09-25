@@ -131,7 +131,8 @@ struct PatientDossierView: View {
             await viewModel.fetchPatientDossier()
         }
         .sheet(isPresented: $showConsultation, onDismiss: {
-            dismiss()
+            // Only leave the dossier after a successful "Complete & Sign", not on Cancel.
+            if viewModel.consultationCompleted { dismiss() }
         }) {
             ConsultationWorkspaceView(viewModel: viewModel)
         }
@@ -167,6 +168,7 @@ struct ConsultationWorkspaceView: View {
     @State private var newMedFreq = ""
     @State private var newMedDuration = ""
     @State private var newMedInstr = ""
+    @State private var pendingLabTest: CataloguesResponse.Test?
     
     var body: some View {
         NavigationView {
@@ -219,7 +221,7 @@ struct ConsultationWorkspaceView: View {
                     }
                     
                     Section(header: Text("Prescription")) {
-                        ForEach(viewModel.medications, id: \.drug_id) { med in
+                        ForEach(Array(viewModel.medications.enumerated()), id: \.offset) { _, med in
                             VStack(alignment: .leading) {
                                 Text(cat.drugs.first(where: { $0.id == med.drug_id })?.name ?? med.drug_id)
                                     .font(.headline)
@@ -236,16 +238,25 @@ struct ConsultationWorkspaceView: View {
                     
                     Section(header: Text("Order Labs")) {
                         ForEach(cat.tests) { test in
-                            Button(action: {
-                                Task { await viewModel.orderLab(testId: test.id) }
-                            }) {
+                            let alreadyOrdered = viewModel.orderedTestIds.contains(test.id)
+                            let inFlight = viewModel.labOrdersInFlight.contains(test.id)
+                            Button(action: { pendingLabTest = test }) {
                                 HStack {
                                     Text(test.name)
                                     Spacer()
-                                    Image(systemName: "plus.circle")
+                                    if alreadyOrdered {
+                                        Label("Ordered", systemImage: "checkmark.circle.fill")
+                                            .font(.caption)
+                                            .foregroundColor(.green)
+                                    } else if inFlight {
+                                        ProgressView()
+                                    } else {
+                                        Image(systemName: "plus.circle")
+                                    }
                                 }
                             }
                             .foregroundColor(.primary)
+                            .disabled(alreadyOrdered || inFlight)
                         }
                     }
                 } else {
@@ -273,6 +284,19 @@ struct ConsultationWorkspaceView: View {
             }
             .task {
                 await viewModel.fetchCatalogues()
+            }
+            .confirmationDialog(
+                "Order lab test?",
+                isPresented: Binding(get: { pendingLabTest != nil }, set: { if !$0 { pendingLabTest = nil } }),
+                titleVisibility: .visible,
+                presenting: pendingLabTest
+            ) { test in
+                Button("Order \(test.name)") {
+                    Task { await viewModel.orderLab(testId: test.id) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { test in
+                Text("This places a lab order for \(test.name) (\(test.code)) on this encounter.")
             }
             .sheet(isPresented: $showingAddMedication) {
                 NavigationView {

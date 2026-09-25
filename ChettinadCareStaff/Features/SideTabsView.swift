@@ -7,9 +7,9 @@ struct SideTabsView: View {
 
     private var destinations: [(String, String)] {
         switch appState.role {
-        case "ADMIN": return [("Overview", "chart.bar"), ("Appointments", "calendar"), ("Doctor schedules", "clock"), ("Administration", "gearshape"), ("Audit trail", "doc.text.magnifyingglass"), ("My Availability", "clock"), ("My profile ("My profile & sessions", "person.crop.circle") sessions", "person.crop.circle")]
-        case "DOCTOR": return [("Overview", "chart.bar"), ("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My Availability", "clock"), ("My profile ("My profile & sessions", "person.crop.circle") sessions", "person.crop.circle")]
-        case "NURSE": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My Availability", "clock"), ("My profile ("My profile & sessions", "person.crop.circle") sessions", "person.crop.circle")]
+        case "ADMIN": return [("Overview", "chart.bar"), ("Appointments", "calendar"), ("Doctor schedules", "clock"), ("Administration", "gearshape"), ("Audit trail", "doc.text.magnifyingglass"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
+        case "DOCTOR": return [("Overview", "chart.bar"), ("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
+        case "NURSE": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
         default: return [("Overview", "chart.bar")]
         }
     }

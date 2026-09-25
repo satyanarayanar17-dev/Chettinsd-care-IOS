@@ -116,6 +116,14 @@ class DoctorConsultationViewModel: ObservableObject {
     @Published var catalogues: CataloguesResponse?
     @Published var selectedDiagnoses: Set<String> = []
     @Published var medications: [PrescriptionDrug] = []
+    @Published var labOrdersInFlight: Set<String> = []
+    /// Set only after "Complete & Sign" succeeds; the dossier closes only in that case.
+    @Published var consultationCompleted = false
+
+    /// Lab tests already ordered on this encounter.
+    var orderedTestIds: Set<String> {
+        Set(recordBundle?.labs.filter { $0.encounter_id == encounterId }.map(\.test_id) ?? [])
+    }
     
     let apiClient = APIClient()
     
@@ -157,7 +165,16 @@ class DoctorConsultationViewModel: ObservableObject {
             guard let entry = queue.first(where: { $0.encounter_id == encounterId }) else { throw APIError.invalidResponse }
             currentVersion = entry.__v
             if entry.status != "CONSULTATION" {
-                let _: EncounterMutationResponse = try await apiClient.execute(endpoint: StartConsultEndpoint(encounterId: encounterId, v: currentVersion))
+                let started: EncounterMutationResponse = try await apiClient.execute(endpoint: StartConsultEndpoint(encounterId: encounterId, v: currentVersion))
+                if let v = started.__v {
+                    currentVersion = v
+                } else {
+                    // Response carried no version: re-read it from the queue (same as the nurse flow).
+                    let updated: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+                    if let refreshed = updated.first(where: { $0.encounter_id == encounterId }) {
+                        currentVersion = refreshed.__v
+                    }
+                }
             }
             await fetchPatientDossier()
             isSubmitting = false
@@ -172,6 +189,9 @@ class DoctorConsultationViewModel: ObservableObject {
     }
     
     func orderLab(testId: String) async {
+        guard !orderedTestIds.contains(testId), !labOrdersInFlight.contains(testId) else { return }
+        labOrdersInFlight.insert(testId)
+        defer { labOrdersInFlight.remove(testId) }
         do {
             struct LabResponse: Codable {}
             let _: LabResponse = try await apiClient.execute(endpoint: OrderLabEndpoint(encounterId: encounterId, testId: testId))
@@ -189,7 +209,7 @@ class DoctorConsultationViewModel: ObservableObject {
             let cData = ConsultationData(
                 complaint: noteComplaint.isEmpty ? nil : noteComplaint,
                 history: noteHistory.isEmpty ? nil : noteHistory,
-                previous_history: noteHistory.isEmpty ? nil : noteHistory,
+                previous_history: nil,
                 examination: noteExamination.isEmpty ? nil : noteExamination,
                 assessment: noteAssessment.isEmpty ? nil : noteAssessment,
                 diagnosis_ids: Array(selectedDiagnoses),
@@ -199,11 +219,12 @@ class DoctorConsultationViewModel: ObservableObject {
             )
             
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData)
+                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData)
             )
             if let newV = response.__v {
                 self.currentVersion = newV
             }
+            consultationCompleted = true
             isSubmitting = false
             return true
         } catch let error as APIError {

@@ -118,7 +118,11 @@ public final class APIClient: @unchecked Sendable {
         let tempFileURL = tempDir.appendingPathComponent(UUID().uuidString)
         
         guard let outputStream = OutputStream(url: tempFileURL, append: false) else { throw APIError.invalidResponse }
+        // Always remove the temporary copy of the medical document, even if we throw part-way through.
+        defer { try? FileManager.default.removeItem(at: tempFileURL) }
         outputStream.open()
+        var outputClosed = false
+        defer { if !outputClosed { outputStream.close() } }
         
         func writeString(_ text: String) throws {
             let data = text.data(using: .utf8)!
@@ -141,6 +145,7 @@ public final class APIClient: @unchecked Sendable {
         
         guard let inputStream = InputStream(url: fileURL) else { throw APIError.invalidResponse }
         inputStream.open()
+        defer { inputStream.close() }
         let bufferSize = 65536
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
         defer { buffer.deallocate() }
@@ -156,12 +161,10 @@ public final class APIClient: @unchecked Sendable {
                 totalWritten += written
             }
         }
-        inputStream.close()
         
         try writeString("\r\n--\(boundary)--\r\n")
         outputStream.close()
-        
-        defer { try? FileManager.default.removeItem(at: tempFileURL) }
+        outputClosed = true
         
         let path = "/api/v1/opd/patient-documents/\(patientId)"
         guard let url = URL(string: path, relativeTo: baseURL) else { throw APIError.invalidResponse }
@@ -191,9 +194,11 @@ public final class APIClient: @unchecked Sendable {
         request.setValue(UUID().uuidString, forHTTPHeaderField: "X-Correlation-ID")
         let (data, response) = try await urlSession.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw APIError.invalidResponse }
-        let safeExtension = document.original_filename.split(separator: ".").last.map(String.init) ?? (document.mime_type == "application/pdf" ? "pdf" : "bin")
+        let originalExtension = (document.original_filename as NSString).pathExtension
+        let safeExtension = originalExtension.isEmpty ? (document.mime_type == "application/pdf" ? "pdf" : "bin") : originalExtension
         let destination = FileManager.default.temporaryDirectory.appendingPathComponent("\(document.id).\(safeExtension)")
-        try data.write(to: destination, options: .atomic)
+        // Protected at rest; callers delete the file once the preview is dismissed.
+        try data.write(to: destination, options: [.atomic, .completeFileProtection])
         return destination
     }
 }

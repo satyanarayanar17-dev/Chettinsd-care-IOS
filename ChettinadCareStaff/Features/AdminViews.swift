@@ -4,6 +4,7 @@ import ChettinadCore
 struct AdminDashboardView: View {
     @StateObject private var viewModel = AdminDashboardViewModel()
     @State private var showBooking = false
+    @State private var pendingCheckIn: Appointment?
     
     var body: some View {
         NavigationView {
@@ -23,7 +24,7 @@ struct AdminDashboardView: View {
                     } else {
                         ForEach(viewModel.appointments.sorted(by: { $0.scheduled_at < $1.scheduled_at })) { apt in
                             AppointmentAdminCard(appointment: apt, onCheckIn: {
-                                Task { await viewModel.checkIn(appointmentId: apt.id) }
+                                pendingCheckIn = apt
                             })
                         }
                     }
@@ -53,6 +54,19 @@ struct AdminDashboardView: View {
                 Task { await viewModel.fetchAppointments() }
             }) {
                 BookAppointmentView()
+            }
+            .confirmationDialog(
+                "Confirm patient identity",
+                isPresented: Binding(get: { pendingCheckIn != nil }, set: { if !$0 { pendingCheckIn = nil } }),
+                titleVisibility: .visible,
+                presenting: pendingCheckIn
+            ) { apt in
+                Button("Identity verified — Check In") {
+                    Task { await viewModel.checkIn(appointmentId: apt.id) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("Check the patient's photo ID or MRN before checking them in.")
             }
         }
     }
@@ -108,14 +122,7 @@ struct AppointmentAdminCard: View {
     }
     
     private func formatDate(_ dateStr: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: dateStr) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.timeStyle = .short
-            return displayFormatter.string(from: date)
-        }
-        return String(dateStr.prefix(16))
+        ISODate.display(dateStr, dateStyle: .none, timeStyle: .short)
     }
     
     private func colorForStatus(_ status: String) -> Color {
@@ -168,14 +175,14 @@ struct BookAppointmentView: View {
                     Picker("Select Doctor", selection: $viewModel.selectedDoctorId) {
                         Text("None").tag(String?.none)
                         ForEach(viewModel.doctors) { d in
-                            Text("\(d.name) - \(d.department)").tag(String?.some(d.id))
+                            Text("\(d.name) - \(d.department ?? "—")").tag(String?.some(d.id))
                         }
                     }
                     .onChange(of: viewModel.selectedDoctorId) { _ in
                         Task { await viewModel.fetchSlots() }
                     }
                     
-                    DatePicker("Date", selection: $viewModel.selectedDate, displayedComponents: .date)
+                    DatePicker("Date", selection: $viewModel.selectedDate, in: Calendar.current.startOfDay(for: Date())..., displayedComponents: .date)
                         .onChange(of: viewModel.selectedDate) { _ in
                             Task { await viewModel.fetchSlots() }
                         }
@@ -220,14 +227,7 @@ struct BookAppointmentView: View {
     }
     
     private func formatTime(_ dateStr: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: dateStr) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.timeStyle = .short
-            return displayFormatter.string(from: date)
-        }
-        return String(dateStr.suffix(13).prefix(5))
+        ISODate.display(dateStr, dateStyle: .none, timeStyle: .short)
     }
 }
 

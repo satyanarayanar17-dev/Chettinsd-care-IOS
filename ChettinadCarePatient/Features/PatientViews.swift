@@ -17,7 +17,7 @@ struct PatientDashboardView: View {
                 if viewModel.isLoading {
                     ProgressView("Loading Dashboard...")
                         .padding()
-                } else if let error = viewModel.errorMessage {
+                } else if let error = viewModel.errorMessage, viewModel.recordBundle == nil {
                     Text(error).foregroundColor(.chettinadError).padding()
                 } else if let bundle = viewModel.recordBundle {
                     VStack(alignment: .leading, spacing: 24) {
@@ -35,7 +35,7 @@ struct PatientDashboardView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Next actions").textStyle(Typography.titleMedium, color: .chettinadPrimary)
                             if let appointment = viewModel.appointments.filter({ !["COMPLETED", "CANCELLED", "NO_SHOW"].contains($0.status) }).sorted(by: { $0.scheduled_at < $1.scheduled_at }).first {
-                                Label("\(appointment.doctor_name ?? "OG Doctor") · \(String(appointment.scheduled_at.prefix(16)))", systemImage: "calendar")
+                                Label("\(appointment.doctor_name ?? "OG Doctor") · \(ISODate.display(appointment.scheduled_at))", systemImage: "calendar")
                             } else { Label("Book your next OG appointment", systemImage: "calendar.badge.plus") }
                             if let task = viewModel.todayCareTasks.first(where: { $0.status == .DUE || $0.status == .UPCOMING }) { Label("\(task.title) · \(task.due_time)", systemImage: "checklist") }
                             else { Label("No Care Plan task is due now", systemImage: "checkmark.circle") }
@@ -123,156 +123,164 @@ struct PatientRecordsView: View {
     @State private var importingDocument = false
     @State private var previewURL: URL?
     @State private var uploadURL: URL?
+    @State private var lastPreviewURL: URL?
     
     var body: some View {
-        VStack(spacing: 0) {
-            AppHeader(title: "Medical Records")
+        NavigationStack {
+            VStack(spacing: 0) {
+                AppHeader(title: "Medical Records")
             
-            ScrollView {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .padding()
-                } else if let bundle = viewModel.recordBundle {
-                    VStack(alignment: .leading, spacing: 24) {
-                        
-                        // Header
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(bundle.patient.name)
-                                .textStyle(Typography.titleLarge, color: .chettinadPrimary)
-                            Text("MRN: \(bundle.patient.mrn) • \(bundle.patient.gender)")
-                                .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.surfaceContainerLowest)
-                        .padding(.top, 16)
-                        
-                        // Sections
+                ScrollView {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .padding()
+                    } else if let bundle = viewModel.recordBundle {
                         VStack(alignment: .leading, spacing: 24) {
-                            SectionView(title: "My documents") {
-                                Button { importingDocument = true } label: { Label("Upload PDF or image", systemImage: "square.and.arrow.up") }.buttonStyle(.borderedProminent)
-                                if viewModel.documents.isEmpty {
-                                    Text("Your uploaded reports, scans and PDFs will appear here.").font(.subheadline).foregroundColor(.secondary)
-                                } else {
-                                    ForEach(viewModel.documents) { document in
-                                        RecordCard {
-                                            VStack(alignment: .leading, spacing: 10) {
-                                                Button { Task { previewURL = try? await viewModel.apiClient.downloadPatientDocument(document) } } label: {
-                                                    HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(.headline); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }
-                                                }.buttonStyle(.plain)
-                                                Menu {
-                                                    if document.appointment_id != nil { Button("Remove appointment attachment", role: .destructive) { Task { _ = await viewModel.linkDocument(document, to: nil) } } }
-                                                    ForEach(viewModel.appointments) { appointment in
-                                                        Button("\(String(appointment.scheduled_at.prefix(10))) · \(appointment.doctor_name ?? "OBST Doctor")") { Task { _ = await viewModel.linkDocument(document, to: appointment.id) } }
+                        
+                            // Header
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(bundle.patient.name)
+                                    .textStyle(Typography.titleLarge, color: .chettinadPrimary)
+                                Text("MRN: \(bundle.patient.mrn) • \(bundle.patient.gender)")
+                                    .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.surfaceContainerLowest)
+                            .padding(.top, 16)
+                        
+                            // Sections
+                            VStack(alignment: .leading, spacing: 24) {
+                                SectionView(title: "My documents") {
+                                    Button { importingDocument = true } label: { Label("Upload PDF or image", systemImage: "square.and.arrow.up") }.buttonStyle(.borderedProminent)
+                                    if viewModel.documents.isEmpty {
+                                        Text("Your uploaded reports, scans and PDFs will appear here.").font(.subheadline).foregroundColor(.secondary)
+                                    } else {
+                                        ForEach(viewModel.documents) { document in
+                                            RecordCard {
+                                                VStack(alignment: .leading, spacing: 10) {
+                                                    Button { Task { previewURL = try? await viewModel.apiClient.downloadPatientDocument(document) } } label: {
+                                                        HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(.headline); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }
+                                                    }.buttonStyle(.plain)
+                                                    Menu {
+                                                        if document.appointment_id != nil { Button("Remove appointment attachment", role: .destructive) { Task { _ = await viewModel.linkDocument(document, to: nil) } } }
+                                                        ForEach(viewModel.appointments) { appointment in
+                                                            Button("\(ISODate.display(appointment.scheduled_at, dateStyle: .medium, timeStyle: .none)) · \(appointment.doctor_name ?? "OBST Doctor")") { Task { _ = await viewModel.linkDocument(document, to: appointment.id) } }
+                                                        }
+                                                    } label: {
+                                                        Label(document.appointment_id == nil ? "Attach to appointment" : "Change appointment attachment", systemImage: "paperclip")
+                                                            .font(.caption)
                                                     }
-                                                } label: {
-                                                    Label(document.appointment_id == nil ? "Attach to appointment" : "Change appointment attachment", systemImage: "paperclip")
-                                                        .font(.caption)
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
                             
-                            if !bundle.notes.isEmpty {
-                                SectionView(title: "Clinical Notes") {
-                                    ForEach(bundle.notes) { note in
-                                        NavigationLink(destination: NoteDetailView(note: note)) {
+                                if !bundle.notes.isEmpty {
+                                    SectionView(title: "Clinical Notes") {
+                                        ForEach(bundle.notes) { note in
+                                            NavigationLink(destination: NoteDetailView(note: note)) {
+                                                RecordCard {
+                                                    VStack(alignment: .leading, spacing: 4) {
+                                                        Text(note.author_name ?? "Doctor Note")
+                                                            .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                        Text(String(note.created_at.prefix(10)))
+                                                            .textStyle(Typography.bodySmall, color: .chettinadTextSecondary)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            
+                                if !bundle.prescriptions.isEmpty {
+                                    SectionView(title: "Prescriptions") {
+                                        ForEach(bundle.prescriptions) { rx in
+                                            NavigationLink(destination: PrescriptionDetailView(prescription: rx)) {
+                                                RecordCard {
+                                                    VStack(alignment: .leading, spacing: 4) {
+                                                        Text(rx.doctor_name ?? "Prescription")
+                                                            .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                        Text(String(rx.created_at.prefix(10)))
+                                                            .textStyle(Typography.bodySmall, color: .chettinadTextSecondary)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            
+                                if !bundle.labs.isEmpty {
+                                    SectionView(title: "Lab Orders") {
+                                        ForEach(bundle.labs) { lab in
                                             RecordCard {
-                                                VStack(alignment: .leading, spacing: 4) {
-                                                    Text(note.author_name ?? "Doctor Note")
-                                                        .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
-                                                    Text(String(note.created_at.prefix(10)))
-                                                        .textStyle(Typography.bodySmall, color: .chettinadTextSecondary)
+                                                VStack(alignment: .leading, spacing: 8) {
+                                                    HStack {
+                                                        Text(lab.name ?? lab.code ?? "Lab Test")
+                                                            .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
+                                                        Spacer()
+                                                        Text(lab.status)
+                                                            .textStyle(Typography.labelSmall, color: .chettinadSecondary)
+                                                            .padding(.horizontal, 8)
+                                                            .padding(.vertical, 4)
+                                                            .background(Color.surfaceContainerHigh)
+                                                            .cornerRadius(8)
+                                                    }
+                                                    if let result = lab.result {
+                                                        Text("Result: \(result)")
+                                                            .textStyle(Typography.bodyMedium, color: .chettinadPrimary)
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
                             
-                            if !bundle.prescriptions.isEmpty {
-                                SectionView(title: "Prescriptions") {
-                                    ForEach(bundle.prescriptions) { rx in
-                                        NavigationLink(destination: PrescriptionDetailView(prescription: rx)) {
+                                if !bundle.triage.isEmpty {
+                                    SectionView(title: "Latest Triage") {
+                                        if let tr = bundle.triage.first {
                                             RecordCard {
-                                                VStack(alignment: .leading, spacing: 4) {
-                                                    Text(rx.doctor_name ?? "Prescription")
+                                                VStack(alignment: .leading, spacing: 8) {
+                                                    Text("Triage by \(tr.nurse_id ?? "Nurse")")
                                                         .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
-                                                    Text(String(rx.created_at.prefix(10)))
-                                                        .textStyle(Typography.bodySmall, color: .chettinadTextSecondary)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if !bundle.labs.isEmpty {
-                                SectionView(title: "Lab Orders") {
-                                    ForEach(bundle.labs) { lab in
-                                        RecordCard {
-                                            VStack(alignment: .leading, spacing: 8) {
-                                                HStack {
-                                                    Text(lab.name ?? lab.code ?? "Lab Test")
-                                                        .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
-                                                    Spacer()
-                                                    Text(lab.status)
-                                                        .textStyle(Typography.labelSmall, color: .chettinadSecondary)
-                                                        .padding(.horizontal, 8)
-                                                        .padding(.vertical, 4)
-                                                        .background(Color.surfaceContainerHigh)
-                                                        .cornerRadius(8)
-                                                }
-                                                if let result = lab.result {
-                                                    Text("Result: \(result)")
-                                                        .textStyle(Typography.bodyMedium, color: .chettinadPrimary)
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if !bundle.triage.isEmpty {
-                                SectionView(title: "Latest Triage") {
-                                    if let tr = bundle.triage.first {
-                                        RecordCard {
-                                            VStack(alignment: .leading, spacing: 8) {
-                                                Text("Triage by \(tr.nurse_id ?? "Nurse")")
-                                                    .textStyle(Typography.titleMedium, color: .chettinadTextPrimary)
                                                 
-                                                if let d = tr.data {
-                                                    HStack(spacing: 16) {
-                                                        if let t = d.temperature { Text("Temp: \(String(format: "%.1f", t))") }
-                                                        if let s = d.systolic, let dia = d.diastolic { Text("BP: \(s)/\(dia)") }
+                                                    if let d = tr.data {
+                                                        HStack(spacing: 16) {
+                                                            if let t = d.temperature { Text("Temp: \(String(format: "%.1f", t))") }
+                                                            if let s = d.systolic, let dia = d.diastolic { Text("BP: \(s)/\(dia)") }
+                                                        }
+                                                        .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
                                                     }
-                                                    .textStyle(Typography.bodyMedium, color: .chettinadSecondary)
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 24)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 24)
                     }
                 }
+                .background(Color.chettinadBackground)
+                .refreshable {
+                    await viewModel.fetchRecords()
+                }
+                .fileImporter(isPresented: $importingDocument, allowedContentTypes: [.pdf, .jpeg, .png], allowsMultipleSelection: false) { result in
+                    guard case .success(let urls) = result, let url = urls.first else { return }
+                    uploadURL = url
+                }
+                .sheet(isPresented: Binding(get: { uploadURL != nil }, set: { if !$0 { uploadURL = nil } })) { if let uploadURL { DocumentUploadSheet(fileURL: uploadURL).environmentObject(viewModel) } }
+                .quickLookPreview($previewURL)
+                .onChange(of: previewURL) { newValue in
+                    // Delete the downloaded copy of the document once the preview is dismissed.
+                    if let old = lastPreviewURL, old != newValue { try? FileManager.default.removeItem(at: old) }
+                    lastPreviewURL = newValue
+                }
             }
-            .background(Color.chettinadBackground)
-            .refreshable {
-                await viewModel.fetchRecords()
-            }
-            .fileImporter(isPresented: $importingDocument, allowedContentTypes: [.pdf, .jpeg, .png], allowsMultipleSelection: false) { result in
-                guard case .success(let urls) = result, let url = urls.first else { return }
-                uploadURL = url
-            }
-            .sheet(isPresented: Binding(get: { uploadURL != nil }, set: { if !$0 { uploadURL = nil } })) { if let uploadURL { DocumentUploadSheet(fileURL: uploadURL).environmentObject(viewModel) } }
-            .quickLookPreview($previewURL)
+            .toolbar(.hidden, for: .navigationBar)
         }
-        .navigationBarHidden(true)
     }
 }
 
@@ -288,9 +296,11 @@ private struct DocumentUploadSheet: View {
     @State private var saving = false
     var body: some View {
         NavigationView { Form {
+            if let error = viewModel.errorMessage { Section { Text(error).foregroundColor(.chettinadError) } }
             Section("File") { Text(fileURL.lastPathComponent); TextField("Title", text: $title); Picker("Document type", selection: $type) { ForEach(["LAB_REPORT", "SCAN", "PRESCRIPTION", "DISCHARGE_SUMMARY", "REFERRAL", "OTHER_MEDICAL_RECORD"], id: \.self) { Text($0.replacingOccurrences(of: "_", with: " ").capitalized) } }; DatePicker("Report date", selection: $clinicalDate, in: ...Date(), displayedComponents: .date) }
-            Section("Visit association") { Picker("Appointment", selection: $appointmentId) { Text("No appointment").tag(""); ForEach(viewModel.appointments) { Text("\(String($0.scheduled_at.prefix(10))) · \($0.doctor_name ?? "OG Doctor")").tag($0.id) } }; TextField("Optional patient note", text: $note, axis: .vertical) }
+            Section("Visit association") { Picker("Appointment", selection: $appointmentId) { Text("No appointment").tag(""); ForEach(viewModel.appointments) { Text("\(ISODate.display($0.scheduled_at, dateStyle: .medium, timeStyle: .none)) · \($0.doctor_name ?? "OG Doctor")").tag($0.id) } }; TextField("Optional patient note", text: $note, axis: .vertical) }
         }.navigationTitle("Upload document").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }; ToolbarItem(placement: .confirmationAction) { Button(saving ? "Uploading…" : "Upload") { saving = true; let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"; Task { if await viewModel.uploadDocument(fileURL: fileURL, title: title, documentType: type, clinicalDate: formatter.string(from: clinicalDate), appointmentId: appointmentId.isEmpty ? nil : appointmentId, note: note.isEmpty ? nil : note) { dismiss() }; saving = false } }.disabled(saving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) } } }
+        .onAppear { if viewModel.recordBundle != nil { viewModel.errorMessage = nil } }
     }
 }
 
@@ -476,7 +486,7 @@ struct PatientAppointmentsView: View {
                 } else if viewModel.appointments.isEmpty {
                     VStack(spacing: 16) { Image(systemName: "calendar").font(.system(size: 48)).foregroundColor(.secondary); Text("No upcoming appointments").font(.headline); Text("Book an appointment with the\nObstetrics & Gynaecology care team.").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center); Button("Request Appointment") { showingBooking = true }.buttonStyle(.borderedProminent) }.frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 40).listRowBackground(Color.clear)
                 } else {
-                    let upcoming = viewModel.appointments.filter { !["COMPLETED", "CANCELLED", "NO_SHOW"].contains($0.status) && $0.scheduled_at >= ISO8601DateFormatter().string(from: Date()) }
+                    let upcoming = viewModel.appointments.filter { !["COMPLETED", "CANCELLED", "NO_SHOW"].contains($0.status) && (ISODate.parse($0.scheduled_at).map { date in date >= Date() } ?? false) }
                     let past = viewModel.appointments.filter { !upcoming.map(\.id).contains($0.id) }
                     if !upcoming.isEmpty {
                         Section("Upcoming") { ForEach(upcoming.sorted { $0.scheduled_at < $1.scheduled_at }) { appointmentRow($0) } }
@@ -503,15 +513,7 @@ struct PatientAppointmentsView: View {
     }
     
     private func formatDate(_ dateStr: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: dateStr) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.dateStyle = .medium
-            displayFormatter.timeStyle = .short
-            return displayFormatter.string(from: date)
-        }
-        return String(dateStr.prefix(10))
+        ISODate.display(dateStr)
     }
     
     private func colorForStatus(_ status: String) -> Color {
@@ -539,6 +541,7 @@ private struct AppointmentBookingSheet: View {
     var body: some View {
         NavigationView {
             Form {
+                if let error = viewModel.errorMessage { Section { Text(error).foregroundColor(.chettinadError) } }
                 Section("Department") { LabeledContent("Specialty", value: "Obstetrics & Gynaecology"); LabeledContent("Prefix", value: "OBST") }
                 Section("Doctor and date") {
                     Picker("Doctor", selection: $doctorId) { Text("Select a doctor").tag(""); ForEach(viewModel.directory?.doctors ?? []) { Text($0.name).tag($0.id) } }
@@ -554,12 +557,12 @@ private struct AppointmentBookingSheet: View {
             }
             .navigationTitle("Book appointment")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+            .onAppear { if viewModel.recordBundle != nil { viewModel.errorMessage = nil } }
             .task(id: "\(doctorId)-\(date.timeIntervalSince1970)") { selectedSlot = ""; guard !doctorId.isEmpty else { return }; await viewModel.fetchSlots(doctorId: doctorId, date: date) }
         }
     }
 
     private static func time(_ value: String) -> String {
-        let input = ISO8601DateFormatter(); guard let date = input.date(from: value) else { return value }
-        let output = DateFormatter(); output.timeStyle = .short; return output.string(from: date)
+        ISODate.display(value, dateStyle: .none, timeStyle: .short)
     }
 }

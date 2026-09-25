@@ -11,6 +11,7 @@ public final class KeychainHelper: @unchecked Sendable {
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
             kSecAttrAccount: account,
+            kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
         ] as CFDictionary
         
         var status = SecItemAdd(query, nil)
@@ -22,7 +23,10 @@ public final class KeychainHelper: @unchecked Sendable {
                 kSecClass: kSecClassGenericPassword,
             ] as CFDictionary
             
-            let attributesToUpdate = [kSecValueData: data] as CFDictionary
+            let attributesToUpdate = [
+                kSecValueData: data,
+                kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+            ] as CFDictionary
             status = SecItemUpdate(query, attributesToUpdate)
         }
         return status == errSecSuccess

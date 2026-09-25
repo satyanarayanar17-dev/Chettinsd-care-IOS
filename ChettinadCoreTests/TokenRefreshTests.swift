@@ -12,7 +12,7 @@ final class TokenRefreshTests: XCTestCase {
         let manager = SessionManager.shared
         await manager.clearSession()
         let session = AuthSession(accessToken: "old_token", role: "PATIENT", accountType: "PATIENT", userId: "1", name: "Test")
-        await manager.saveSession(session)
+        try await manager.saveSession(session)
         
         class MockServer: @unchecked Sendable {
             private var _refreshCount = 0
@@ -109,7 +109,7 @@ final class TokenRefreshTests: XCTestCase {
         let client = APIClient(urlSession: URLSession(configuration: configuration))
         let manager = SessionManager.shared
         await manager.clearSession()
-        await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
+        try await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
 
         final class Counts: @unchecked Sendable {
             let lock = NSLock()
@@ -147,7 +147,7 @@ final class TokenRefreshTests: XCTestCase {
         let client = APIClient(urlSession: URLSession(configuration: configuration))
         let manager = SessionManager.shared
         await manager.clearSession()
-        await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
+        try await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
 
         final class Counts: @unchecked Sendable {
             let lock = NSLock()

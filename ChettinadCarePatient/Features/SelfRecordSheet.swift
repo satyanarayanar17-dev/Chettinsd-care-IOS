@@ -18,6 +18,9 @@ struct SelfRecordSheet: View {
     var body: some View {
         NavigationView {
             Form {
+                if let error = viewModel.errorMessage {
+                    Section { Text(error).foregroundColor(.red) }
+                }
                 Section("Record") {
                     Picker("Type", selection: $type) { ForEach(types, id: \.self) { Text($0.replacingOccurrences(of: "_", with: " ").capitalized).tag($0) } }
                     if type == "GLUCOSE" { Picker("Timing", selection: $timing) { ForEach(timings, id: \.self) { Text($0.replacingOccurrences(of: "_", with: " ").capitalized).tag($0) } } }

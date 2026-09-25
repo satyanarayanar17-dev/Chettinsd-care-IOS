@@ -23,13 +23,11 @@ public final class NotificationManager: Sendable {
         for task in tasks {
             guard task.status == .DUE || task.status == .UPCOMING else { continue }
             
-            // Assuming due_date is "YYYY-MM-DD" and due_time is "HH:MM"
-            let dateString = "\(task.due_date)T\(task.due_time):00"
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            
-            // Need a simpler formatter if it doesn't have fractional seconds / timezone.
+            // due_date is "yyyy-MM-dd"; due_time is "HH:mm" (or "HH:mm:ss").
+            let time = task.due_time.split(separator: ":").count == 2 ? "\(task.due_time):00" : task.due_time
+            let dateString = "\(task.due_date)T\(time)"
             let localFormatter = DateFormatter()
+            localFormatter.locale = Locale(identifier: "en_US_POSIX")
             localFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
             localFormatter.timeZone = TimeZone.current
             
@@ -40,7 +38,8 @@ public final class NotificationManager: Sendable {
             
             let content = UNMutableNotificationContent()
             content.title = "Care Plan Reminder"
-            content.body = "It's time for: \(task.title)"
+            // Keep medication / task names off the lock screen.
+            content.body = "You have a care plan task due."
             content.sound = .default
             
             let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: dueDate)

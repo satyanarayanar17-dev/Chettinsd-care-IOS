@@ -10,6 +10,8 @@ class PatientViewModel: ObservableObject {
     @Published var selfRecords: [PatientSelfRecord] = []
     @Published var documents: [PatientDocument] = []
     @Published var todayCareTasks: [CarePlanOccurrenceDTO] = []
+    @Published var timeline: [AdherenceResponseDTO] = []
+    @Published var trendsError: String? = nil
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
     
@@ -59,6 +61,28 @@ class PatientViewModel: ObservableObject {
         isLoading = false
     }
 
+    func fetchTimeline() async {
+        do {
+            let id: String
+            if let patientId {
+                id = patientId
+            } else {
+                let session: UserSession = try await apiClient.execute(endpoint: OPDSessionEndpoint())
+                guard let pid = session.patient_id else {
+                    trendsError = "Patient ID not found in session."
+                    return
+                }
+                self.patientId = pid
+                id = pid
+            }
+            timeline = try await apiClient.execute(endpoint: GetTimelineEndpoint(patientId: id))
+            selfRecords = try await apiClient.execute(endpoint: PatientSelfRecordsEndpoint(patientId: id))
+            trendsError = nil
+        } catch {
+            trendsError = "Trends could not be loaded. Please try again."
+        }
+    }
+
     func fetchSlots(doctorId: String, date: Date) async {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
@@ -70,6 +94,7 @@ class PatientViewModel: ObservableObject {
     }
 
     func book(doctorId: String, scheduledAt: String, reason: String) async -> Bool {
+        errorMessage = nil
         do {
             let _: Appointment = try await apiClient.execute(endpoint: BookAppointmentEndpoint(doctorId: doctorId, scheduledAt: scheduledAt, reason: reason))
             await fetchRecords()
@@ -78,7 +103,11 @@ class PatientViewModel: ObservableObject {
     }
 
     func uploadDocument(fileURL: URL, title: String, documentType: String, clinicalDate: String, appointmentId: String?, note: String?) async -> Bool {
-        guard let patientId else { return false }
+        guard let patientId else {
+            errorMessage = "Your records are still loading. Please try again."
+            return false
+        }
+        errorMessage = nil
         do {
             let document = try await apiClient.uploadPatientDocument(patientId: patientId, fileURL: fileURL, title: title, documentType: documentType, clinicalDate: clinicalDate, appointmentId: appointmentId, note: note)
             documents.insert(document, at: 0)
@@ -87,7 +116,11 @@ class PatientViewModel: ObservableObject {
     }
 
     func linkDocument(_ document: PatientDocument, to appointmentId: String?) async -> Bool {
-        guard let patientId else { return false }
+        guard let patientId else {
+            errorMessage = "Your records are still loading. Please try again."
+            return false
+        }
+        errorMessage = nil
         do {
             let updated: PatientDocument = try await apiClient.execute(endpoint: LinkPatientDocumentAppointmentEndpoint(patientId: patientId, documentId: document.id, appointmentId: appointmentId))
             if let index = documents.firstIndex(where: { $0.id == document.id }) { documents[index] = updated }

@@ -52,6 +52,7 @@ class CarePlanViewModel: ObservableObject {
     }
 
     func addSelfRecord(_ payload: PatientSelfRecordPayload) async -> Bool {
+        errorMessage = nil
         do {
             let patientId = try await getPatientId()
             let endpoint = try CreatePatientSelfRecordEndpoint(patientId: patientId, payload: payload)
@@ -62,6 +63,7 @@ class CarePlanViewModel: ObservableObject {
     }
     
     func recordAdherence(resourceId: String, payload: RecordAdherencePayload) async -> Bool {
+        errorMessage = nil
         do {
             let endpoint = RecordAdherenceEndpoint(resourceId: resourceId, payload: payload)
             // Just hit the endpoint, ignoring return if we don't parse it

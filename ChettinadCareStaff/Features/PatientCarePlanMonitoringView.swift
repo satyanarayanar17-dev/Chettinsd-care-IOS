@@ -11,6 +11,7 @@ struct PatientCarePlanMonitoringView: View {
     @State private var selfRecords: [PatientSelfRecord] = []
     @State private var documents: [PatientDocument] = []
     @State private var previewURL: URL?
+    @State private var lastPreviewURL: URL?
     @State private var isLoading = true
     @State private var errorMessage: String? = nil
     
@@ -101,7 +102,7 @@ struct PatientCarePlanMonitoringView: View {
                                     }
                                 }
                                 Spacer()
-                                Text(event.recorded_at)
+                                Text(ISODate.display(event.recorded_at))
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -122,7 +123,7 @@ struct PatientCarePlanMonitoringView: View {
                                 if record.record_type == "ACTIVITY" { Text("\(record.activity_name ?? "Activity") · \(record.duration_minutes ?? 0) min") }
                                 else if record.record_type == "BLOOD_PRESSURE" { Text("\(record.numeric_value ?? 0, specifier: "%.0f")/\(record.secondary_numeric_value ?? 0, specifier: "%.0f") mmHg") }
                                 else { Text("\(record.numeric_value ?? 0, specifier: "%.1f") \(record.unit ?? "")") }
-                                Text("Patient self-recorded · \(String(record.observed_at.prefix(16)))").font(.caption2).foregroundColor(.secondary)
+                                Text("Patient self-recorded · \(ISODate.display(record.observed_at))").font(.caption2).foregroundColor(.secondary)
                             }.frame(maxWidth: .infinity, alignment: .leading).padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8)
                         }
                     }.padding(.horizontal)
@@ -138,6 +139,11 @@ struct PatientCarePlanMonitoringView: View {
             await fetchCarePlan()
         }
         .quickLookPreview($previewURL)
+        .onChange(of: previewURL) { newValue in
+            // Delete the downloaded copy of the document once the preview is dismissed.
+            if let old = lastPreviewURL, old != newValue { try? FileManager.default.removeItem(at: old) }
+            lastPreviewURL = newValue
+        }
     }
     
     private func fetchCarePlan() async {

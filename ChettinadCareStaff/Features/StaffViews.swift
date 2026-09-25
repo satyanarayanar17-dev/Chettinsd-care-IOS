@@ -25,7 +25,6 @@ struct DoctorQueueView: View {
                         // Metrics
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                             MetricsCard(title: "Patients Waiting", value: "\(viewModel.queue.count)", iconName: "person.3.sequence.fill", trend: viewModel.queue.count > 5 ? "High" : "Normal")
-                            MetricsCard(title: "Avg Wait Time", value: "18m", iconName: "clock.fill")
                         }
                         .padding(.horizontal, 16)
                         

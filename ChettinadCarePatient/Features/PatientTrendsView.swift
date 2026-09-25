@@ -20,6 +20,10 @@ struct PatientTrendsView: View {
                     
                     if viewModel.isLoading {
                         ProgressView().padding()
+                    } else if let error = viewModel.trendsError, viewModel.timeline.isEmpty, viewModel.selfRecords.isEmpty {
+                        Text(error)
+                            .foregroundColor(.chettinadError)
+                            .padding()
                     } else if filteredTimeline.isEmpty && filteredSelfRecords.isEmpty {
                         Text("No data available for this time range.")
                             .foregroundColor(.secondary)
@@ -53,19 +57,15 @@ struct PatientTrendsView: View {
     }
     
     private var filteredTimeline: [AdherenceResponseDTO] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return viewModel.timeline.filter { event in
-            guard let date = formatter.date(from: event.recorded_at) else { return false }
+            guard let date = ISODate.parse(event.recorded_at) else { return false }
             return date >= cutoffDate
         }
     }
     
     private var filteredSelfRecords: [PatientSelfRecord] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return viewModel.selfRecords.filter { record in
-            guard let date = formatter.date(from: record.observed_at) else { return false }
+            guard let date = ISODate.parse(record.observed_at) else { return false }
             return date >= cutoffDate
         }
     }
@@ -79,23 +79,22 @@ struct PatientTrendsView: View {
     }
     
     private var glucoseData: [ChartData] {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
         // From adherence (Care Plan tasks)
         let scheduled = filteredTimeline.compactMap { event -> ChartData? in
             guard event.task_type == .MEASUREMENT,
                   let target = event.observation_type, target.lowercased().contains("sugar") || target.lowercased().contains("glucose"),
                   let obs = event.observation?.components?.first?.numeric_value,
-                  let date = formatter.date(from: event.recorded_at) else { return nil }
+                  let date = ISODate.parse(event.recorded_at) else { return nil }
             return ChartData(date: date, value: obs)
         }
         
         // From self records
         let selfRecs = filteredSelfRecords.compactMap { record -> ChartData? in
-            guard record.record_type == "BLOOD_SUGAR",
+            // The self-record sheet saves "GLUCOSE"; accept the legacy "BLOOD_SUGAR" too.
+            guard record.record_type == "GLUCOSE" || record.record_type == "BLOOD_SUGAR",
                   let val = record.numeric_value,
-                  let date = formatter.date(from: record.observed_at) else { return nil }
+                  let date = ISODate.parse(record.observed_at) else { return nil }
             return ChartData(date: date, value: val)
         }
         
@@ -103,19 +102,19 @@ struct PatientTrendsView: View {
     }
     
     private var insulinRecords: [AdherenceResponseDTO] {
-        filteredTimeline.filter { $0.task_type == .INSULIN }.sorted { $0.recorded_at > $1.recorded_at }
+        filteredTimeline.filter { $0.task_type == .INSULIN }.sorted { sortDate($0.recorded_at) > sortDate($1.recorded_at) }
     }
     
     private var medicationRecords: [AdherenceResponseDTO] {
-        filteredTimeline.filter { $0.task_type == .MEDICATION }.sorted { $0.recorded_at > $1.recorded_at }
+        filteredTimeline.filter { $0.task_type == .MEDICATION }.sorted { sortDate($0.recorded_at) > sortDate($1.recorded_at) }
     }
     
     private var activityRecords: [AdherenceResponseDTO] {
-        filteredTimeline.filter { $0.task_type == .ACTIVITY }.sorted { $0.recorded_at > $1.recorded_at }
+        filteredTimeline.filter { $0.task_type == .ACTIVITY }.sorted { sortDate($0.recorded_at) > sortDate($1.recorded_at) }
     }
     
     private var selfActivityRecords: [PatientSelfRecord] {
-        filteredSelfRecords.filter { $0.record_type == "ACTIVITY" }.sorted { $0.observed_at > $1.observed_at }
+        filteredSelfRecords.filter { $0.record_type == "ACTIVITY" }.sorted { sortDate($0.observed_at) > sortDate($1.observed_at) }
     }
     
     // MARK: - Views
@@ -226,9 +225,9 @@ struct PatientTrendsView: View {
                     let combined: [(title: String, date: String, status: String?, mins: Int?)] = (
                         activityRecords.map { ($0.title ?? "Activity", $0.recorded_at, $0.status, nil) } +
                         selfActivityRecords.map { ($0.activity_name ?? "Activity", $0.observed_at, "RECORDED", $0.duration_minutes) }
-                    ).sorted { $0.date > $1.date }
+                    ).sorted { sortDate($0.date) > sortDate($1.date) }
                     
-                    ForEach(combined.prefix(5), id: \.date) { item in
+                    ForEach(Array(combined.prefix(5).enumerated()), id: \.offset) { _, item in
                         HStack {
                             VStack(alignment: .leading) {
                                 Text(item.title).font(.subheadline).bold()
@@ -271,14 +270,10 @@ struct PatientTrendsView: View {
     }
     
     private func formatDate(_ dateStr: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: dateStr) {
-            let out = DateFormatter()
-            out.dateStyle = .medium
-            out.timeStyle = .short
-            return out.string(from: date)
-        }
-        return String(dateStr.prefix(16))
+        ISODate.display(dateStr)
+    }
+
+    private func sortDate(_ dateStr: String) -> Date {
+        ISODate.parse(dateStr) ?? .distantPast
     }
 }
