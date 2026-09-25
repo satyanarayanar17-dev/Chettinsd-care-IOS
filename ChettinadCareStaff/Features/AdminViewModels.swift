@@ -62,14 +62,14 @@ class AdminDashboardViewModel: ObservableObject {
     
     let apiClient = APIClient()
     
-    func fetchAppointments() async {
+    func fetchAppointments(for date: Date = Date()) async {
         isLoading = true
         errorMessage = nil
         do {
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
             formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-            let dateString = formatter.string(from: Date())
+            let dateString = formatter.string(from: date)
             
             let fetched: [Appointment] = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: dateString))
             self.appointments = fetched
@@ -211,6 +211,7 @@ class StaffManagementViewModel: ObservableObject {
     @Published var departments: [DirectoryResponse.Department] = []
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
+    @Published var isSubmitting = false
     
     let apiClient = APIClient()
     

@@ -5,11 +5,26 @@ struct AdminDashboardView: View {
     @StateObject private var viewModel = AdminDashboardViewModel()
     @State private var showBooking = false
     @State private var pendingCheckIn: Appointment?
+    @State private var selectedDate = Date()
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 AppHeader(title: "Admin Dashboard")
+                
+                HStack {
+                    DatePicker("Date", selection: $selectedDate, displayedComponents: .date)
+                        .labelsHidden()
+                        .padding(.horizontal)
+                    Spacer()
+                    Button("Today") { selectedDate = Date() }
+                        .padding(.horizontal)
+                }
+                .padding(.vertical, 8)
+                .background(Color(.systemGroupedBackground))
+                .onChange(of: selectedDate) { _ in
+                    Task { await viewModel.fetchAppointments(for: selectedDate) }
+                }
                 
                 List {
                     if let error = viewModel.errorMessage {
@@ -446,7 +461,7 @@ struct EditStaffView: View {
     @State private var role: String
     @State private var department: String
     
-    init(viewModel: StaffManagementViewModel, staff: Staff) {
+    init(viewModel: StaffManagementViewModel, staff: StaffMember) {
         self.viewModel = viewModel
         self.staffId = staff.id
         self._name = State(initialValue: staff.name)
@@ -470,8 +485,14 @@ struct EditStaffView: View {
                     }
                 }
             }
+            if let error = viewModel.errorMessage {
+                Section {
+                    Text(error).font(.footnote).foregroundColor(.red)
+                }
+            }
         }
         .navigationTitle("Edit Profile")
+        .navigationBarHidden(false)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -482,7 +503,7 @@ struct EditStaffView: View {
                         }
                     }
                 }
-                .disabled(name.isEmpty)
+                .disabled(name.isEmpty || department.isEmpty || viewModel.isSubmitting)
             }
         }
     }
