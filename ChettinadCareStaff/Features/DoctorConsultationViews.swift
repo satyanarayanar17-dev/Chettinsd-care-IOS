@@ -24,6 +24,8 @@ struct PatientDossierView: View {
                 .padding()
             } else if let bundle = viewModel.recordBundle {
                 VStack(alignment: .leading, spacing: 20) {
+                    PatientCarePlanMonitoringView(patientId: bundle.patient.id, role: "DOCTOR")
+                        .padding(.vertical)
                     
                     // Patient Header
                     HStack {
@@ -178,6 +180,10 @@ struct ConsultationWorkspaceView: View {
                 
                 Section(header: Text("Clinical Note")) {
                     VStack(alignment: .leading, spacing: 4) {
+                        Text("History").font(.caption).foregroundColor(.secondary)
+                        TextEditor(text: $viewModel.noteHistory).frame(height: 80)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("Chief Complaint").font(.caption).foregroundColor(.secondary)
                         TextEditor(text: $viewModel.noteComplaint)
                             .frame(height: 80)
@@ -262,7 +268,7 @@ struct ConsultationWorkspaceView: View {
                             }
                         }
                     }
-                    .disabled(viewModel.isSubmitting || viewModel.noteComplaint.isEmpty || viewModel.selectedDiagnoses.isEmpty)
+                    .disabled(viewModel.isSubmitting || viewModel.noteHistory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteExamination.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAssessment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAdvice.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.selectedDiagnoses.isEmpty)
                 }
             }
             .task {

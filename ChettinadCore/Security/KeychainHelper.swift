@@ -5,7 +5,7 @@ public final class KeychainHelper: @unchecked Sendable {
     public static let shared = KeychainHelper()
     private init() {}
     
-    public func save(_ data: Data, service: String, account: String) {
+    public func save(_ data: Data, service: String, account: String) -> Bool {
         let query = [
             kSecValueData: data,
             kSecClass: kSecClassGenericPassword,
@@ -25,6 +25,7 @@ public final class KeychainHelper: @unchecked Sendable {
             let attributesToUpdate = [kSecValueData: data] as CFDictionary
             status = SecItemUpdate(query, attributesToUpdate)
         }
+        return status == errSecSuccess
     }
     
     public func read(service: String, account: String) -> Data? {

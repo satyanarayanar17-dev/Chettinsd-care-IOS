@@ -26,66 +26,31 @@ struct LoginView: View {
     let genders = ["Female", "Male", "Other", "Not specified"]
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Authentication")) {
-                    if !isCodeSent {
-                        TextField("Mobile Number", text: $phone)
-                            .keyboardType(.phonePad)
-                        
-                        Button("Request OTP") {
-                            requestOTP()
-                        }
-                        .disabled(isLoading || phone.isEmpty)
-                    } else {
-                        TextField("OTP Code", text: $code)
-                            .keyboardType(.numberPad)
-                        
-                        if !isProfileRequired {
-                            Button("Verify OTP") {
-                                verifyOTP()
-                            }
-                            .disabled(isLoading || code.isEmpty)
-                        }
-                    }
-                }
-                
-                if isProfileRequired {
-                    Section(header: Text("Patient Registration")) {
-                        TextField("Full Name", text: $profileName)
-                        DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
-                        Picker("Gender", selection: $gender) {
-                            ForEach(genders, id: \.self) { g in
-                                Text(g).tag(g)
-                            }
-                        }
-                        TextField("Address", text: $address)
-                        TextField("City", text: $city)
-                        TextField("State", text: $state)
-                        TextField("PIN Code", text: $pinCode)
-                            .keyboardType(.numberPad)
-                        TextField("Emergency Contact", text: $emergencyContact)
-                            .keyboardType(.phonePad)
-                        
-                        Button("Complete Registration & Verify") {
-                            verifyOTP()
-                        }
-                        .disabled(isLoading || profileName.isEmpty || address.isEmpty || city.isEmpty || state.isEmpty || pinCode.isEmpty || emergencyContact.isEmpty)
-                    }
-                }
-                
-                if let error = errorMessage {
-                    Section {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.caption)
-                    }
-                }
+        StitchLoginShell(title: isProfileRequired ? "Patient Registration" : "Patient Sign In", subtitle: "Sign in to view test results, consult records & prescriptions.") {
+            Label("Sign in with OTP", systemImage: "message").font(Typography.titleMedium).foregroundStyle(Color.chettinadPrimary)
+            Text("REGISTERED MOBILE NUMBER").font(Typography.labelMedium).tracking(1.5).padding(.top, 12)
+            TextField("Mobile Number", text: $phone).keyboardType(.phonePad).stitchField().disabled(isCodeSent)
+            if isCodeSent {
+                Text("6-DIGIT ACCESS CODE / OTP").font(Typography.labelMedium).tracking(1.5)
+                TextField("OTP Code", text: $code).keyboardType(.numberPad).textContentType(.oneTimeCode).stitchField()
             }
-            .navigationTitle(isProfileRequired ? "Register" : "Sign In")
+            if isProfileRequired {
+                TextField("Full Name", text: $profileName).stitchField()
+                DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
+                Picker("Gender", selection: $gender) { ForEach(genders, id: \.self) { Text($0) } }
+                TextField("Address", text: $address).stitchField()
+                TextField("City", text: $city).stitchField()
+                TextField("State", text: $state).stitchField()
+                TextField("PIN Code", text: $pinCode).keyboardType(.numberPad).stitchField()
+                TextField("Emergency Contact", text: $emergencyContact).keyboardType(.phonePad).stitchField()
+            }
+            if let error = errorMessage { Text(error).font(Typography.bodySmall).foregroundStyle(Color.chettinadError) }
+            Button(action: { isCodeSent ? verifyOTP() : requestOTP() }) {
+                HStack { Text(isLoading ? "Please wait…" : (isCodeSent ? "ACCESS HEALTH RECORDS" : "SEND VERIFICATION CODE")); Image(systemName: "arrow.right") }
+            }.buttonStyle(StitchButtonStyle()).disabled(isLoading || phone.isEmpty || (isCodeSent && code.isEmpty)).padding(.top, 12)
         }
     }
-    
+
     func requestOTP() {
         isLoading = true
         errorMessage = nil
@@ -96,7 +61,9 @@ struct LoginView: View {
                     self.isCodeSent = response.sent
                     self.isLoading = false
                     if let devCode = response.development_code {
+                        #if DEBUG
                         print("Dev OTP Code: \(devCode)")
+                        #endif
                         self.code = devCode // auto-fill for convenience
                     }
                 }
@@ -145,7 +112,7 @@ struct LoginView: View {
                     name: response.name
                 )
                 
-                await SessionManager.shared.saveSession(session)
+                try await SessionManager.shared.saveSession(session)
                 
                 DispatchQueue.main.async {
                     self.isLoading = false

@@ -105,6 +105,8 @@ class DoctorConsultationViewModel: ObservableObject {
     
     // Consultation note fields
     @Published var noteComplaint = ""
+    @Published var noteHistory = ""
+    @Published var noteVersion = 0
     @Published var noteExamination = ""
     @Published var noteAssessment = ""
     @Published var noteAdvice = ""
@@ -128,7 +130,7 @@ class DoctorConsultationViewModel: ObservableObject {
             let cat: CataloguesResponse = try await apiClient.execute(endpoint: CataloguesEndpoint())
             self.catalogues = cat
         } catch {
-            print("Failed to fetch catalogues: \(error)")
+            self.errorMessage = "Failed to fetch catalogues: \(error.localizedDescription)"
         }
     }
     
@@ -140,6 +142,7 @@ class DoctorConsultationViewModel: ObservableObject {
                 endpoint: PatientRecordEndpoint(patientId: patientId)
             )
             self.recordBundle = bundle
+            self.noteVersion = bundle.notes.first(where: { $0.encounter_id == encounterId })?.__v ?? 0
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -150,12 +153,13 @@ class DoctorConsultationViewModel: ObservableObject {
         isSubmitting = true
         errorMessage = nil
         do {
-            let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: StartConsultEndpoint(encounterId: encounterId, v: currentVersion)
-            )
-            if let newV = response.__v {
-                self.currentVersion = newV
+            let queue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+            guard let entry = queue.first(where: { $0.encounter_id == encounterId }) else { throw APIError.invalidResponse }
+            currentVersion = entry.__v
+            if entry.status != "CONSULTATION" {
+                let _: EncounterMutationResponse = try await apiClient.execute(endpoint: StartConsultEndpoint(encounterId: encounterId, v: currentVersion))
             }
+            await fetchPatientDossier()
             isSubmitting = false
             return true
         } catch let error as APIError {
@@ -184,8 +188,8 @@ class DoctorConsultationViewModel: ObservableObject {
         do {
             let cData = ConsultationData(
                 complaint: noteComplaint.isEmpty ? nil : noteComplaint,
-                history: nil,
-                previous_history: nil,
+                history: noteHistory.isEmpty ? nil : noteHistory,
+                previous_history: noteHistory.isEmpty ? nil : noteHistory,
                 examination: noteExamination.isEmpty ? nil : noteExamination,
                 assessment: noteAssessment.isEmpty ? nil : noteAssessment,
                 diagnosis_ids: Array(selectedDiagnoses),
@@ -195,7 +199,7 @@ class DoctorConsultationViewModel: ObservableObject {
             )
             
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData)
+                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData)
             )
             if let newV = response.__v {
                 self.currentVersion = newV

@@ -32,14 +32,21 @@ public actor SessionManager {
         }
     }
     
-    public func saveSession(_ session: AuthSession) {
-        self.currentSession = session
-        if let data = try? JSONEncoder().encode(session) {
-            KeychainHelper.shared.save(data, service: service, account: account)
+    public enum SessionError: Error {
+        case persistenceFailed
+    }
+    
+    public func saveSession(_ session: AuthSession) throws {
+        guard let data = try? JSONEncoder().encode(session),
+              KeychainHelper.shared.save(data, service: service, account: account) else {
+            throw SessionError.persistenceFailed
         }
+        self.currentSession = session
     }
     
     public func logout(apiClient: APIClient) async {
+        refreshTask?.cancel()
+        refreshTask = nil
         do {
             let endpoint = LogoutEndpoint()
             let _: [String: String]? = try? await apiClient.executeRaw(endpoint: endpoint)
@@ -48,6 +55,8 @@ public actor SessionManager {
     }
     
     public func clearSession() {
+        refreshTask?.cancel()
+        refreshTask = nil
         self.currentSession = nil
         KeychainHelper.shared.delete(service: service, account: account)
         if let cookies = HTTPCookieStorage.shared.cookies {
@@ -89,7 +98,7 @@ public actor SessionManager {
                     userId: current.userId,
                     name: current.name
                 )
-                self.saveSession(newSession)
+                try self.saveSession(newSession)
                 return newSession
             } catch {
                 self.clearSession()

@@ -19,10 +19,12 @@
 		3656D9B3DC8A42CD69F7CFFC /* OTPVerifyEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D4584A04050BD564BBA0C1 /* OTPVerifyEndpoint.swift */; };
 		3C19DCE0B6A22D3A75D8F3F1 /* ChettinadCarePatientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 995C105780D6A137DA20FC8A /* ChettinadCarePatientTests.swift */; };
 		3D59BAECD00BD0C5D6F4A08D /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
+		3E078C996FA99C192824364C /* CarePlanEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = C06DD70B5CD4766B36A5C70D /* CarePlanEndpoints.swift */; };
 		45D88E09A48A88006DE66266 /* AdminViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 659FA317211EBF6712303679 /* AdminViewModels.swift */; };
 		4751E66647003D5677A099ED /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */; };
 		4F3643EC90233CB201E13102 /* ChettinadCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		51BE94964F5D8156108B4FD3 /* ChettinadCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */; };
+		571815FA78AEBD115C36DCF6 /* PatientCarePlanMonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 204116B3828F504B56AD96DC /* PatientCarePlanMonitoringView.swift */; };
 		5B445A5DCAF9186F2BE2E928 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90C3B002A974BD2D70F641B7 /* MockURLProtocol.swift */; };
 		5F2ADCBF2F3AA4E94FDBE109 /* StaffLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680C59F078267ED61F6609C0 /* StaffLoginView.swift */; };
 		635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */; };
@@ -33,6 +35,7 @@
 		798912C36E877ACE698D3C51 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B3F221F432D33170B31C0 /* APIError.swift */; };
 		7C0AA74F165FA34F0A678C46 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EE8F6B447B641EE36E6184 /* Typography.swift */; };
 		8130C3D7B18AD2ABBCEBE071 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 463CBB4A1A0E6785099DF985 /* APIClient.swift */; };
+		82EDFB5F1460FC0B8E560A84 /* Manrope.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5B3A613F35C64FEFE674F1EB /* Manrope.ttf */; };
 		84B4629CE8ADADC87493F21A /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E23D3B04BB4C16326E145C1 /* AppHeader.swift */; };
 		86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */; };
 		8FB9D309AAEBD3FE5486CF93 /* AdminViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */; };
@@ -42,16 +45,25 @@
 		AD0F9C60D79E35222D54E1A6 /* PatientViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */; };
 		AD723F699218286A6486DD3F /* LogoutEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146A78CAED3201570D881234 /* LogoutEndpoint.swift */; };
 		B2276E1D6C1A9BD2B5C27CD9 /* StaffLoginEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA136E06A6420F9E7F890069 /* StaffLoginEndpoint.swift */; };
+		B6E1B8206E35733217E3A562 /* SelfRecordSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AFA814DADA9BEACBA5CAE9D /* SelfRecordSheet.swift */; };
+		B81787DB913EFF11D3EF5E95 /* CarePlanModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCEE6C1997FDAA322668EFB /* CarePlanModels.swift */; };
 		BB06B4E3BDEFE26EE40D9649 /* BackendIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */; };
+		BC6A0E198D60D8245A10F2C0 /* StitchComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10B5B357A6406D1C008FB53D /* StitchComponents.swift */; };
 		D7DFA7879034500A0B2504B1 /* SessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED113C90AF4FD739C0E068F4 /* SessionManager.swift */; };
 		D932AC18C2E3A39546313EBE /* DoctorConsultationViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8406B2B66CA1FE64E0E853 /* DoctorConsultationViews.swift */; };
+		DA43FFCEFB7C0BCA4E469FD9 /* PatientPortalEndpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF55536DA466C74683728A2B /* PatientPortalEndpoints.swift */; };
+		DB1A712E73E6FE3E5195751A /* SideTabsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C07BCFCE4E5F3AC48D7304 /* SideTabsView.swift */; };
 		DC09FD46FA6C4A6D940AD0DB /* NurseTriageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D7EBE307CB379EDB4764443 /* NurseTriageViews.swift */; };
 		DE6FED09318C2A52A86FC7C7 /* ChettinadCareStaffApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8921557351524ED41CF8887E /* ChettinadCareStaffApp.swift */; };
 		DE7128CEE5F06F273781D193 /* DoctorViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E364ED96535DF98EB5A40AB8 /* DoctorViewModels.swift */; };
 		E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */; };
+		E496357C14C799390032FE4C /* PatientCarePlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */; };
+		F2D70BED513EC1DE9E09AFA3 /* CarePlanViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10E0DDAA488C3EAA7A0D3376 /* CarePlanViewModel.swift */; };
 		F4832CDA3466BFDB6416AE09 /* Color+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D53A36DD55C131BBB205D7AA /* Color+Theme.swift */; };
+		F6E44F12DF55FD9ED52A7EF4 /* Manrope-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 509CF0D3DD046E805845683A /* Manrope-LICENSE.txt */; };
 		F88DFFD49CD3AE1817445104 /* NurseViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7064BAAC03DD101978E8B3C /* NurseViewModels.swift */; };
 		FAC0752AF680C26BCD448D82 /* OPDModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C4E1C4514065784F2686C17 /* OPDModels.swift */; };
+		FEC7D106D68BD295E3004B56 /* CarePlanDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E279C6E43B63B6BFCA0D2CDF /* CarePlanDecodingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -131,7 +143,11 @@
 /* Begin PBXFileReference section */
 		0E23D3B04BB4C16326E145C1 /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
 		0ED7C4197D65A7C5E48D574A /* ChettinadCareStaffTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCareStaffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		10B5B357A6406D1C008FB53D /* StitchComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StitchComponents.swift; sourceTree = "<group>"; };
+		10E0DDAA488C3EAA7A0D3376 /* CarePlanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanViewModel.swift; sourceTree = "<group>"; };
 		146A78CAED3201570D881234 /* LogoutEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoutEndpoint.swift; sourceTree = "<group>"; };
+		204116B3828F504B56AD96DC /* PatientCarePlanMonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientCarePlanMonitoringView.swift; sourceTree = "<group>"; };
+		31C07BCFCE4E5F3AC48D7304 /* SideTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideTabsView.swift; sourceTree = "<group>"; };
 		39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCoreTests.swift; sourceTree = "<group>"; };
 		3B02288037FB94426AA7D51B /* ChettinadCarePatient.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCarePatient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B446A8A97827B3AB1760656 /* ChettinadCareStaff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCareStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -140,17 +156,22 @@
 		463CBB4A1A0E6785099DF985 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		4A8406B2B66CA1FE64E0E853 /* DoctorConsultationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoctorConsultationViews.swift; sourceTree = "<group>"; };
 		4C4E1C4514065784F2686C17 /* OPDModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OPDModels.swift; sourceTree = "<group>"; };
+		4CAECE09A30855D800FAB3C2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		509CF0D3DD046E805845683A /* Manrope-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Manrope-LICENSE.txt"; sourceTree = "<group>"; };
 		5231D311394C779EB2CDE00C /* APIEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIEndpoint.swift; sourceTree = "<group>"; };
 		5767C83F0B469A23F7AD8EC1 /* MetricsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricsCard.swift; sourceTree = "<group>"; };
 		58EE8F6B447B641EE36E6184 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		5B3A613F35C64FEFE674F1EB /* Manrope.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Manrope.ttf; sourceTree = "<group>"; };
 		5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViews.swift; sourceTree = "<group>"; };
 		5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRequestEndpoint.swift; sourceTree = "<group>"; };
 		659FA317211EBF6712303679 /* AdminViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViewModels.swift; sourceTree = "<group>"; };
+		66476D6376B4B81E0421AD53 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		680C59F078267ED61F6609C0 /* StaffLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffLoginView.swift; sourceTree = "<group>"; };
 		69D4584A04050BD564BBA0C1 /* OTPVerifyEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPVerifyEndpoint.swift; sourceTree = "<group>"; };
 		6DC9CCC565614361145DF65A /* ChettinadCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCore.swift; sourceTree = "<group>"; };
 		7A5B3F221F432D33170B31C0 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		7AFA814DADA9BEACBA5CAE9D /* SelfRecordSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelfRecordSheet.swift; sourceTree = "<group>"; };
 		8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnvironmentConfig.swift; sourceTree = "<group>"; };
 		8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ChettinadCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8837F515753F7E3D4B49BF2C /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -163,15 +184,20 @@
 		AE4F85494BDF60C306018C8D /* StaffViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffViews.swift; sourceTree = "<group>"; };
 		AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientViewModel.swift; sourceTree = "<group>"; };
 		B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamePostgreSQLProofTests.swift; sourceTree = "<group>"; };
+		BF55536DA466C74683728A2B /* PatientPortalEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientPortalEndpoints.swift; sourceTree = "<group>"; };
+		C06DD70B5CD4766B36A5C70D /* CarePlanEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanEndpoints.swift; sourceTree = "<group>"; };
 		C07BE791CF27F51EFC84CB9B /* TokenRefreshTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRefreshTests.swift; sourceTree = "<group>"; };
 		D2B7F0256B2669424BF4754C /* ChettinadCareStaffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCareStaffTests.swift; sourceTree = "<group>"; };
 		D53A36DD55C131BBB205D7AA /* Color+Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Theme.swift"; sourceTree = "<group>"; };
+		DBCEE6C1997FDAA322668EFB /* CarePlanModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanModels.swift; sourceTree = "<group>"; };
 		DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCarePatientApp.swift; sourceTree = "<group>"; };
 		E0B92CF0704960BFAA8503A5 /* ChettinadCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E279C6E43B63B6BFCA0D2CDF /* CarePlanDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanDecodingTests.swift; sourceTree = "<group>"; };
 		E364ED96535DF98EB5A40AB8 /* DoctorViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoctorViewModels.swift; sourceTree = "<group>"; };
 		E7CC4E20925096B379872B67 /* FlexibleBool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexibleBool.swift; sourceTree = "<group>"; };
 		EA136E06A6420F9E7F890069 /* StaffLoginEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffLoginEndpoint.swift; sourceTree = "<group>"; };
 		ED113C90AF4FD739C0E068F4 /* SessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionManager.swift; sourceTree = "<group>"; };
+		EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientCarePlanView.swift; sourceTree = "<group>"; };
 		F7064BAAC03DD101978E8B3C /* NurseViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NurseViewModels.swift; sourceTree = "<group>"; };
 		FD0029DD98CDB95FF61AEE9D /* ChettinadCarePatientTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCarePatientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -207,6 +233,7 @@
 		1130AD6280AB8A2E861D5A4B /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				DBCEE6C1997FDAA322668EFB /* CarePlanModels.swift */,
 				4C4E1C4514065784F2686C17 /* OPDModels.swift */,
 			);
 			path = Models;
@@ -220,6 +247,7 @@
 				AE38398DE44AC78B9EC5C7B8 /* DesignSystem */,
 				1130AD6280AB8A2E861D5A4B /* Models */,
 				17F8BE3E2ED527734635BBD5 /* Networking */,
+				1E55A8F6B1F894257885BE0C /* Resources */,
 				52DD4FF7BF467FE8CF57EDF7 /* Security */,
 				3AC19524FE2C776B723236E2 /* Utils */,
 			);
@@ -232,7 +260,9 @@
 				463CBB4A1A0E6785099DF985 /* APIClient.swift */,
 				5231D311394C779EB2CDE00C /* APIEndpoint.swift */,
 				7A5B3F221F432D33170B31C0 /* APIError.swift */,
+				C06DD70B5CD4766B36A5C70D /* CarePlanEndpoints.swift */,
 				8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */,
+				BF55536DA466C74683728A2B /* PatientPortalEndpoints.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -241,9 +271,19 @@
 			isa = PBXGroup;
 			children = (
 				8921557351524ED41CF8887E /* ChettinadCareStaffApp.swift */,
+				4CAECE09A30855D800FAB3C2 /* Info.plist */,
 				1E5B5D4AB62D351847D57790 /* Features */,
 			);
 			path = ChettinadCareStaff;
+			sourceTree = "<group>";
+		};
+		1E55A8F6B1F894257885BE0C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				509CF0D3DD046E805845683A /* Manrope-LICENSE.txt */,
+				5B3A613F35C64FEFE674F1EB /* Manrope.ttf */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		1E5B5D4AB62D351847D57790 /* Features */ = {
@@ -255,6 +295,8 @@
 				E364ED96535DF98EB5A40AB8 /* DoctorViewModels.swift */,
 				3D7EBE307CB379EDB4764443 /* NurseTriageViews.swift */,
 				F7064BAAC03DD101978E8B3C /* NurseViewModels.swift */,
+				204116B3828F504B56AD96DC /* PatientCarePlanMonitoringView.swift */,
+				31C07BCFCE4E5F3AC48D7304 /* SideTabsView.swift */,
 				680C59F078267ED61F6609C0 /* StaffLoginView.swift */,
 				3DEE6773E5751FEC1F4360C8 /* StaffMainView.swift */,
 				AE4F85494BDF60C306018C8D /* StaffViews.swift */,
@@ -309,10 +351,13 @@
 		7DE19AF43B47789815D3C2C2 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				10E0DDAA488C3EAA7A0D3376 /* CarePlanViewModel.swift */,
 				A60190ADFFCFD5DCC5171A22 /* LoginView.swift */,
 				8837F515753F7E3D4B49BF2C /* MainTabView.swift */,
+				EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */,
 				AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */,
 				ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */,
+				7AFA814DADA9BEACBA5CAE9D /* SelfRecordSheet.swift */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -321,6 +366,7 @@
 			isa = PBXGroup;
 			children = (
 				DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */,
+				66476D6376B4B81E0421AD53 /* Info.plist */,
 				7DE19AF43B47789815D3C2C2 /* Features */,
 			);
 			path = ChettinadCarePatient;
@@ -345,6 +391,7 @@
 				0E23D3B04BB4C16326E145C1 /* AppHeader.swift */,
 				D53A36DD55C131BBB205D7AA /* Color+Theme.swift */,
 				5767C83F0B469A23F7AD8EC1 /* MetricsCard.swift */,
+				10B5B357A6406D1C008FB53D /* StitchComponents.swift */,
 				58EE8F6B447B641EE36E6184 /* Typography.swift */,
 			);
 			path = DesignSystem;
@@ -354,6 +401,7 @@
 			isa = PBXGroup;
 			children = (
 				A6910D35BFD7907F87E071EF /* BackendIntegrationTests.swift */,
+				E279C6E43B63B6BFCA0D2CDF /* CarePlanDecodingTests.swift */,
 				39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */,
 				90C3B002A974BD2D70F641B7 /* MockURLProtocol.swift */,
 				B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */,
@@ -400,6 +448,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8564ADD1510DF03DC1FF64DF /* Build configuration list for PBXNativeTarget "ChettinadCareStaff" */;
 			buildPhases = (
+				D341D37BB18745C6BA74CE74 /* Enforce HTTPS for Production */,
 				8006276AFF6E8915097BD062 /* Sources */,
 				D358AE62AA6F14BB49EDBEFA /* Frameworks */,
 				7A2FB71B339514CF05B8C73D /* Embed Frameworks */,
@@ -440,6 +489,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FC3AB55F0C5C7434AC9CFABA /* Build configuration list for PBXNativeTarget "ChettinadCarePatient" */;
 			buildPhases = (
+				C760ADDE5DFB1F71D553CC0D /* Enforce HTTPS for Production */,
 				601E63BB3B90DFE920316259 /* Sources */,
 				756CC9A8C8812C2064DB5392 /* Frameworks */,
 				EAEEA1AB64A966F77CB99C4B /* Embed Frameworks */,
@@ -461,6 +511,7 @@
 			buildConfigurationList = 7BF0E50B3609A69660728AD3 /* Build configuration list for PBXNativeTarget "ChettinadCore" */;
 			buildPhases = (
 				8134D570D71E49D99EAAB9FB /* Sources */,
+				BC41E079BE6948CDD48950F4 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -500,6 +551,14 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					2C9D8450DB4D9DF15C9B3C83 = {
+						DevelopmentTeam = GWC7KMSVRR;
+						ProvisioningStyle = Automatic;
+					};
+					B5AF815B660214F95C1AAF87 = {
+						DevelopmentTeam = GWC7KMSVRR;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 022980EA5AFA727CF5DD4066 /* Build configuration list for PBXProject "ChettinadCare-iOS" */;
@@ -526,16 +585,70 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		BC41E079BE6948CDD48950F4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F6E44F12DF55FD9ED52A7EF4 /* Manrope-LICENSE.txt in Resources */,
+				82EDFB5F1460FC0B8E560A84 /* Manrope.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C760ADDE5DFB1F71D553CC0D /* Enforce HTTPS for Production */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Enforce HTTPS for Production";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  if [[ ! \"$CC_API_BASE_URL\" == https* ]]; then\n    echo \"error: Release build must use an HTTPS backend URL. Found: $CC_API_BASE_URL\"\n    exit 1\n  fi\nfi\n";
+		};
+		D341D37BB18745C6BA74CE74 /* Enforce HTTPS for Production */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Enforce HTTPS for Production";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n  if [[ ! \"$CC_API_BASE_URL\" == https* ]]; then\n    echo \"error: Release build must use an HTTPS backend URL. Found: $CC_API_BASE_URL\"\n    exit 1\n  fi\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		601E63BB3B90DFE920316259 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F2D70BED513EC1DE9E09AFA3 /* CarePlanViewModel.swift in Sources */,
 				635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */,
 				0715CF879F30DC1312570593 /* LoginView.swift in Sources */,
 				02562C291B9ED397F1E5B02D /* MainTabView.swift in Sources */,
+				E496357C14C799390032FE4C /* PatientCarePlanView.swift in Sources */,
 				AD0F9C60D79E35222D54E1A6 /* PatientViewModel.swift in Sources */,
 				E466D47EE31E4375C9663CAF /* PatientViews.swift in Sources */,
+				B6E1B8206E35733217E3A562 /* SelfRecordSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -550,6 +663,8 @@
 				DE7128CEE5F06F273781D193 /* DoctorViewModels.swift in Sources */,
 				DC09FD46FA6C4A6D940AD0DB /* NurseTriageViews.swift in Sources */,
 				F88DFFD49CD3AE1817445104 /* NurseViewModels.swift in Sources */,
+				571815FA78AEBD115C36DCF6 /* PatientCarePlanMonitoringView.swift in Sources */,
+				DB1A712E73E6FE3E5195751A /* SideTabsView.swift in Sources */,
 				5F2ADCBF2F3AA4E94FDBE109 /* StaffLoginView.swift in Sources */,
 				13852648CF327ACD5528F72F /* StaffMainView.swift in Sources */,
 				6A41A7F8DF8B0CF03C42C1B2 /* StaffViews.swift in Sources */,
@@ -564,6 +679,8 @@
 				31617DD668D1EC2425CB0199 /* APIEndpoint.swift in Sources */,
 				798912C36E877ACE698D3C51 /* APIError.swift in Sources */,
 				84B4629CE8ADADC87493F21A /* AppHeader.swift in Sources */,
+				3E078C996FA99C192824364C /* CarePlanEndpoints.swift in Sources */,
+				B81787DB913EFF11D3EF5E95 /* CarePlanModels.swift in Sources */,
 				9ECBAC18F295CBD3C5EF2225 /* ChettinadCore.swift in Sources */,
 				F4832CDA3466BFDB6416AE09 /* Color+Theme.swift in Sources */,
 				86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */,
@@ -574,8 +691,10 @@
 				FAC0752AF680C26BCD448D82 /* OPDModels.swift in Sources */,
 				9DB99C2D3C97857E2FAB84DD /* OTPRequestEndpoint.swift in Sources */,
 				3656D9B3DC8A42CD69F7CFFC /* OTPVerifyEndpoint.swift in Sources */,
+				DA43FFCEFB7C0BCA4E469FD9 /* PatientPortalEndpoints.swift in Sources */,
 				D7DFA7879034500A0B2504B1 /* SessionManager.swift in Sources */,
 				B2276E1D6C1A9BD2B5C27CD9 /* StaffLoginEndpoint.swift in Sources */,
+				BC6A0E198D60D8245A10F2C0 /* StitchComponents.swift in Sources */,
 				7C0AA74F165FA34F0A678C46 /* Typography.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -601,6 +720,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB06B4E3BDEFE26EE40D9649 /* BackendIntegrationTests.swift in Sources */,
+				FEC7D106D68BD295E3004B56 /* CarePlanDecodingTests.swift in Sources */,
 				51BE94964F5D8156108B4FD3 /* ChettinadCoreTests.swift in Sources */,
 				5B445A5DCAF9186F2BE2E928 /* MockURLProtocol.swift in Sources */,
 				707B9C89DC77522FE7FEB4C3 /* SamePostgreSQLProofTests.swift in Sources */,
@@ -639,6 +759,63 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		19A786680DEFE920CEF763B1 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Staging;
+		};
 		2838FC1A2919D9EF62C03DF7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -657,6 +834,53 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChettinadCarePatient.app/ChettinadCarePatient";
 			};
 			name = Release;
+		};
+		2E5B3C06ED100538ED118D27 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Staging;
+		};
+		31BA16D9F1275E5E8AFF7AB6 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APP_ENV = staging;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CC_API_BASE_URL = "https://staging-api.chettinad.care";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GWC7KMSVRR;
+				INFOPLIST_FILE = ChettinadCarePatient/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.patient;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+			};
+			name = Staging;
 		};
 		3DB8EE966E253DA33E8751D8 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -677,13 +901,35 @@
 			};
 			name = Release;
 		};
+		3DC3C9776A285BF1AC9E85AF /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCareStaffTests;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChettinadCareStaff.app/ChettinadCareStaff";
+			};
+			name = Staging;
+		};
 		44A256C2633AD7837245DB62 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_ENV = local;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CC_API_BASE_URL = "http://Sids-MacBook-Pro.local:3001";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GWC7KMSVRR;
+				INFOPLIST_FILE = ChettinadCareStaff/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -714,13 +960,34 @@
 			};
 			name = Debug;
 		};
+		51A8EA78A577DC3D644C379D /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCoreTests;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+			};
+			name = Staging;
+		};
 		5DA93A3AFC83D40F1101A533 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_ENV = local;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CC_API_BASE_URL = "http://Sids-MacBook-Pro.local:3001";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GWC7KMSVRR;
+				INFOPLIST_FILE = ChettinadCarePatient/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -736,10 +1003,13 @@
 		8AD88D2D7C97A4E2C7944132 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_ENV = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CC_API_BASE_URL = "https://api.chettinad.care";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GWC7KMSVRR;
+				INFOPLIST_FILE = ChettinadCarePatient/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -935,13 +1205,38 @@
 			};
 			name = Release;
 		};
+		B6A205073A19F60CC930104F /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APP_ENV = staging;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CC_API_BASE_URL = "https://staging-api.chettinad.care";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GWC7KMSVRR;
+				INFOPLIST_FILE = ChettinadCareStaff/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.staff;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+			};
+			name = Staging;
+		};
 		C9542296630E1A37C7422DF1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APP_ENV = production;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CC_API_BASE_URL = "https://api.chettinad.care";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GWC7KMSVRR;
+				INFOPLIST_FILE = ChettinadCareStaff/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -998,6 +1293,25 @@
 			};
 			name = Debug;
 		};
+		FC39C228D2030834CE8671E9 /* Staging */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCarePatientTests;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ChettinadCarePatient.app/ChettinadCarePatient";
+			};
+			name = Staging;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1006,6 +1320,7 @@
 			buildConfigurations = (
 				8D5EEDC842312A49454E57BA /* Debug */,
 				9BB15D698616830E4AD4C203 /* Release */,
+				19A786680DEFE920CEF763B1 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1015,6 +1330,7 @@
 			buildConfigurations = (
 				98B9A40EB2C6E9E9173A44D0 /* Debug */,
 				2838FC1A2919D9EF62C03DF7 /* Release */,
+				FC39C228D2030834CE8671E9 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1024,6 +1340,7 @@
 			buildConfigurations = (
 				E595CB78454864432BD2E30B /* Debug */,
 				90B2C5F41FBCD3B44E9F21CE /* Release */,
+				2E5B3C06ED100538ED118D27 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1033,6 +1350,7 @@
 			buildConfigurations = (
 				44A256C2633AD7837245DB62 /* Debug */,
 				C9542296630E1A37C7422DF1 /* Release */,
+				B6A205073A19F60CC930104F /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1042,6 +1360,7 @@
 			buildConfigurations = (
 				4F8CDFBA61B7E92E1C844A3E /* Debug */,
 				AED3C80055CB26B9072B205E /* Release */,
+				51A8EA78A577DC3D644C379D /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1051,6 +1370,7 @@
 			buildConfigurations = (
 				CC696AC2BB18CD5D25D26162 /* Debug */,
 				3DB8EE966E253DA33E8751D8 /* Release */,
+				3DC3C9776A285BF1AC9E85AF /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
@@ -1060,6 +1380,7 @@
 			buildConfigurations = (
 				5DA93A3AFC83D40F1101A533 /* Debug */,
 				8AD88D2D7C97A4E2C7944132 /* Release */,
+				31BA16D9F1275E5E8AFF7AB6 /* Staging */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

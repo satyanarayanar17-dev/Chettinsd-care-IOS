@@ -4,10 +4,20 @@ import ChettinadCore
 struct TriageFormView: View {
     @StateObject var viewModel: TriageFormViewModel
     @Environment(\.dismiss) var dismiss
+    let patientId: String
     let patientName: String
     
     var body: some View {
         Form {
+            Section("Care Plan") {
+                NavigationLink("View adherence and readings") {
+                    ScrollView {
+                        PatientCarePlanMonitoringView(patientId: patientId, role: "NURSE")
+                            .padding(.vertical)
+                    }
+                    .navigationTitle("Patient Care Plan")
+                }
+            }
             if let error = viewModel.errorMessage {
                 Section {
                     VStack(spacing: 8) {
@@ -69,6 +79,16 @@ struct TriageFormView: View {
                 }
             }
             
+            Section(header: Text("Additional measurements")) {
+                TextField("Height (cm)", text: $viewModel.height).keyboardType(.decimalPad)
+                TextField("Pain (0–10)", text: $viewModel.pain).keyboardType(.numberPad)
+                TextField("Nurse notes", text: $viewModel.notes)
+                Picker("Priority", selection: $viewModel.priority) {
+                    Text("Routine").tag(0)
+                    Text("Priority").tag(1)
+                    Text("Urgent").tag(2)
+                }
+            }
             Section(header: Text("Complaint")) {
                 TextEditor(text: $viewModel.complaint)
                     .frame(height: 80)
@@ -93,7 +113,7 @@ struct TriageFormView: View {
             if viewModel.currentVersion == 0 { // Simplification, rely on actual version.
                // We should probably start triage if it's in WAITING state.
             }
-            await viewModel.startTriage()
+                _ = await viewModel.startTriage()
         }
         .overlay {
             if viewModel.isLoading || viewModel.isSubmitting {

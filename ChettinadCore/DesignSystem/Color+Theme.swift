@@ -6,17 +6,17 @@ public extension Color {
     static let chettinadSecondary = Color(hex: 0x4B5563) // Gray 600
     
     // Backgrounds & Surfaces
-    static let chettinadBackground = Color(hex: 0xF9FAFB) // Gray 50
+    static let chettinadBackground = Color(hex: 0xF8F9FA) // Gray 50
     static let surfaceContainerLowest = Color.white
-    static let surfaceContainerLow = Color(hex: 0xF3F4F6) // Gray 100
+    static let surfaceContainerLow = Color(hex: 0xF3F4F5) // Gray 100
     static let surfaceContainerHigh = Color(hex: 0xE5E7EB) // Gray 200
     
     // Status & Feedback
-    static let chettinadError = Color(hex: 0xDC2626) // Red 600
+    static let chettinadError = Color(hex: 0xBA1A1A) // Red 600
     static let chettinadErrorContainer = Color(hex: 0xFEE2E2) // Red 100
     static let onChettinadErrorContainer = Color(hex: 0x991B1B) // Red 800
     
-    static let chettinadSuccess = Color(hex: 0x16A34A) // Green 600
+    static let chettinadSuccess = Color(hex: 0x087F72) // Green 600
     static let chettinadSuccessContainer = Color(hex: 0xDCFCE7) // Green 100
     static let onChettinadSuccessContainer = Color(hex: 0x166534) // Green 800
     
@@ -25,7 +25,7 @@ public extension Color {
     static let onChettinadWarningContainer = Color(hex: 0x92400E) // Amber 800
     
     // Text
-    static let chettinadTextPrimary = Color(hex: 0x111827) // Gray 900
+    static let chettinadTextPrimary = Color(hex: 0x191C1D) // Gray 900
     static let chettinadTextSecondary = Color(hex: 0x6B7280) // Gray 500
     
     // Borders

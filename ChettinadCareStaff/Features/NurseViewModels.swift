@@ -61,6 +61,10 @@ class TriageFormViewModel: ObservableObject {
     @Published var pulse: String = ""
     @Published var spo2: String = ""
     @Published var weight: String = ""
+    @Published var height: String = ""
+    @Published var pain: String = ""
+    @Published var notes: String = ""
+    @Published var priority: Int = 0
     @Published var complaint: String = ""
     
     @Published var isLoading = false
@@ -78,11 +82,14 @@ class TriageFormViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
-            let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: StartTriageEndpoint(encounterId: encounterId, v: currentVersion)
-            )
-            if let newV = response.__v {
-                self.currentVersion = newV
+            let queue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+            guard let entry = queue.first(where: { $0.encounter_id == encounterId }) else { throw APIError.invalidResponse }
+            currentVersion = entry.__v
+            if entry.status == "WAITING" {
+                let _: EncounterMutationResponse = try await apiClient.execute(endpoint: StartTriageEndpoint(encounterId: encounterId, v: currentVersion))
+                let updated: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+                guard let refreshed = updated.first(where: { $0.encounter_id == encounterId }) else { throw APIError.invalidResponse }
+                currentVersion = refreshed.__v
             }
             isLoading = false
             return true
@@ -106,12 +113,12 @@ class TriageFormViewModel: ObservableObject {
             pulse: Int(pulse),
             spo2: Int(spo2),
             weight: Double(weight),
-            height: nil,
+            height: Double(height),
             complaint: complaint.isEmpty ? nil : complaint,
             allergies: nil,
-            pain: nil,
-            notes: nil,
-            priority: 2,
+            pain: Int(pain),
+            notes: notes,
+            priority: priority,
             bmi: nil
         )
         

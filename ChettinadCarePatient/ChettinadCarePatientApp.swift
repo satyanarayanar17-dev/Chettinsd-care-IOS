@@ -5,14 +5,22 @@ import ChettinadCore
 struct ChettinadCarePatientApp: App {
     @StateObject private var appState = AppState()
     
+    init() { StitchTheme.registerFonts() }
+
     var body: some Scene {
         WindowGroup {
             if appState.isAuthenticated {
                 MainTabView()
                     .environmentObject(appState)
+                    .tint(.chettinadPrimary)
+                    .font(Typography.bodyLarge)
+                    .preferredColorScheme(.light)
             } else {
                 LoginView()
                     .environmentObject(appState)
+                    .tint(.chettinadPrimary)
+                    .font(Typography.bodyLarge)
+                    .preferredColorScheme(.light)
             }
         }
     }

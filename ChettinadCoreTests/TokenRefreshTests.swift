@@ -90,14 +90,92 @@ final class TokenRefreshTests: XCTestCase {
         {
             "id": "123",
             "name": "Test",
-            "role": "DOCTOR",
-            "department": "Cardiology",
-            "must_change_password": false
+            "role": "PATIENT",
+            "department": null,
+            "patient_id": "patient-123",
+            "must_change_password": 0
         }
         """
         let session = try JSONDecoder().decode(UserSession.self, from: json.data(using: .utf8)!)
-        XCTAssertEqual(session.role, "DOCTOR")
+        XCTAssertEqual(session.role, "PATIENT")
         XCTAssertEqual(session.name, "Test")
+        XCTAssertEqual(session.patient_id, "patient-123")
+        XCTAssertFalse(session.must_change_password)
+    }
+
+    func testStructured401RefreshesOnceAndRetriesOriginalRequest() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let client = APIClient(urlSession: URLSession(configuration: configuration))
+        let manager = SessionManager.shared
+        await manager.clearSession()
+        await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
+
+        final class Counts: @unchecked Sendable {
+            let lock = NSLock()
+            var refresh = 0
+            var resource = 0
+        }
+        let counts = Counts()
+        MockURLProtocol.requestHandler = { request in
+            counts.lock.lock(); defer { counts.lock.unlock() }
+            let path = request.url!.path
+            if path.contains("/auth/refresh") {
+                counts.refresh += 1
+                let data = Data(#"{"access_token":"fresh","role":"patient","account_type":"patient"}"#.utf8)
+                return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
+            }
+            counts.resource += 1
+            if request.value(forHTTPHeaderField: "Authorization") == "Bearer expired" {
+                let data = Data(#"{"error":{"code":"TOKEN_EXPIRED","message":"Expired"},"meta":{"correlation_id":"test"}}"#.utf8)
+                return (HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: nil)!, data)
+            }
+            return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, Data(#"{"id":"ok"}"#.utf8))
+        }
+
+        struct Endpoint: APIEndpoint { let path = "/structured-401"; let method: HTTPMethod = .get }
+        struct Response: Codable { let id: String }
+        let response: Response = try await client.execute(endpoint: Endpoint())
+        XCTAssertEqual(response.id, "ok")
+        XCTAssertEqual(counts.refresh, 1)
+        XCTAssertEqual(counts.resource, 2)
+    }
+
+    func testFailedRefreshClearsSessionWithoutRetryLoop() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [MockURLProtocol.self]
+        let client = APIClient(urlSession: URLSession(configuration: configuration))
+        let manager = SessionManager.shared
+        await manager.clearSession()
+        await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
+
+        final class Counts: @unchecked Sendable {
+            let lock = NSLock()
+            var refresh = 0
+            var resource = 0
+        }
+        let counts = Counts()
+        MockURLProtocol.requestHandler = { request in
+            counts.lock.lock(); defer { counts.lock.unlock() }
+            if request.url!.path.contains("/auth/refresh") {
+                counts.refresh += 1
+            } else {
+                counts.resource += 1
+            }
+            let data = Data(#"{"error":{"code":"REFRESH_INVALID","message":"Sign in again"},"meta":{"correlation_id":"test"}}"#.utf8)
+            return (HTTPURLResponse(url: request.url!, statusCode: 401, httpVersion: nil, headerFields: nil)!, data)
+        }
+
+        struct Endpoint: APIEndpoint { let path = "/requires-auth"; let method: HTTPMethod = .get }
+        struct Response: Codable { let id: String }
+        do {
+            let _: Response = try await client.execute(endpoint: Endpoint())
+            XCTFail("Expected refresh failure")
+        } catch { }
+        XCTAssertEqual(counts.refresh, 1)
+        XCTAssertEqual(counts.resource, 1)
+        let clearedSession = await manager.getSession()
+        XCTAssertNil(clearedSession)
     }
 
     func testStaleStateError() throws {

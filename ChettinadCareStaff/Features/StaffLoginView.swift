@@ -11,43 +11,19 @@ struct StaffLoginView: View {
     let apiClient = APIClient()
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Chettinad Care")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text("Staff Portal")
-                    .font(.title3)
-                    .foregroundColor(.secondary)
-                
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                }
-                
-                TextField("Username (Staff ID)", text: $username)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                    .padding(.horizontal)
-                
-                SecureField("Password", text: $password)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
-                
-                Button("Sign In") {
-                    login()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isLoading || username.isEmpty || password.isEmpty)
-            }
-            .padding()
-            .navigationTitle("Sign In")
-            .navigationBarHidden(true)
+        StitchLoginShell(title: "Staff Sign In", subtitle: "Clinical care. Connected. Sign in to your hospital workspace.") {
+            Text("STAFF ID").font(Typography.labelMedium).tracking(2)
+            TextField("Username (Staff ID)", text: $username)
+                .textInputAutocapitalization(.never).autocorrectionDisabled().stitchField()
+            Text("PASSWORD").font(Typography.labelMedium).tracking(2).padding(.top, 8)
+            SecureField("Password", text: $password).stitchField()
+            if let error = errorMessage { Text(error).font(Typography.bodySmall).foregroundStyle(Color.chettinadError) }
+            Button(action: login) {
+                HStack { Text(isLoading ? "Signing in…" : "ACCESS CLINICAL WORKSPACE"); Image(systemName: "arrow.right") }
+            }.buttonStyle(StitchButtonStyle()).disabled(isLoading || username.isEmpty || password.isEmpty).padding(.top, 12)
         }
     }
-    
+
     func login() {
         isLoading = true
         errorMessage = nil
@@ -67,7 +43,7 @@ struct StaffLoginView: View {
                     name: response.name
                 )
                 
-                await SessionManager.shared.saveSession(session)
+                try await SessionManager.shared.saveSession(session)
                 
                 DispatchQueue.main.async {
                     self.isLoading = false

@@ -8,123 +8,75 @@ struct AnyEndpoint: APIEndpoint {
 }
 
 final class SamePostgreSQLProofTests: XCTestCase {
-    
-    func execute(path: String, method: HTTPMethod, body: [String: Any]? = nil, token: String? = nil) async throws -> [String: Any] {
-        var req = URLRequest(url: URL(string: "http://127.0.0.1:3001" + path)!)
-        req.httpMethod = method.rawValue
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let t = token {
-            req.setValue("Bearer \(t)", forHTTPHeaderField: "Authorization")
+    func unwrap<T>(_ value: T?) throws -> T { try XCTUnwrap(value) }
+    var base: String = ""
+    override func setUpWithError() throws {
+        guard let value = ProcessInfo.processInfo.environment["CC_INTEGRATION_BASE_URL"], value == "http://127.0.0.1:3011" else {
+            throw XCTSkip("Requires disposable PostgreSQL fixture: tests/start-native.cjs on port 3011")
         }
-        if let b = body {
-            req.httpBody = try JSONSerialization.data(withJSONObject: b)
-        }
-        
-        let (data, res) = try await URLSession.shared.data(for: req)
-        guard let httpRes = res as? HTTPURLResponse else { throw URLError(.badServerResponse) }
-        
-        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if httpRes.statusCode >= 400 {
-                print("HTTP \(httpRes.statusCode) Error on \(path): \(json)")
-            }
-            return json
-        }
-        return [:]
+        base = value
     }
-    
+    func request(_ path: String, _ method: String = "GET", _ body: [String: Any]? = nil, _ token: String? = nil, status: Int = 200) async throws -> Any {
+        var req = URLRequest(url: URL(string: base + path)!)
+        req.httpMethod = method
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        if let body { req.httpBody = try JSONSerialization.data(withJSONObject: body) }
+        let (data, response) = try await URLSession.shared.data(for: req)
+        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, status, path + ": " + String(decoding: data, as: UTF8.self))
+        return try JSONSerialization.jsonObject(with: data)
+    }
+    func login(_ id: String) async throws -> String {
+        let result = try await request("/api/v1/auth/login/staff", "POST", ["username": id, "password": "ChettinadDemo2026!" ]) as? [String: Any]
+        return try unwrap(result?["access_token"] as? String)
+    }
+    func queue(_ token: String) async throws -> [[String: Any]] {
+        return try unwrap(try await request("/api/v1/opd/queue", "GET", nil, token) as? [[String: Any]])
+    }
     func testSamePostgreSQLProof() async throws {
-        print("--- Starting PostgreSQL Integrity Proof ---")
-        
-        let patientPhone = "+919000000001"
-        let patientId = "pat-261a2ce1-a322-4707-8958-d11718801942"
-        let password = "Password123!"
-        
-        // 1. Doctor Login
-        let doctorRes = try await execute(path: "/api/v1/auth/login/staff", method: .post, body: ["username": "demo_doctor", "password": password])
-        let doctorToken = doctorRes["access_token"] as! String
-        print("✅ Doctor logged in")
-        
-        // 2. Nurse Login
-        let nurseRes = try await execute(path: "/api/v1/auth/login/staff", method: .post, body: ["username": "demo_nurse", "password": password])
-        let nurseToken = nurseRes["access_token"] as! String
-        print("✅ Nurse logged in")
-        
-        // 3. Admin Login (to book appointment without issues)
-        let adminRes = try await execute(path: "/api/v1/auth/login/staff", method: .post, body: ["username": "demo_admin", "password": password])
-        let adminToken = adminRes["access_token"] as! String
-        
-        let scheduledAt = "2026-09-21T06:00:00.000Z"
-        
-        let bookRes = try await execute(path: "/api/v1/opd/appointments", method: .post, body: [
-            "patient_id": patientId,
-            "doctor_id": "demo_doctor",
-            "scheduled_at": scheduledAt,
-            "reason": "Test Proof iOS"
-        ], token: adminToken)
-        guard let appointmentId = bookRes["id"] as? String else {
-            XCTFail("Failed to book appointment: \(bookRes)")
-            return
-        }
-        print("✅ Appointment booked: \(appointmentId)")
-        
-        // 5. Check-in (Creates Encounter)
-        let checkinRes = try await execute(path: "/api/v1/opd/appointments/\(appointmentId)/check-in", method: .post, body: ["identity_verified": true], token: adminToken)
-        guard let encounterId = checkinRes["encounter_id"] as? String else {
-            XCTFail("Checkin failed: \(checkinRes)")
-            return
-        }
-        let initialV = checkinRes["__v"] as! Int
-        print("✅ Checked in, Encounter: \(encounterId)")
-        
-        // 6. Triage by Nurse
-        _ = try await execute(path: "/api/v1/opd/encounters/\(encounterId)/start-triage", method: .post, body: ["__v": initialV], token: nurseToken)
-        
-        let triageData: [String: Any] = [
-            "temperature": 37.0,
-            "systolic": 120,
-            "diastolic": 80,
-            "pulse": 75,
-            "spo2": 98,
-            "weight": 70,
-            "height": 175,
-            "complaint": "iOS Proof Testing",
-            "priority": 0
-        ]
-        let triageRes = try await execute(path: "/api/v1/opd/encounters/\(encounterId)/triage", method: .post, body: ["data": triageData, "__v": initialV + 1], token: nurseToken)
-        print("✅ Triage submitted by Nurse")
-        
-        // 7. Consultation by Doctor
-        _ = try await execute(path: "/api/v1/opd/encounters/\(encounterId)/call", method: .post, body: ["__v": initialV + 2], token: doctorToken)
-        _ = try await execute(path: "/api/v1/opd/encounters/\(encounterId)/start", method: .post, body: ["__v": initialV + 3], token: doctorToken)
-        
-        let consultationData: [String: Any] = [
-            "history": "No significant history",
-            "examination": "Normal",
-            "assessment": "Healthy",
-            "diagnosis_ids": ["diagnosis-a0df27cc-18e7-458a-b4f7-07e69e8d7975"],
-            "advice": "Drink water",
-            "medications": []
-        ]
-        let consultRes = try await execute(path: "/api/v1/opd/encounters/\(encounterId)/complete", method: .post, body: ["data": consultationData, "__v": 0], token: doctorToken)
-        print("✅ Consultation completed by Doctor: \(consultRes)")
-        
-        // 8. Patient OTP Flow
-        let otpReqRes = try await execute(path: "/api/v1/auth/opd/otp/request", method: .post, body: ["phone": patientPhone])
-        let code = otpReqRes["development_code"] as! String
-        
-        let otpVerifyRes = try await execute(path: "/api/v1/auth/opd/otp/verify", method: .post, body: ["phone": patientPhone, "code": code])
-        let patientToken = otpVerifyRes["access_token"] as! String
-        print("✅ Patient authenticated via OTP: \(code)")
-        
-        // 9. Patient Record Fetch
-        let recordRes = try await execute(path: "/api/v1/opd/patients/\(patientId)/record", method: .get, token: patientToken)
-        let notes = recordRes["notes"] as! [[String: Any]]
-        let triage = recordRes["triage"] as! [[String: Any]]
-        
-        XCTAssertTrue(notes.count > 0)
-        XCTAssertTrue(triage.count > 0)
-        
-        print("🎉 SUCCESS! Patient successfully retrieved PostgreSQL state generated by Staff!")
-        print("Patient Notes: \(notes.first!)")
+        let doctor = try await login("demo_doctor")
+        let nurse = try await login("demo_nurse")
+        let admin = try await login("demo_admin")
+        let catalogue = try unwrap(try await request("/api/v1/opd/catalogues", "GET", nil, doctor) as? [String: Any])
+        let diagnosis = try unwrap((catalogue["diagnoses"] as? [[String: Any]])?.first?["id"] as? String)
+        let drug = try unwrap((catalogue["drugs"] as? [[String: Any]])?.first?["id"] as? String)
+        // Finish the independent seeded consultation before handing off the nurse fixture.
+        let active = try unwrap(try await queue(doctor).first { $0["status"] as? String == "CONSULTATION" })
+        let activeId = try unwrap(active["encounter_id"] as? String)
+        let activePatient = try unwrap(active["patient_id"] as? String)
+        let activeRecord = try unwrap(try await request("/api/v1/opd/patients/\(activePatient)/record", "GET", nil, doctor) as? [String: Any])
+        let noteVersion = (activeRecord["notes"] as? [[String: Any]])?.first { $0["encounter_id"] as? String == activeId }?["__v"] as? Int ?? 0
+        let clinical: [String: Any] = ["history":"Synthetic validation history", "examination":"Synthetic examination", "assessment":"Synthetic assessment", "diagnosis_ids":[diagnosis], "advice":"Synthetic advice", "medications":[["drug_id":drug,"dose":"1 tablet","frequency":"Daily","duration":"3 days"]]]
+        _ = try await request("/api/v1/opd/encounters/\(activeId)/complete", "POST", ["data":clinical,"__v":noteVersion], doctor)
+        let entry = try unwrap(try await queue(nurse).first { $0["patient_name"] as? String == "Ananya Raman (Demo)" })
+        let encounter = try unwrap(entry["encounter_id"] as? String)
+        let patient = try unwrap(entry["patient_id"] as? String)
+        let version = try unwrap(entry["__v"] as? Int)
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/start-triage", "POST", ["__v":version], nurse)
+        let updated = try unwrap(try await queue(nurse).first { $0["encounter_id"] as? String == encounter })
+        let vitals: [String:Any] = ["temperature":36.8,"systolic":120,"diastolic":80,"pulse":74,"spo2":98,"weight":62,"height":164,"pain":2,"complaint":"Native handoff validation","notes":"Exact nurse handoff note","priority":0]
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/triage", "POST", ["data":vitals,"__v":try unwrap(updated["__v"] as? Int)], nurse)
+        let handed = try unwrap(try await queue(doctor).first { $0["encounter_id"] as? String == encounter })
+        XCTAssertEqual(handed["status"] as? String, "WAITING_DOCTOR")
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/start", "POST", ["__v":try unwrap(handed["__v"] as? Int)], doctor)
+        let test = try unwrap((catalogue["tests"] as? [[String:Any]])?.first?["id"] as? String)
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/labs", "POST", ["test_id":test], doctor, status:201)
+        let duplicate = try await request("/api/v1/opd/encounters/\(encounter)/labs", "POST", ["test_id":test], doctor, status:409) as? [String:Any]
+        XCTAssertEqual((duplicate?["error"] as? [String:Any])?["code"] as? String,"TEST_ALREADY_ORDERED")
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0], nurse, status:403)
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0], admin, status:403)
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0], doctor)
+        let otp = try unwrap(try await request("/api/v1/auth/opd/otp/request", "POST", ["phone":"+919000000001"]) as? [String:Any])
+        _ = try await request("/api/v1/auth/opd/otp/verify", "POST", ["phone":"+919000000001","code":"000000"], status:401)
+        let authenticated = try unwrap(try await request("/api/v1/auth/opd/otp/verify", "POST", ["phone":"+919000000001","code":try unwrap(otp["development_code"] as? String)]) as? [String:Any])
+        let token = try unwrap(authenticated["access_token"] as? String)
+        let record = try unwrap(try await request("/api/v1/opd/patients/\(patient)/record", "GET", nil, token) as? [String:Any])
+        let triage = try unwrap((record["triage"] as? [[String:Any]])?.first?["data"] as? [String:Any])
+        XCTAssertEqual(triage["notes"] as? String,"Exact nurse handoff note")
+        XCTAssertEqual(triage["pulse"] as? Int,74)
+        let prescription = try unwrap((record["prescriptions"] as? [[String:Any]])?.first?["rx_content"] as? [String:Any])
+        XCTAssertEqual((prescription["medications"] as? [[String:Any]])?.first?["drug_id"] as? String,drug)
+        _ = try await request("/api/v1/opd/patients/\(activePatient)/record", "GET", nil, token, status:404)
+        _ = try await request("/api/v1/opd/staff", "GET", nil, token, status:403)
     }
 }

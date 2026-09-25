@@ -1,8 +1,13 @@
 import SwiftUI
 import ChettinadCore
+import UniformTypeIdentifiers
+import QuickLook
 
 struct PatientDashboardView: View {
     @EnvironmentObject var viewModel: PatientViewModel
+    let onAppointments: () -> Void
+    let onRecords: () -> Void
+    let onCarePlan: () -> Void
     
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +31,21 @@ struct PatientDashboardView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Next actions").textStyle(Typography.titleMedium, color: .chettinadPrimary)
+                            if let appointment = viewModel.appointments.filter({ !["COMPLETED", "CANCELLED", "NO_SHOW"].contains($0.status) }).sorted(by: { $0.scheduled_at < $1.scheduled_at }).first {
+                                Label("\(appointment.doctor_name ?? "OG Doctor") · \(String(appointment.scheduled_at.prefix(16)))", systemImage: "calendar")
+                            } else { Label("Book your next OG appointment", systemImage: "calendar.badge.plus") }
+                            if let task = viewModel.todayCareTasks.first(where: { $0.status == .DUE || $0.status == .UPCOMING }) { Label("\(task.title) · \(task.due_time)", systemImage: "checklist") }
+                            else { Label("No Care Plan task is due now", systemImage: "checkmark.circle") }
+                            Label("Upload a report or scan in Records", systemImage: "square.and.arrow.up")
+                            Label("Review prescriptions and reminders", systemImage: "pills")
+                            HStack { Button("Request Appointment", action: onAppointments).buttonStyle(.borderedProminent); Button("Upload Report", action: onRecords).buttonStyle(.bordered); Button("Add Record", action: onCarePlan).buttonStyle(.bordered) }
+                            if let prescription = bundle.prescriptions.first { Text("Latest prescription · \(prescription.rx_content?.medications?.map(\.name).joined(separator: ", ") ?? "Available")").font(.caption).foregroundColor(.secondary) }
+                            if let document = viewModel.documents.first { Text("Recent upload · \(document.title) · \(document.clinical_date)").font(.caption).foregroundColor(.secondary) }
+                        }
+                        .padding().frame(maxWidth: .infinity, alignment: .leading).background(Color.surfaceContainerLowest).cornerRadius(12).padding(.horizontal, 16)
                         
                         // Quick Stats
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
@@ -100,6 +120,9 @@ struct PatientDashboardView: View {
 
 struct PatientRecordsView: View {
     @EnvironmentObject var viewModel: PatientViewModel
+    @State private var importingDocument = false
+    @State private var previewURL: URL?
+    @State private var uploadURL: URL?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -126,6 +149,31 @@ struct PatientRecordsView: View {
                         
                         // Sections
                         VStack(alignment: .leading, spacing: 24) {
+                            SectionView(title: "My documents") {
+                                Button { importingDocument = true } label: { Label("Upload PDF or image", systemImage: "square.and.arrow.up") }.buttonStyle(.borderedProminent)
+                                if viewModel.documents.isEmpty {
+                                    Text("Your uploaded reports, scans and PDFs will appear here.").font(.subheadline).foregroundColor(.secondary)
+                                } else {
+                                    ForEach(viewModel.documents) { document in
+                                        RecordCard {
+                                            VStack(alignment: .leading, spacing: 10) {
+                                                Button { Task { previewURL = try? await viewModel.apiClient.downloadPatientDocument(document) } } label: {
+                                                    HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(.headline); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }
+                                                }.buttonStyle(.plain)
+                                                Menu {
+                                                    if document.appointment_id != nil { Button("Remove appointment attachment", role: .destructive) { Task { _ = await viewModel.linkDocument(document, to: nil) } } }
+                                                    ForEach(viewModel.appointments) { appointment in
+                                                        Button("\(String(appointment.scheduled_at.prefix(10))) · \(appointment.doctor_name ?? "OBST Doctor")") { Task { _ = await viewModel.linkDocument(document, to: appointment.id) } }
+                                                    }
+                                                } label: {
+                                                    Label(document.appointment_id == nil ? "Attach to appointment" : "Change appointment attachment", systemImage: "paperclip")
+                                                        .font(.caption)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             
                             if !bundle.notes.isEmpty {
                                 SectionView(title: "Clinical Notes") {
@@ -217,8 +265,32 @@ struct PatientRecordsView: View {
             .refreshable {
                 await viewModel.fetchRecords()
             }
+            .fileImporter(isPresented: $importingDocument, allowedContentTypes: [.pdf, .jpeg, .png], allowsMultipleSelection: false) { result in
+                guard case .success(let urls) = result, let url = urls.first else { return }
+                uploadURL = url
+            }
+            .sheet(isPresented: Binding(get: { uploadURL != nil }, set: { if !$0 { uploadURL = nil } })) { if let uploadURL { DocumentUploadSheet(fileURL: uploadURL).environmentObject(viewModel) } }
+            .quickLookPreview($previewURL)
         }
         .navigationBarHidden(true)
+    }
+}
+
+private struct DocumentUploadSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var viewModel: PatientViewModel
+    let fileURL: URL
+    @State private var type = "OTHER_MEDICAL_RECORD"
+    @State private var title = ""
+    @State private var clinicalDate = Date()
+    @State private var appointmentId = ""
+    @State private var note = ""
+    @State private var saving = false
+    var body: some View {
+        NavigationView { Form {
+            Section("File") { Text(fileURL.lastPathComponent); TextField("Title", text: $title); Picker("Document type", selection: $type) { ForEach(["LAB_REPORT", "SCAN", "PRESCRIPTION", "DISCHARGE_SUMMARY", "REFERRAL", "OTHER_MEDICAL_RECORD"], id: \.self) { Text($0.replacingOccurrences(of: "_", with: " ").capitalized) } }; DatePicker("Report date", selection: $clinicalDate, in: ...Date(), displayedComponents: .date) }
+            Section("Visit association") { Picker("Appointment", selection: $appointmentId) { Text("No appointment").tag(""); ForEach(viewModel.appointments) { Text("\(String($0.scheduled_at.prefix(10))) · \($0.doctor_name ?? "OG Doctor")").tag($0.id) } }; TextField("Optional patient note", text: $note, axis: .vertical) }
+        }.navigationTitle("Upload document").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }; ToolbarItem(placement: .confirmationAction) { Button(saving ? "Uploading…" : "Upload") { saving = true; let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"; Task { if await viewModel.uploadDocument(fileURL: fileURL, title: title, documentType: type, clinicalDate: formatter.string(from: clinicalDate), appointmentId: appointmentId.isEmpty ? nil : appointmentId, note: note.isEmpty ? nil : note) { dismiss() }; saving = false } }.disabled(saving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) } } }
     }
 }
 
@@ -393,6 +465,8 @@ struct PatientProfileView: View {
 
 struct PatientAppointmentsView: View {
     @EnvironmentObject var viewModel: PatientViewModel
+    @State private var showingBooking = false
+    let onRecords: () -> Void
     
     var body: some View {
         NavigationView {
@@ -400,31 +474,32 @@ struct PatientAppointmentsView: View {
                 if viewModel.isLoading {
                     ProgressView()
                 } else if viewModel.appointments.isEmpty {
-                    Text("No appointments found.")
-                        .foregroundColor(.secondary)
+                    VStack(spacing: 16) { Image(systemName: "calendar").font(.system(size: 48)).foregroundColor(.secondary); Text("No upcoming appointments").font(.headline); Text("Book an appointment with the\nObstetrics & Gynaecology care team.").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center); Button("Request Appointment") { showingBooking = true }.buttonStyle(.borderedProminent) }.frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 40).listRowBackground(Color.clear)
                 } else {
-                    ForEach(viewModel.appointments.sorted(by: { $0.scheduled_at > $1.scheduled_at })) { apt in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(apt.reason ?? "Consultation")
-                                .font(.headline)
-                            HStack {
-                                Text(formatDate(apt.scheduled_at))
-                                Spacer()
-                                Text(apt.status)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(colorForStatus(apt.status))
-                            }
-                            .font(.subheadline)
-                        }
-                        .padding(.vertical, 4)
+                    let upcoming = viewModel.appointments.filter { !["COMPLETED", "CANCELLED", "NO_SHOW"].contains($0.status) && $0.scheduled_at >= ISO8601DateFormatter().string(from: Date()) }
+                    let past = viewModel.appointments.filter { !upcoming.map(\.id).contains($0.id) }
+                    if !upcoming.isEmpty {
+                        Section("Upcoming") { ForEach(upcoming.sorted { $0.scheduled_at < $1.scheduled_at }) { appointmentRow($0) } }
                     }
+                    if !past.isEmpty { Section("Past") { ForEach(past.sorted { $0.scheduled_at > $1.scheduled_at }) { appointmentRow($0) } } }
                 }
             }
             .navigationTitle("Appointments")
+            .toolbar { Button { showingBooking = true } label: { Label("Book", systemImage: "plus") } }
+            .sheet(isPresented: $showingBooking) { AppointmentBookingSheet().environmentObject(viewModel) }
             .refreshable {
                 await viewModel.fetchRecords()
             }
         }
+    }
+
+    private func appointmentRow(_ apt: Appointment) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(apt.doctor_name ?? "OG Doctor").font(.headline)
+            Text("Obstetrics & Gynaecology · \(apt.reason ?? "Consultation")").font(.subheadline).foregroundColor(.secondary)
+            HStack { Text(formatDate(apt.scheduled_at)); Spacer(); Text(apt.status == "PENDING_CONFIRMATION" ? "Awaiting confirmation" : apt.status.replacingOccurrences(of: "_", with: " ")).foregroundColor(colorForStatus(apt.status)) }.font(.caption)
+            if !["COMPLETED", "CANCELLED", "NO_SHOW"].contains(apt.status) { Button("Add Records for this Appointment", action: onRecords).font(.caption).buttonStyle(.bordered) }
+        }.padding(.vertical, 4)
     }
     
     private func formatDate(_ dateStr: String) -> String {
@@ -442,11 +517,49 @@ struct PatientAppointmentsView: View {
     private func colorForStatus(_ status: String) -> Color {
         switch status {
         case "SCHEDULED": return .blue
+        case "PENDING_CONFIRMATION": return .orange
         case "CONFIRMED": return .green
         case "CHECKED_IN": return .purple
         case "CANCELLED", "NO_SHOW": return .red
         case "COMPLETED": return .gray
         default: return .primary
         }
+    }
+}
+
+private struct AppointmentBookingSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var viewModel: PatientViewModel
+    @State private var doctorId = ""
+    @State private var date = Calendar.current.startOfDay(for: Date().addingTimeInterval(86400))
+    @State private var selectedSlot = ""
+    @State private var reason = ""
+    @State private var saving = false
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Department") { LabeledContent("Specialty", value: "Obstetrics & Gynaecology"); LabeledContent("Prefix", value: "OBST") }
+                Section("Doctor and date") {
+                    Picker("Doctor", selection: $doctorId) { Text("Select a doctor").tag(""); ForEach(viewModel.directory?.doctors ?? []) { Text($0.name).tag($0.id) } }
+                    DatePicker("Date", selection: $date, in: Calendar.current.startOfDay(for: Date())..., displayedComponents: .date)
+                }
+                Section("Available times") {
+                    if doctorId.isEmpty { Text("Choose an OG doctor to see real available slots.").foregroundColor(.secondary) }
+                    else if viewModel.slots.isEmpty { Text("No available slots for this date.").foregroundColor(.secondary) }
+                    else { Picker("Time", selection: $selectedSlot) { Text("Select a time").tag(""); ForEach(viewModel.slots) { Text(Self.time($0.scheduled_at) + " · " + $0.room).tag($0.scheduled_at) } } }
+                }
+                Section("Reason") { TextField("Reason for visit", text: $reason, axis: .vertical) }
+                Section { Button(saving ? "Requesting…" : "Request Appointment") { saving = true; Task { if await viewModel.book(doctorId: doctorId, scheduledAt: selectedSlot, reason: reason) { dismiss() }; saving = false } }.disabled(doctorId.isEmpty || selectedSlot.isEmpty || reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || saving) }
+            }
+            .navigationTitle("Book appointment")
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+            .task(id: "\(doctorId)-\(date.timeIntervalSince1970)") { selectedSlot = ""; guard !doctorId.isEmpty else { return }; await viewModel.fetchSlots(doctorId: doctorId, date: date) }
+        }
+    }
+
+    private static func time(_ value: String) -> String {
+        let input = ISO8601DateFormatter(); guard let date = input.date(from: value) else { return value }
+        let output = DateFormatter(); output.timeStyle = .short; return output.string(from: date)
     }
 }

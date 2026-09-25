@@ -40,9 +40,13 @@ struct DoctorQueueView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding()
                             } else if viewModel.queue.isEmpty {
-                                Text("No patients in queue.")
-                                    .textStyle(Typography.bodyLarge, color: .chettinadSecondary)
-                                    .padding(.horizontal, 16)
+                                VStack(spacing: 12) {
+                                    Image(systemName: "person.3.sequence").font(.system(size: 40)).foregroundColor(.secondary)
+                                    Text("No patients currently waiting").font(.headline)
+                                    Text("Your OBST patient queue will appear here\nas patients check in.").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 40)
                             } else {
                                 ForEach(viewModel.queue, id: \.id) { entry in
                                     NavigationLink(destination: PatientDossierView(viewModel: DoctorConsultationViewModel(encounterId: entry.encounter_id, patientId: entry.patient_id, initialVersion: entry.__v), patientName: entry.patient_name)) {
@@ -93,18 +97,16 @@ struct NurseTriageView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                         } else if viewModel.queue.isEmpty {
-                            VStack(spacing: 16) {
-                                Image(systemName: "cross.case.fill")
-                                    .font(.system(size: 48))
-                                    .foregroundColor(.chettinadSecondary.opacity(0.5))
-                                Text("No patients currently waiting.")
-                                    .textStyle(Typography.bodyLarge, color: .chettinadSecondary)
+                            VStack(spacing: 12) {
+                                Image(systemName: "cross.case.fill").font(.system(size: 40)).foregroundColor(.secondary)
+                                Text("No patients to triage").font(.headline)
+                                Text("Your OBST triage queue will appear here\nas patients check in.").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 40)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.vertical, 40)
                         } else {
                             ForEach(viewModel.queue, id: \.id) { entry in
-                                NavigationLink(destination: TriageFormView(viewModel: TriageFormViewModel(encounterId: entry.encounter_id, initialVersion: entry.__v), patientName: entry.patient_name)) {
+                                NavigationLink(destination: TriageFormView(viewModel: TriageFormViewModel(encounterId: entry.encounter_id, initialVersion: entry.__v), patientId: entry.patient_id, patientName: entry.patient_name)) {
                                     QueueCard(entry: entry)
                                 }
                                 .buttonStyle(PlainButtonStyle())

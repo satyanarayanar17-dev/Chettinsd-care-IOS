@@ -11,9 +11,7 @@ public struct AppHeader: View {
     
     public var body: some View {
         HStack {
-            Image(systemName: "cross.case.fill")
-                .foregroundColor(.chettinadPrimary)
-                .font(.system(size: 24))
+            OfficialLogoSlot()
             
             Text(title)
                 .textStyle(Typography.titleMedium, color: .chettinadPrimary)

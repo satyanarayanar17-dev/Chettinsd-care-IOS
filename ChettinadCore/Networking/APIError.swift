@@ -29,7 +29,28 @@ public enum APIError: Error {
     case unauthenticated
 }
 
-extension APIError {
+extension APIError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .networkError(let error as NSError) where error.domain == NSURLErrorDomain && error.code == NSURLErrorNotConnectedToInternet:
+            return "Please check your internet connection and try again."
+        case .networkError(let error as NSError) where error.domain == NSURLErrorDomain && error.code == NSURLErrorTimedOut:
+            return "The request timed out. Please try again."
+        case .networkError: 
+            return "A network error occurred. Please try again."
+        case .invalidResponse: 
+            return "Received an unexpected response from the server."
+        case .httpError(let statusCode, _): 
+            return statusCode >= 500 ? "Server is temporarily unavailable. Please try again later." : "Something went wrong (Error \(statusCode))."
+        case .apiError(_, let response): 
+            return response.error.message.isEmpty ? "An unexpected error occurred." : response.error.message
+        case .decodingError: 
+            return "There was a problem loading the data."
+        case .unauthenticated: 
+            return "Your session has expired. Please log in again."
+        }
+    }
+    
     public var isUnauthorized: Bool {
         switch self {
         case .httpError(let statusCode, _):

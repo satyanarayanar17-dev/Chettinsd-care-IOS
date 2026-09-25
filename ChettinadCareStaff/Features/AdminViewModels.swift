@@ -7,6 +7,11 @@ struct DirectoryResponse: Codable {
         let name: String
         let department: String
     }
+    struct Department: Codable, Identifiable {
+        let id: String
+        let name: String
+    }
+    let departments: [Department]
     let doctors: [Doctor]
 }
 
@@ -37,7 +42,8 @@ struct BookAppointmentEndpoint: APIEndpoint {
 
 struct AdminAppointmentsEndpoint: APIEndpoint {
     let date: String
-    var path: String { "/api/v1/opd/appointments?date=\(date)" }
+    var path: String { "/api/v1/opd/appointments" }
+    var queryItems: [URLQueryItem]? { [URLQueryItem(name: "date", value: date)] }
     var method: HTTPMethod { .get }
 }
 
@@ -62,6 +68,7 @@ class AdminDashboardViewModel: ObservableObject {
         do {
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+            formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
             let dateString = formatter.string(from: Date())
             
             let fetched: [Appointment] = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: dateString))
@@ -74,7 +81,7 @@ class AdminDashboardViewModel: ObservableObject {
     
     func checkIn(appointmentId: String) async {
         do {
-            let _: QueueEntry = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
+            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
             await fetchAppointments()
         } catch {
             self.errorMessage = "Check-in failed: \(error.localizedDescription)"
@@ -84,7 +91,8 @@ class AdminDashboardViewModel: ObservableObject {
 
 struct PatientSearchEndpoint: APIEndpoint {
     let query: String
-    var path: String { "/api/v1/opd/patients?search=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)" }
+    var path: String { "/api/v1/opd/patients" }
+    var queryItems: [URLQueryItem]? { [URLQueryItem(name: "search", value: query)] }
     var method: HTTPMethod { .get }
 }
 
@@ -96,7 +104,8 @@ struct DirectoryEndpoint: APIEndpoint {
 struct SlotsEndpoint: APIEndpoint {
     let doctorId: String
     let date: String
-    var path: String { "/api/v1/opd/slots?doctor_id=\(doctorId)&date=\(date)" }
+    var path: String { "/api/v1/opd/slots" }
+    var queryItems: [URLQueryItem]? { [URLQueryItem(name: "doctor_id", value: doctorId), URLQueryItem(name: "date", value: date)] }
     var method: HTTPMethod { .get }
 }
 
@@ -107,6 +116,7 @@ class BookAppointmentViewModel: ObservableObject {
     @Published var selectedPatientId: String? = nil
     
     @Published var doctors: [DirectoryResponse.Doctor] = []
+    @Published var departments: [DirectoryResponse.Department] = []
     @Published var selectedDoctorId: String? = nil
     
     @Published var selectedDate = Date()
@@ -137,29 +147,34 @@ class BookAppointmentViewModel: ObservableObject {
         do {
             let directory: DirectoryResponse = try await apiClient.execute(endpoint: DirectoryEndpoint())
             self.doctors = directory.doctors
+            self.departments = directory.departments
         } catch {
-            print("Failed to fetch doctors: \(error)")
+            self.errorMessage = "Failed to fetch doctors: \(error.localizedDescription)"
         }
     }
     
     func fetchSlots() async {
+        selectedSlot = nil
+        availableSlots = []
         guard let doctorId = selectedDoctorId else { return }
         
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+            formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
         let dateString = formatter.string(from: selectedDate)
         
         do {
             let slots: [Slot] = try await apiClient.execute(endpoint: SlotsEndpoint(doctorId: doctorId, date: dateString))
             self.availableSlots = slots
         } catch {
-            print("Failed to fetch slots: \(error)")
+            self.errorMessage = "Failed to fetch slots: \(error.localizedDescription)"
             self.availableSlots = []
         }
     }
     
     func bookAppointment() async -> Bool {
         guard let pId = selectedPatientId, let dId = selectedDoctorId, let slot = selectedSlot else { return false }
+        guard !isSubmitting else { return false }
         isSubmitting = true
         errorMessage = nil
         do {
@@ -192,12 +207,18 @@ struct StaffListEndpoint: APIEndpoint {
 @MainActor
 class StaffManagementViewModel: ObservableObject {
     @Published var staffMembers: [StaffMember] = []
+    @Published var departments: [DirectoryResponse.Department] = []
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
     
     let apiClient = APIClient()
     
     func fetchStaff() async {
+        do {
+            let directory: DirectoryResponse = try await apiClient.execute(endpoint: DirectoryEndpoint())
+            self.departments = directory.departments
+        } catch {}
+
         isLoading = true
         errorMessage = nil
         do {
@@ -207,5 +228,84 @@ class StaffManagementViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+    
+    func createStaff(id: String, name: String, role: String, department: String, password: String) async -> Bool {
+        do {
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: CreateStaffEndpoint(payload: [
+                "id": id, "name": name, "role": role, "department": department, "password": password
+            ]))
+            await fetchStaff()
+            return true
+        } catch {
+            self.errorMessage = error.localizedDescription
+            return false
+        }
+    }
+    
+    func toggleStaff(staffId: String, active: Bool) async {
+        do {
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: ToggleStaffEndpoint(staffId: staffId, active: active))
+            await fetchStaff()
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+    }
+}
+
+struct CreateStaffEndpoint: APIEndpoint {
+    let payload: [String: String]
+    var path: String { "/api/v1/opd/staff" }
+    var method: HTTPMethod { .post }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: payload) }
+}
+
+struct ToggleStaffEndpoint: APIEndpoint {
+    let staffId: String
+    let active: Bool
+    var path: String { "/api/v1/opd/staff/\(staffId)" }
+    var method: HTTPMethod { .patch }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: ["active": active]) }
+}
+
+struct AdminMetricsEndpoint: APIEndpoint {
+    var path: String { "/api/v1/opd/dashboard" }
+    var method: HTTPMethod { .get }
+}
+
+struct AdminMetricsResponse: Codable {
+    struct DoctorMetric: Codable, Identifiable {
+        let name: String
+        let appointments: Int
+        let waiting: Int
+        let completed: Int
+        let average_consultation: Double?
+        var id: String { name }
+    }
+    let date: String
+    let appointments: Int
+    let checked_in: Int
+    let waiting: Int
+    let triage: Int
+    let consultation: Int
+    let completed: Int
+    let doctors: [DoctorMetric]
+}
+
+@MainActor
+class AdminMetricsViewModel: ObservableObject {
+    @Published var metrics: AdminMetricsResponse?
+    @Published var errorMessage: String? = nil
+    let apiClient = APIClient()
+    
+    func fetchMetrics() async {
+        do {
+            let res: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+            self.metrics = res
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
     }
 }

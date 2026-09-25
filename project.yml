@@ -5,6 +5,10 @@ options:
   deploymentTarget:
     iOS: 16.0
     macOS: 13.0
+configs:
+  Debug: debug
+  Staging: release
+  Release: release
 targets:
   ChettinadCore:
     type: framework
@@ -34,16 +38,51 @@ targets:
     type: application
     platform: iOS
     sources: [ChettinadCarePatient]
+    preBuildScripts:
+      - name: Enforce HTTPS for Production
+        script: |
+          if [ "$CONFIGURATION" = "Release" ]; then
+            if [[ ! "$CC_API_BASE_URL" == https* ]]; then
+              echo "error: Release build must use an HTTPS backend URL. Found: $CC_API_BASE_URL"
+              exit 1
+            fi
+          fi
+    info:
+      path: ChettinadCarePatient/Info.plist
+      properties:
+        UILaunchScreen: {}
+        NSAppTransportSecurity:
+          NSExceptionDomains:
+            Sids-MacBook-Pro.local:
+              NSExceptionAllowsInsecureHTTPLoads: true
+              NSIncludesSubdomains: true
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+            127.0.0.1:
+              NSExceptionAllowsInsecureHTTPLoads: true
+        NSLocalNetworkUsageDescription: "Connect to the Chettinad Care backend."
+        CC_API_BASE_URL: "$(CC_API_BASE_URL)"
+        APP_ENV: "$(APP_ENV)"
     dependencies:
       - target: ChettinadCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.patient
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: GWC7KMSVRR
         SWIFT_VERSION: 6.0
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        GENERATE_INFOPLIST_FILE: YES
+      configs:
+        Debug:
+          CC_API_BASE_URL: "http://Sids-MacBook-Pro.local:3001"
+          APP_ENV: "local"
+        Staging:
+          CC_API_BASE_URL: "https://staging-api.chettinad.care"
+          APP_ENV: "staging"
+        Release:
+          CC_API_BASE_URL: "https://api.chettinad.care"
+          APP_ENV: "production"
 
   ChettinadCarePatientTests:
     type: bundle.unit-test
@@ -62,16 +101,51 @@ targets:
     type: application
     platform: iOS
     sources: [ChettinadCareStaff]
+    preBuildScripts:
+      - name: Enforce HTTPS for Production
+        script: |
+          if [ "$CONFIGURATION" = "Release" ]; then
+            if [[ ! "$CC_API_BASE_URL" == https* ]]; then
+              echo "error: Release build must use an HTTPS backend URL. Found: $CC_API_BASE_URL"
+              exit 1
+            fi
+          fi
+    info:
+      path: ChettinadCareStaff/Info.plist
+      properties:
+        UILaunchScreen: {}
+        NSAppTransportSecurity:
+          NSExceptionDomains:
+            Sids-MacBook-Pro.local:
+              NSExceptionAllowsInsecureHTTPLoads: true
+              NSIncludesSubdomains: true
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+            127.0.0.1:
+              NSExceptionAllowsInsecureHTTPLoads: true
+        NSLocalNetworkUsageDescription: "Connect to the Chettinad Care backend."
+        CC_API_BASE_URL: "$(CC_API_BASE_URL)"
+        APP_ENV: "$(APP_ENV)"
     dependencies:
       - target: ChettinadCore
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.staff
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: GWC7KMSVRR
         SWIFT_VERSION: 6.0
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        GENERATE_INFOPLIST_FILE: YES
+      configs:
+        Debug:
+          CC_API_BASE_URL: "http://Sids-MacBook-Pro.local:3001"
+          APP_ENV: "local"
+        Staging:
+          CC_API_BASE_URL: "https://staging-api.chettinad.care"
+          APP_ENV: "staging"
+        Release:
+          CC_API_BASE_URL: "https://api.chettinad.care"
+          APP_ENV: "production"
 
   ChettinadCareStaffTests:
     type: bundle.unit-test

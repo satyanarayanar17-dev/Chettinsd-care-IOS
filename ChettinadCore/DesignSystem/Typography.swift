@@ -1,24 +1,23 @@
 import SwiftUI
 
 public struct Typography {
-    // We use standard iOS system fonts mapped to the Manrope scales from Stitch.
-    // When the actual Manrope font is available, these can be replaced with .custom("Manrope", size: ...)
+    // Bundled Manrope matches the supplied Stitch design and scales with Dynamic Type.
     
-    public static let headlineLarge = Font.system(size: 32, weight: .bold, design: .default)
-    public static let headlineMedium = Font.system(size: 28, weight: .bold, design: .default)
-    public static let headlineSmall = Font.system(size: 24, weight: .semibold, design: .default)
+    public static let headlineLarge = Font.custom("Manrope-Regular", size: 32).weight(.bold)
+    public static let headlineMedium = Font.custom("Manrope-Regular", size: 28).weight(.bold)
+    public static let headlineSmall = Font.custom("Manrope-Regular", size: 24).weight(.semibold)
     
-    public static let titleLarge = Font.system(size: 22, weight: .semibold, design: .default)
-    public static let titleMedium = Font.system(size: 18, weight: .bold, design: .default)
-    public static let titleSmall = Font.system(size: 16, weight: .semibold, design: .default)
+    public static let titleLarge = Font.custom("Manrope-Regular", size: 22).weight(.semibold)
+    public static let titleMedium = Font.custom("Manrope-Regular", size: 18).weight(.bold)
+    public static let titleSmall = Font.custom("Manrope-Regular", size: 16).weight(.semibold)
     
-    public static let bodyLarge = Font.system(size: 16, weight: .regular, design: .default)
-    public static let bodyMedium = Font.system(size: 14, weight: .regular, design: .default)
-    public static let bodySmall = Font.system(size: 12, weight: .regular, design: .default)
+    public static let bodyLarge = Font.custom("Manrope-Regular", size: 16).weight(.regular)
+    public static let bodyMedium = Font.custom("Manrope-Regular", size: 14).weight(.regular)
+    public static let bodySmall = Font.custom("Manrope-Regular", size: 12).weight(.regular)
     
-    public static let labelLarge = Font.system(size: 14, weight: .medium, design: .default)
-    public static let labelMedium = Font.system(size: 12, weight: .medium, design: .default)
-    public static let labelSmall = Font.system(size: 11, weight: .medium, design: .default)
+    public static let labelLarge = Font.custom("Manrope-Regular", size: 14).weight(.medium)
+    public static let labelMedium = Font.custom("Manrope-Regular", size: 12).weight(.medium)
+    public static let labelSmall = Font.custom("Manrope-Regular", size: 11).weight(.medium)
 }
 
 public struct ChettinadTextStyle: ViewModifier {

@@ -146,6 +146,7 @@ public struct TriageData: Codable, Sendable {
 }
 
 public struct Note: Codable, Identifiable {
+    public let __v: Int?
     public let id: String
     public let encounter_id: String
     public let status: String
@@ -236,6 +237,8 @@ public struct QueueEndpoint: APIEndpoint {
 }
 
 public struct Appointment: Codable, Identifiable {
+    public let doctor_name: String?
+    public let department_name: String?
     public let id: String
     public let patient_id: String
     public let doctor_id: String
@@ -245,4 +248,76 @@ public struct Appointment: Codable, Identifiable {
     public let encounter_id: String?
     public let follow_up_of: String?
     public let __v: Int?
+}
+
+public struct OPDDepartment: Codable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let prefix: String
+}
+
+public struct OPDSchedule: Codable, Identifiable, Sendable {
+    public let id: String
+    public let doctor_id: String
+    public let department_id: String
+    public let weekday: Int
+    public let start_time: String
+    public let end_time: String
+    public let slot_minutes: Int
+    public let room: String
+}
+
+public struct OPDDoctor: Codable, Identifiable, Sendable {
+    public let id: String
+    public let name: String
+    public let role: String
+    public let department: String?
+    public let schedules: [OPDSchedule]
+}
+
+public struct OPDDirectory: Codable, Sendable {
+    public let departments: [OPDDepartment]
+    public let doctors: [OPDDoctor]
+}
+
+public struct AppointmentSlot: Codable, Identifiable, Sendable {
+    public var id: String { scheduled_at }
+    public let scheduled_at: String
+    public let ends_at: String
+    public let room: String
+    public let department_id: String
+}
+
+public struct PatientSelfRecord: Codable, Identifiable, Sendable {
+    public let id: String
+    public let patient_id: String
+    public let record_type: String
+    public let timing_context: String?
+    public let numeric_value: Double?
+    public let secondary_numeric_value: Double?
+    public let unit: String?
+    public let activity_name: String?
+    public let duration_minutes: Int?
+    public let observed_at: String
+    public let patient_note: String?
+    public let provenance: String
+    public let created_at: String
+}
+
+public struct PatientDocument: Codable, Identifiable, Sendable {
+    public let id: String
+    public let patient_id: String
+    public let appointment_id: String?
+    public let uploaded_by: String
+    public let uploaded_by_name: String
+    public let document_type: String
+    public let title: String
+    public let original_filename: String
+    public let mime_type: String
+    public let size_bytes: Int
+    public let patient_note: String?
+    public let clinical_date: String
+    public let created_at: String
+    public let updated_at: String
+    public let content_url: String
 }

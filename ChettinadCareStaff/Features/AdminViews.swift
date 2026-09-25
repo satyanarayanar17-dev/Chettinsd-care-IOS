@@ -234,6 +234,11 @@ struct BookAppointmentView: View {
 struct AdminTabView: View {
     var body: some View {
         TabView {
+            AdminMetricsView()
+                .tabItem {
+                    Label("Dashboard", systemImage: "chart.bar")
+                }
+            
             AdminDashboardView()
                 .tabItem {
                     Label("Appointments", systemImage: "calendar")
@@ -249,6 +254,7 @@ struct AdminTabView: View {
 
 struct StaffManagementView: View {
     @StateObject private var viewModel = StaffManagementViewModel()
+    @State private var showCreate = false
     
     var body: some View {
         NavigationView {
@@ -276,25 +282,30 @@ struct StaffManagementView: View {
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
-                                if staff.is_active == 1 {
-                                    Text("Active")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.green)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.green.opacity(0.1))
-                                        .cornerRadius(8)
-                                } else {
-                                    Text("Inactive")
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.gray)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.gray.opacity(0.1))
-                                        .cornerRadius(8)
+                                Button(action: {
+                                    Task { await viewModel.toggleStaff(staffId: staff.id, active: staff.is_active == 1 ? false : true) }
+                                }) {
+                                    if staff.is_active == 1 {
+                                        Text("Active")
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.green)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.green.opacity(0.1))
+                                            .cornerRadius(8)
+                                    } else {
+                                        Text("Inactive")
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.gray)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.gray.opacity(0.1))
+                                            .cornerRadius(8)
+                                    }
                                 }
+                                .buttonStyle(PlainButtonStyle())
                             }
                             .padding(.vertical, 4)
                         }
@@ -307,6 +318,117 @@ struct StaffManagementView: View {
             .navigationBarHidden(true)
             .task {
                 await viewModel.fetchStaff()
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Button(action: { showCreate = true }) {
+                    Image(systemName: "plus")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .clipShape(Circle())
+                        .shadow(radius: 4)
+                }
+                .padding()
+            }
+            .sheet(isPresented: $showCreate) {
+                CreateStaffView(viewModel: viewModel)
+            }
+        }
+    }
+}
+
+struct AdminMetricsView: View {
+    @StateObject private var viewModel = AdminMetricsViewModel()
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+                AppHeader(title: "Dashboard")
+                if let error = viewModel.errorMessage {
+                    Text(error).foregroundColor(.red).padding()
+                }
+                if let metrics = viewModel.metrics {
+                    List {
+                        Section(header: Text("Today's Overview")) {
+                            HStack { Text("Total Appointments"); Spacer(); Text("\(metrics.appointments)").bold() }
+                            HStack { Text("Checked In"); Spacer(); Text("\(metrics.checked_in)").bold() }
+                            HStack { Text("Waiting"); Spacer(); Text("\(metrics.waiting)").bold() }
+                            HStack { Text("In Triage/Consult"); Spacer(); Text("\(metrics.triage + metrics.consultation)").bold() }
+                            HStack { Text("Completed"); Spacer(); Text("\(metrics.completed)").bold() }
+                        }
+                        Section(header: Text("Doctor Metrics")) {
+                            ForEach(metrics.doctors) { d in
+                                VStack(alignment: .leading) {
+                                    Text(d.name).font(.headline)
+                                    HStack {
+                                        Text("Appts: \(d.appointments)")
+                                        Spacer()
+                                        Text("Wait: \(d.waiting)")
+                                        Spacer()
+                                        Text("Done: \(d.completed)")
+                                    }.font(.subheadline).foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .refreshable { await viewModel.fetchMetrics() }
+                } else {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .navigationBarHidden(true)
+            .task { await viewModel.fetchMetrics() }
+        }
+    }
+}
+
+struct CreateStaffView: View {
+    @ObservedObject var viewModel: StaffManagementViewModel
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var id = ""
+    @State private var name = ""
+    @State private var role = "DOCTOR"
+    @State private var department = ""
+    @State private var password = ""
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("Staff Details")) {
+                    TextField("Username (ID)", text: $id)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    TextField("Full Name", text: $name)
+                    Picker("Role", selection: $role) {
+                        Text("Doctor").tag("DOCTOR")
+                        Text("Nurse").tag("NURSE")
+                        Text("Admin").tag("ADMIN")
+                    }
+                    Picker("Department", selection: $department) {
+                        Text("None").tag("")
+                        ForEach(viewModel.departments) { d in
+                            Text(d.name).tag(d.name)
+                        }
+                    }
+                    SecureField("Initial Password", text: $password)
+                }
+            }
+            .navigationTitle("Add Staff")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        Task {
+                            if await viewModel.createStaff(id: id, name: name, role: role, department: department, password: password) {
+                                dismiss()
+                            }
+                        }
+                    }
+                    .disabled(id.isEmpty || name.isEmpty || password.isEmpty)
+                }
             }
         }
     }
