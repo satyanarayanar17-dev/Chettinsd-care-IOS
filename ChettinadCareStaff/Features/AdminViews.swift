@@ -40,6 +40,8 @@ struct AdminDashboardView: View {
                         ForEach(viewModel.appointments.sorted(by: { $0.scheduled_at < $1.scheduled_at })) { apt in
                             AppointmentAdminCard(appointment: apt, onCheckIn: {
                                 pendingCheckIn = apt
+                            }, onConfirm: {
+                                Task { await viewModel.confirmAppointment(appointmentId: apt.id) }
                             })
                         }
                     }
@@ -90,6 +92,7 @@ struct AdminDashboardView: View {
 struct AppointmentAdminCard: View {
     let appointment: Appointment
     let onCheckIn: () -> Void
+    let onConfirm: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -120,7 +123,18 @@ struct AppointmentAdminCard: View {
                     .foregroundColor(.secondary)
             }
             
-            if appointment.status == "CONFIRMED" {
+            if appointment.status == "PENDING_CONFIRMATION" {
+                Button(action: onConfirm) {
+                    Text("Confirm Appointment")
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(Color.orange)
+                        .cornerRadius(8)
+                }
+                .padding(.top, 4)
+            } else if appointment.status == "CONFIRMED" {
                 Button(action: onCheckIn) {
                     Text("Check In")
                         .fontWeight(.bold)
@@ -142,6 +156,7 @@ struct AppointmentAdminCard: View {
     
     private func colorForStatus(_ status: String) -> Color {
         switch status {
+        case "PENDING_CONFIRMATION": return .orange
         case "SCHEDULED": return .blue
         case "CONFIRMED": return .green
         case "CHECKED_IN": return .purple

@@ -80,6 +80,17 @@ class AdminDashboardViewModel: ObservableObject {
         isLoading = false
     }
     
+    
+    func confirmAppointment(appointmentId: String) async {
+        do {
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            await fetchAppointments(for: selectedDate)
+        } catch {
+            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
+        }
+    }
+
     func checkIn(appointmentId: String) async {
         do {
             let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
@@ -341,4 +352,12 @@ class AdminMetricsViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+}
+
+
+struct AdminConfirmEndpoint: APIEndpoint {
+    let appointmentId: String
+    var path: String { "/api/v1/opd/appointments/\(appointmentId)/confirm" }
+    var method: HTTPMethod { .post }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": 1]) }
 }
