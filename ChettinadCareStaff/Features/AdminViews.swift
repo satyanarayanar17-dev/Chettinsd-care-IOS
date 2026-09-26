@@ -41,7 +41,7 @@ struct AdminDashboardView: View {
                             AppointmentAdminCard(appointment: apt, onCheckIn: {
                                 pendingCheckIn = apt
                             }, onConfirm: {
-                                Task { await viewModel.confirmAppointment(appointmentId: apt.id) }
+                                Task { await viewModel.confirmAppointment(appointmentId: apt.id, date: selectedDate) }
                             })
                         }
                     }

@@ -81,11 +81,11 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     
-    func confirmAppointment(appointmentId: String) async {
+    func confirmAppointment(appointmentId: String, date: Date) async {
         do {
             struct AnyResponse: Codable {}
             let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
-            await fetchAppointments(for: selectedDate)
+            await fetchAppointments(for: date)
         } catch {
             self.errorMessage = "Confirm failed: \(error.localizedDescription)"
         }
