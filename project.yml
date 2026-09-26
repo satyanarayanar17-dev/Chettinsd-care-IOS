@@ -40,6 +40,7 @@ targets:
     sources: [ChettinadCarePatient]
     preBuildScripts:
       - name: Enforce HTTPS for Production
+        basedOnDependencyAnalysis: false
         script: |
           if [ "$CONFIGURATION" = "Release" ]; then
             if [[ ! "$CC_API_BASE_URL" == https* ]]; then
@@ -62,7 +63,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.patient
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: GWC7KMSVRR
+        DEVELOPMENT_TEAM: 47797T9SLZ
         SWIFT_VERSION: 6.0
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
@@ -96,6 +97,7 @@ targets:
     sources: [ChettinadCareStaff]
     preBuildScripts:
       - name: Enforce HTTPS for Production
+        basedOnDependencyAnalysis: false
         script: |
           if [ "$CONFIGURATION" = "Release" ]; then
             if [[ ! "$CC_API_BASE_URL" == https* ]]; then
@@ -118,7 +120,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chettinadcare.staff
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: GWC7KMSVRR
+        DEVELOPMENT_TEAM: 47797T9SLZ
         SWIFT_VERSION: 6.0
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES

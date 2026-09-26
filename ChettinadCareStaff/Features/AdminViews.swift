@@ -42,7 +42,7 @@ struct AdminDashboardView: View {
                                 pendingCheckIn = apt
                             }, onConfirm: {
                                 Task { await viewModel.confirmAppointment(appointmentId: apt.id, date: selectedDate) }
-                            })
+                            }, role: appState.role)
                         }
                     }
                 }
@@ -93,6 +93,7 @@ struct AppointmentAdminCard: View {
     let appointment: Appointment
     let onCheckIn: () -> Void
     let onConfirm: () -> Void
+    let role: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -123,7 +124,7 @@ struct AppointmentAdminCard: View {
                     .foregroundColor(.secondary)
             }
             
-            if appointment.status == "PENDING_CONFIRMATION" {
+            if appointment.status == "PENDING_CONFIRMATION" && ["ADMIN", "DOCTOR", "NURSE"].contains(role) {
                 Button(action: onConfirm) {
                     Text("Confirm Appointment")
                         .fontWeight(.bold)
@@ -134,7 +135,7 @@ struct AppointmentAdminCard: View {
                         .cornerRadius(8)
                 }
                 .padding(.top, 4)
-            } else if appointment.status == "CONFIRMED" {
+            } else if appointment.status == "CONFIRMED" && ["ADMIN", "NURSE"].contains(role) {
                 Button(action: onCheckIn) {
                     Text("Check In")
                         .fontWeight(.bold)

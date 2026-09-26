@@ -13,6 +13,7 @@
 		07260D67A972DD3EAA8BE964 /* FlexibleBool.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7CC4E20925096B379872B67 /* FlexibleBool.swift */; };
 		13852648CF327ACD5528F72F /* StaffMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DEE6773E5751FEC1F4360C8 /* StaffMainView.swift */; };
 		157BB82489CB36C9EF4E20C0 /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
+		1DDB999F20656F19CD79FC5C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B3D78EA88BA85C74ECBB1FC8 /* Assets.xcassets */; };
 		31617DD668D1EC2425CB0199 /* APIEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5231D311394C779EB2CDE00C /* APIEndpoint.swift */; };
 		33410990F2F9735D6D2DEB8C /* MetricsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5767C83F0B469A23F7AD8EC1 /* MetricsCard.swift */; };
 		3620C114D0338868DCE55A02 /* ChettinadCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -27,6 +28,7 @@
 		51BE94964F5D8156108B4FD3 /* ChettinadCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */; };
 		571815FA78AEBD115C36DCF6 /* PatientCarePlanMonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 204116B3828F504B56AD96DC /* PatientCarePlanMonitoringView.swift */; };
 		5B445A5DCAF9186F2BE2E928 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90C3B002A974BD2D70F641B7 /* MockURLProtocol.swift */; };
+		5C556DF991F542DE28E6DB98 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5F36F04AB6265025AF5DD405 /* Assets.xcassets */; };
 		5F2ADCBF2F3AA4E94FDBE109 /* StaffLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680C59F078267ED61F6609C0 /* StaffLoginView.swift */; };
 		635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */; };
 		6818CD8C6DDAFA06E94D3FE7 /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
@@ -169,6 +171,7 @@
 		5B3A613F35C64FEFE674F1EB /* Manrope.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Manrope.ttf; sourceTree = "<group>"; };
 		5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViews.swift; sourceTree = "<group>"; };
 		5E41B5C880B71E1E28EE33AF /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		5F36F04AB6265025AF5DD405 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		620378AEA9F3B081289F4480 /* OTPRequestEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OTPRequestEndpoint.swift; sourceTree = "<group>"; };
 		659FA317211EBF6712303679 /* AdminViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViewModels.swift; sourceTree = "<group>"; };
 		66476D6376B4B81E0421AD53 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -188,6 +191,7 @@
 		ADB605CFCB8DBFEE20A0C3D9 /* PatientViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientViews.swift; sourceTree = "<group>"; };
 		AE4F85494BDF60C306018C8D /* StaffViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffViews.swift; sourceTree = "<group>"; };
 		AE936C3A47C8FA1FF708DF1F /* PatientViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientViewModel.swift; sourceTree = "<group>"; };
+		B3D78EA88BA85C74ECBB1FC8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SamePostgreSQLProofTests.swift; sourceTree = "<group>"; };
 		BF55536DA466C74683728A2B /* PatientPortalEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientPortalEndpoints.swift; sourceTree = "<group>"; };
 		C06DD70B5CD4766B36A5C70D /* CarePlanEndpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanEndpoints.swift; sourceTree = "<group>"; };
@@ -276,6 +280,7 @@
 		1C4E4F5D9AB0169EE77B744F /* ChettinadCareStaff */ = {
 			isa = PBXGroup;
 			children = (
+				B3D78EA88BA85C74ECBB1FC8 /* Assets.xcassets */,
 				8921557351524ED41CF8887E /* ChettinadCareStaffApp.swift */,
 				4CAECE09A30855D800FAB3C2 /* Info.plist */,
 				1E5B5D4AB62D351847D57790 /* Features */,
@@ -374,6 +379,7 @@
 		82DAD9A084C56F677A4F403C /* ChettinadCarePatient */ = {
 			isa = PBXGroup;
 			children = (
+				5F36F04AB6265025AF5DD405 /* Assets.xcassets */,
 				DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */,
 				66476D6376B4B81E0421AD53 /* Info.plist */,
 				7DE19AF43B47789815D3C2C2 /* Features */,
@@ -459,6 +465,7 @@
 			buildPhases = (
 				D341D37BB18745C6BA74CE74 /* Enforce HTTPS for Production */,
 				8006276AFF6E8915097BD062 /* Sources */,
+				8296A955DF5338BAA2A89D8A /* Resources */,
 				D358AE62AA6F14BB49EDBEFA /* Frameworks */,
 				7A2FB71B339514CF05B8C73D /* Embed Frameworks */,
 			);
@@ -500,6 +507,7 @@
 			buildPhases = (
 				C760ADDE5DFB1F71D553CC0D /* Enforce HTTPS for Production */,
 				601E63BB3B90DFE920316259 /* Sources */,
+				318AC194747F306C0207F6CA /* Resources */,
 				756CC9A8C8812C2064DB5392 /* Frameworks */,
 				EAEEA1AB64A966F77CB99C4B /* Embed Frameworks */,
 			);
@@ -561,9 +569,11 @@
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					2C9D8450DB4D9DF15C9B3C83 = {
+						DevelopmentTeam = 47797T9SLZ;
 						ProvisioningStyle = Automatic;
 					};
 					B5AF815B660214F95C1AAF87 = {
+						DevelopmentTeam = 47797T9SLZ;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -593,6 +603,22 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		318AC194747F306C0207F6CA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C556DF991F542DE28E6DB98 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8296A955DF5338BAA2A89D8A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DDB999F20656F19CD79FC5C /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		BC41E079BE6948CDD48950F4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -607,6 +633,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		C760ADDE5DFB1F71D553CC0D /* Enforce HTTPS for Production */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -625,6 +652,7 @@
 		};
 		D341D37BB18745C6BA74CE74 /* Enforce HTTPS for Production */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -833,8 +861,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				DEVELOPMENT_TEAM = 47797T9SLZ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1159,8 +1185,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				DEVELOPMENT_TEAM = 47797T9SLZ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1360,8 +1384,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				DEVELOPMENT_TEAM = 47797T9SLZ;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
