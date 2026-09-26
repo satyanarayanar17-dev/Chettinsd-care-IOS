@@ -23,10 +23,23 @@ struct DoctorQueueView: View {
                         .padding(.top, 16)
                         
                         // Metrics
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            MetricsCard(title: "Patients Waiting", value: "\(viewModel.queue.count)", iconName: "person.3.sequence.fill", trend: viewModel.queue.count > 5 ? "High" : "Normal")
+                        if let metrics = viewModel.metrics {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 16) {
+                                    MetricsCard(title: "Requires Action", value: "\(metrics.requires_action)", iconName: "exclamationmark.triangle.fill", trend: nil)
+                                        .frame(width: 160)
+                                    MetricsCard(title: "Confirmed Today", value: "\(metrics.today_confirmed)", iconName: "calendar.badge.clock", trend: nil)
+                                        .frame(width: 160)
+                                    MetricsCard(title: "Waiting", value: "\(metrics.waiting)", iconName: "person.3.sequence.fill", trend: nil)
+                                        .frame(width: 160)
+                                    MetricsCard(title: "Completed", value: "\(metrics.completed)", iconName: "checkmark.circle.fill", trend: nil)
+                                        .frame(width: 160)
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        } else {
+                            ProgressView().padding()
                         }
-                        .padding(.horizontal, 16)
                         
                         // Queue
                         VStack(alignment: .leading, spacing: 12) {
@@ -90,6 +103,29 @@ struct NurseTriageView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
+
+
+                        // Metrics
+                        if let metrics = viewModel.metrics {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 16) {
+                                    MetricsCard(title: "Requires Action", value: "\(metrics.requires_action)", iconName: "exclamationmark.triangle.fill", trend: nil)
+                                        .frame(width: 160)
+                                    MetricsCard(title: "Confirmed Today", value: "\(metrics.today_confirmed)", iconName: "calendar.badge.clock", trend: nil)
+                                        .frame(width: 160)
+                                    MetricsCard(title: "Awaiting Triage", value: "\(metrics.triage)", iconName: "cross.case.fill", trend: nil)
+                                        .frame(width: 160)
+                                    MetricsCard(title: "Waiting Doctor", value: "\(metrics.waiting)", iconName: "person.3.sequence.fill", trend: nil)
+                                        .frame(width: 160)
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        } else {
+                            ProgressView().padding()
+                        }
+
+
+
                         
                         if viewModel.isLoading {
                             ProgressView()

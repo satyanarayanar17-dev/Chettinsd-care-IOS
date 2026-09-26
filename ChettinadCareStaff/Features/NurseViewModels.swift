@@ -32,6 +32,7 @@ class NurseTriageViewModel: ObservableObject {
     @Published var queue: [QueueEntry] = []
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
+    @Published var metrics: AdminMetricsResponse? = nil
     
     let apiClient = APIClient()
     
@@ -39,7 +40,10 @@ class NurseTriageViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
-            let fetchedQueue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+            async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+            async let metricsTask: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+            let (fetchedQueue, metrics) = try await (fetchedQueueTask, metricsTask)
+            self.metrics = metrics
             self.queue = fetchedQueue.filter { $0.status == "WAITING" || $0.status == "TRIAGE" }
         } catch {
             self.errorMessage = error.localizedDescription

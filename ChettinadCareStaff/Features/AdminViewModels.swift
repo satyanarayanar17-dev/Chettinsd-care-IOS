@@ -327,14 +327,29 @@ struct AdminMetricsResponse: Codable {
         let average_consultation: Double?
         var id: String { name }
     }
+    struct DepartmentMetric: Codable {
+        let name: String
+        let patients: Int
+        let waiting: Int
+        let average_wait: Int?
+        let longest_wait: Int?
+    }
     let date: String
+    let requires_action: Int
+    let security_alerts: Int
+    let today_confirmed: Int
+    let upcoming: Int
     let appointments: Int
     let checked_in: Int
     let waiting: Int
     let triage: Int
     let consultation: Int
     let completed: Int
+    let no_shows: Int
+    let average_wait: Int?
+    let results_pending: Int
     let doctors: [DoctorMetric]
+    let departments: [DepartmentMetric]?
 }
 
 @MainActor

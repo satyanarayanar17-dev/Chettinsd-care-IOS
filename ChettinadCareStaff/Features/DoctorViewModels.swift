@@ -75,6 +75,7 @@ class DoctorQueueViewModel: ObservableObject {
     @Published var queue: [QueueEntry] = []
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
+    @Published var metrics: AdminMetricsResponse? = nil
     
     let apiClient = APIClient()
     
@@ -82,7 +83,10 @@ class DoctorQueueViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         do {
-            let fetchedQueue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+            async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+            async let metricsTask: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+            let (fetchedQueue, metrics) = try await (fetchedQueueTask, metricsTask)
+            self.metrics = metrics
             self.queue = fetchedQueue.filter { $0.status == "WAITING_DOCTOR" || $0.status == "DOCTOR_READY" || $0.status == "CONSULTATION" }
         } catch {
             self.errorMessage = error.localizedDescription
