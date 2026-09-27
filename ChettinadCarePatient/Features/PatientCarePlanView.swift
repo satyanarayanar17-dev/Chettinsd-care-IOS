@@ -8,6 +8,7 @@ struct PatientCarePlanView: View {
     @State private var measurementValue: String = ""
     @State private var measurementNote: String = ""
     @State private var showingSelfRecord = false
+    @State private var showingActivityRecord = false
     
     var body: some View {
         NavigationView {
@@ -18,32 +19,41 @@ struct PatientCarePlanView: View {
                     ProgressView("Loading Care Plan...")
                 } else if let error = viewModel.errorMessage, viewModel.tasks.isEmpty {
                     errorStateView(error)
-                } else if viewModel.tasks.isEmpty && !viewModel.isLoading {
-                    emptyStateView
                 } else {
                     ScrollView {
-                        VStack(spacing: 16) {
-                            progressHeader
+                        VStack(spacing: StitchSpacing.lg) {
+                            if !viewModel.tasks.isEmpty {
+                                progressHeader
+                            }
 
                             if let error = viewModel.errorMessage {
                                 Text(error)
                                     .font(.footnote)
-                                    .foregroundColor(.red)
+                                    .foregroundStyle(Color.chettinadError)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal)
                             }
 
-                            Button { showingSelfRecord = true } label: { Label("Add Record", systemImage: "plus.circle.fill").frame(maxWidth: .infinity).padding(12) }
-                                .buttonStyle(.borderedProminent).padding(.horizontal)
+                            HStack(spacing: StitchSpacing.md) {
+                                Button { showingActivityRecord = true } label: { Label("What activity have you done?", systemImage: "figure.run").frame(maxWidth: .infinity).padding(StitchSpacing.md) }
+                                    .buttonStyle(StitchPrimaryButtonStyle()).tint(.green)
+                                Button { showingSelfRecord = true } label: { Label("Add Vitals", systemImage: "heart.text.square").frame(maxWidth: .infinity).padding(StitchSpacing.md) }
+                                    .buttonStyle(StitchPrimaryButtonStyle())
+                            }.padding(.horizontal)
                             
-                            if let next = nextActionTask {
-                                nextActionCard(task: next)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Today's Checklist").font(.headline).padding(.horizontal)
-                                ForEach(viewModel.tasks) { occurrence in
-                                    taskRow(occurrence)
+                            if viewModel.tasks.isEmpty && !viewModel.isLoading {
+                                emptyStateView
+                                    .padding(.vertical, 32)
+                            } else {
+                                if let next = nextActionTask {
+                                    nextActionCard(task: next)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: StitchSpacing.md) {
+                                    Text("Today's Checklist").font(Typography.titleMedium).padding(.horizontal)
+                                    ForEach(viewModel.tasks) { occurrence in
+                                        taskRow(occurrence)
+                                    }
                                 }
                             }
 
@@ -65,6 +75,7 @@ struct PatientCarePlanView: View {
                 measurementSheet
             }
             .sheet(isPresented: $showingSelfRecord) { SelfRecordSheet(viewModel: viewModel) }
+            .sheet(isPresented: $showingActivityRecord) { LogActivitySheet(viewModel: viewModel) }
         }
     }
     
@@ -73,21 +84,18 @@ struct PatientCarePlanView: View {
         let total = viewModel.tasks.count
         let percent = total > 0 ? Double(completed) / Double(total) : 0
         
-        return VStack {
+        return StitchCard {
             HStack {
                 Text("Daily Progress")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(Typography.bodyLarge)
+                    .foregroundStyle(Color.chettinadTextSecondary)
                 Spacer()
                 Text("\(completed) of \(total) completed")
-                    .font(.subheadline).bold()
+                    .font(Typography.bodyLarge).bold()
             }
             ProgressView(value: percent)
                 .tint(.green)
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
         .padding(.horizontal)
     }
     
@@ -96,54 +104,46 @@ struct PatientCarePlanView: View {
     }
     
     private func nextActionCard(task: CarePlanOccurrenceDTO) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        StitchCard {
             Text("Next Action")
-                .font(.caption).bold()
+                .font(Typography.bodyMedium).bold()
                 .foregroundColor(.blue)
                 .textCase(.uppercase)
             
             Text(task.title)
-                .font(.title3).bold()
+                .font(Typography.titleMedium).bold()
             
             Text(task.instruction)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(Typography.bodyLarge)
+                .foregroundStyle(Color.chettinadTextSecondary)
             
             HStack {
                 Image(systemName: "clock")
                 Text("Due at \(task.due_time)")
             }
-            .font(.caption)
-            .foregroundColor(.secondary)
+            .font(Typography.bodyMedium)
+            .foregroundStyle(Color.chettinadTextSecondary)
             
             Button(action: {
                 handleTaskAction(task)
             }) {
                 Text(actionTitle(for: task))
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
             }
+            .buttonStyle(StitchPrimaryButtonStyle())
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
         .padding(.horizontal)
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: StitchSpacing.lg) {
             Image(systemName: "heart.text.square")
                 .font(.system(size: 48))
                 .foregroundColor(.gray)
             Text("No active care plan")
-                .font(.headline)
+                .font(Typography.titleMedium)
             Text("Your care team hasn't assigned daily monitoring or activities yet.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+                .font(Typography.bodyLarge)
+                .foregroundStyle(Color.chettinadTextSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Button("Try Again") {
@@ -154,14 +154,8 @@ struct PatientCarePlanView: View {
     }
 
     private func errorStateView(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 42))
-                .foregroundColor(.orange)
-            Text("Care Plan unavailable").font(.headline)
-            Text(message).font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
-            Button("Try Again") { Task { await viewModel.fetchTodayCarePlan(); await viewModel.fetchTimeline() } }
-                .buttonStyle(.borderedProminent)
+        StitchErrorState(message: message) {
+            Task { await viewModel.fetchTodayCarePlan(); await viewModel.fetchTimeline() }
         }
         .padding(32)
     }
@@ -171,75 +165,59 @@ struct PatientCarePlanView: View {
         let isMissed = occurrence.status == .MISSED
         let isSkipped = occurrence.status == .SKIPPED
         
-        return HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(isDone ? Color.green : (isMissed ? Color.red.opacity(0.2) : Color.blue.opacity(0.1)))
-                    .frame(width: 40, height: 40)
-                
-                Image(systemName: iconFor(type: occurrence.task_type))
-                    .foregroundColor(isDone ? .white : (isMissed ? .red : .blue))
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(occurrence.title)
-                    .font(.headline)
-                    .strikethrough(isDone || isSkipped, color: .secondary)
-                Text(occurrence.instruction)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                if let val = occurrence.recorded_value {
-                    Text("Recorded: \(String(format: "%.1f", val)) \(occurrence.target_unit ?? "")")
-                        .font(.caption).bold()
-                        .foregroundColor(.green)
+        return StitchCard {
+            HStack(spacing: StitchSpacing.lg) {
+                ZStack {
+                    Circle()
+                        .fill(isDone ? Color.green : (isMissed ? Color.red.opacity(0.2) : Color.blue.opacity(0.1)))
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: iconFor(type: occurrence.task_type))
+                        .foregroundColor(isDone ? .white : (isMissed ? .red : .blue))
                 }
-            }
-            Spacer()
-            
-            VStack(alignment: .trailing) {
-                Text(occurrence.due_time)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
                 
-                if isDone {
-                    Text("Done")
-                        .font(.caption2).bold()
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.green.opacity(0.2))
-                        .foregroundColor(.green)
-                        .cornerRadius(4)
-                } else if isSkipped {
-                    Text("Skipped")
-                        .font(.caption2).bold()
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.gray.opacity(0.2))
-                        .foregroundColor(.gray)
-                        .cornerRadius(4)
-                } else if isMissed {
-                    Text("Missed")
-                        .font(.caption2).bold()
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color.red.opacity(0.2))
-                        .foregroundColor(.red)
-                        .cornerRadius(4)
-                } else {
-                    if occurrence.task_type == .MEDICATION || occurrence.task_type == .INSULIN {
-                        Menu("Action") {
-                            Button("Mark Taken") { submit(occurrence, status: "TAKEN") }
-                            Button("Skip", role: .destructive) { submit(occurrence, status: "SKIPPED") }
-                        }
-                        .font(.caption).bold().buttonStyle(.borderedProminent)
+                VStack(alignment: .leading, spacing: StitchSpacing.xs) {
+                    Text(occurrence.title)
+                        .font(Typography.titleMedium)
+                        .strikethrough(isDone || isSkipped, color: .secondary)
+                    Text(occurrence.instruction)
+                        .font(Typography.bodyLarge)
+                        .foregroundStyle(Color.chettinadTextSecondary)
+                    
+                    if let val = occurrence.recorded_value {
+                        Text("Recorded: \(String(format: "%.1f", val)) \(occurrence.target_unit ?? "")")
+                            .font(Typography.bodyMedium).bold()
+                            .foregroundColor(.green)
+                    }
+                }
+                Spacer()
+                
+                VStack(alignment: .trailing) {
+                    Text(occurrence.due_time)
+                        .font(Typography.bodyMedium)
+                        .foregroundStyle(Color.chettinadTextSecondary)
+                    
+                    if isDone {
+                        StitchStatusChip(status: "COMPLETED")
+                    } else if isSkipped {
+                        StitchStatusChip(status: "SKIPPED")
+                    } else if isMissed {
+                        StitchStatusChip(status: "MISSED")
                     } else {
-                        Button("Action") { handleTaskAction(occurrence) }
-                            .font(.caption).bold().buttonStyle(.borderedProminent)
+                        if occurrence.task_type == .MEDICATION || occurrence.task_type == .INSULIN {
+                            Menu("Action") {
+                                Button("Mark Taken") { submit(occurrence, status: "TAKEN") }
+                                Button("Skip", role: .destructive) { submit(occurrence, status: "SKIPPED") }
+                            }
+                            .font(Typography.bodyMedium).bold().buttonStyle(StitchPrimaryButtonStyle())
+                        } else {
+                            Button("Action") { handleTaskAction(occurrence) }
+                                .font(Typography.bodyMedium).bold().buttonStyle(StitchPrimaryButtonStyle())
+                        }
                     }
                 }
             }
         }
-        .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
         .padding(.horizontal)
     }
     
@@ -282,13 +260,13 @@ struct PatientCarePlanView: View {
             Form {
                 if let error = viewModel.errorMessage {
                     Section {
-                        Text(error).foregroundColor(.red)
+                        Text(error).foregroundStyle(Color.chettinadError)
                     }
                 }
                 if let task = selectedTask {
                     Section(header: Text("Details")) {
-                        Text(task.title).font(.headline)
-                        Text(task.instruction).font(.subheadline).foregroundColor(.secondary)
+                        Text(task.title).font(Typography.titleMedium)
+                        Text(task.instruction).font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary)
                     }
                     
                     Section(header: Text("Reading")) {
@@ -296,7 +274,7 @@ struct PatientCarePlanView: View {
                             TextField("Value", text: $measurementValue)
                                 .keyboardType(.decimalPad)
                             if let unit = task.target_unit {
-                                Text(unit).foregroundColor(.secondary)
+                                Text(unit).foregroundStyle(Color.chettinadTextSecondary)
                             }
                         }
                         TextField("Optional Note", text: $measurementNote)
@@ -322,39 +300,40 @@ struct PatientCarePlanView: View {
     }
 
     private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Activity").font(.headline)
+        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+            Text("Recent Activity").font(Typography.titleMedium)
             ForEach(viewModel.timeline.prefix(8)) { event in
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(event.title ?? event.task_type?.rawValue.capitalized ?? "Care Plan update").font(.subheadline).bold()
-                        Text(event.status.capitalized).font(.caption).foregroundColor(.secondary)
-                        if let value = event.observation?.components?.first {
-                            Text("\(String(format: "%.1f", value.numeric_value)) \(value.unit)").font(.caption).foregroundColor(.green)
+                StitchCard {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(event.title ?? event.task_type?.rawValue.capitalized ?? "Care Plan update").font(Typography.bodyLarge).bold()
+                            Text(event.status.capitalized).font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                            if let value = event.observation?.components?.first {
+                                Text("\(String(format: "%.1f", value.numeric_value)) \(value.unit)").font(Typography.bodyMedium).foregroundColor(.green)
+                            }
                         }
+                        Spacer()
+                        Text(event.occurrence_date).font(Typography.bodySmall).foregroundStyle(Color.chettinadTextSecondary)
                     }
-                    Spacer()
-                    Text(event.occurrence_date).font(.caption2).foregroundColor(.secondary)
                 }
-                .padding(12)
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(10)
             }
         }
         .padding(.horizontal)
     }
 
     private var selfRecordSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Patient self-recorded").font(.headline)
+        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+            Text("Patient self-recorded").font(Typography.titleMedium)
             ForEach(viewModel.selfRecords.prefix(10)) { record in
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(record.record_type.replacingOccurrences(of: "_", with: " ").capitalized).font(.subheadline).bold()
-                    if record.record_type == "ACTIVITY" { Text("\(record.activity_name ?? "Activity") · \(record.duration_minutes ?? 0) min") }
-                    else if record.record_type == "BLOOD_PRESSURE" { Text("\(record.numeric_value ?? 0, specifier: "%.0f")/\(record.secondary_numeric_value ?? 0, specifier: "%.0f") mmHg") }
-                    else { Text("\(record.numeric_value ?? 0, specifier: "%.1f") \(record.unit ?? "")") }
-                    Text("Patient self-recorded · \(ISODate.display(record.observed_at))").font(.caption).foregroundColor(.secondary)
-                }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(10)
+                StitchCard {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(record.record_type.replacingOccurrences(of: "_", with: " ").capitalized).font(Typography.bodyLarge).bold()
+                        if record.record_type == "ACTIVITY" { Text("\(record.activity_name ?? "Activity") · \(record.duration_minutes ?? 0) min") }
+                        else if record.record_type == "BLOOD_PRESSURE" { Text("\(record.numeric_value ?? 0, specifier: "%.0f")/\(record.secondary_numeric_value ?? 0, specifier: "%.0f") mmHg") }
+                        else { Text("\(record.numeric_value ?? 0, specifier: "%.1f") \(record.unit ?? "")") }
+                        Text("Patient self-recorded · \(ISODate.display(record.observed_at))").font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                    }
+                }
             }
         }.padding(.horizontal)
     }

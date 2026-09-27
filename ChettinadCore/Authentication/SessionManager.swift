@@ -138,3 +138,25 @@ struct RefreshResponse: Codable {
     let role: String
     let account_type: String
 }
+
+public struct SessionInfo: Codable, Identifiable {
+    public let id: String
+    public let device_name: String?
+    public let current: Bool
+    public let expires_at: String
+}
+
+public struct GetSessionsEndpoint: APIEndpoint {
+    public typealias Response = [SessionInfo]
+    public var path: String { "/api/v1/auth/opd/sessions" }
+    public var method: HTTPMethod { .get }
+    public init() {}
+}
+
+public struct RevokeSessionEndpoint: APIEndpoint {
+    public typealias Response = [String: String]
+    public let sessionId: String
+    public var path: String { "/api/v1/auth/opd/sessions/\(sessionId)" }
+    public var method: HTTPMethod { .delete }
+    public init(sessionId: String) { self.sessionId = sessionId }
+}

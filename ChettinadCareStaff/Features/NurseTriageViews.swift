@@ -20,14 +20,7 @@ struct TriageFormView: View {
             }
             if let error = viewModel.errorMessage {
                 Section {
-                    VStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.orange)
-                        Text(error)
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity)
+                    StitchErrorState(message: error)
                 }
             }
             

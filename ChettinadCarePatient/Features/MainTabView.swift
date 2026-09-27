@@ -20,6 +20,12 @@ struct MainTabView: View {
                     Label("Home", systemImage: "house")
                 }
             
+            PatientQueueView()
+                .tag(6)
+                .tabItem {
+                    Label("Queue", systemImage: "person.3.sequence")
+                }
+            
             PatientAppointmentsView(onRecords: { selectedTab = 3 })
                 .tag(2)
                 .tabItem {

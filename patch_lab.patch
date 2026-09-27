@@ -1,0 +1,123 @@
+--- ChettinadCareStaff/Features/StaffViews.swift
++++ ChettinadCareStaff/Features/StaffViews.swift
+@@ -534,6 +534,30 @@
+         }
+         await fetchLabs()
+     }
++    
++    @MainActor func processLab(labId: String, version: Int) async {
++        do {
++            let _: EmptyResponse = try await apiClient.execute(endpoint: TransitionLabEndpoint(labId: labId, action: "process", version: version))
++        } catch { errorMessage = error.localizedDescription }
++        await fetchLabs()
++    }
++    
++    @MainActor func reviewLab(labId: String, version: Int) async {
++        do {
++            let _: EmptyResponse = try await apiClient.execute(endpoint: TransitionLabEndpoint(labId: labId, action: "review", version: version))
++        } catch { errorMessage = error.localizedDescription }
++        await fetchLabs()
++    }
++    
++    @MainActor func enterResult(labId: String, version: Int, result: String, unit: String, referenceRange: String) async {
++        do {
++            struct ResultPayload: Codable { let result: String; let unit: String; let reference_range: String; let __v: Int }
++            struct EnterResultEndpoint: APIEndpoint { typealias Response = EmptyResponse; let labId: String; var path: String { "/api/v1/opd/labs/\(labId)/result" }; var method: HTTPMethod { .post }; var body: Data?; init(labId: String, payload: ResultPayload) { self.labId = labId; self.body = try? JSONEncoder().encode(payload) } }
++            
++            let _: EmptyResponse = try await apiClient.execute(endpoint: EnterResultEndpoint(labId: labId, payload: ResultPayload(result: result, unit: unit, reference_range: referenceRange, __v: version)))
++        } catch { errorMessage = error.localizedDescription }
++        await fetchLabs()
++    }
+ }
+ 
+ struct GetLabsEndpoint: APIEndpoint {
+@@ -547,6 +571,15 @@
+     var body: Data? { try? JSONEncoder().encode(["__v": version]) }
+ }
+ 
++struct TransitionLabEndpoint: APIEndpoint {
++    typealias Response = EmptyResponse
++    let labId: String
++    let action: String
++    let version: Int
++    var path: String { "/api/v1/opd/labs/\(labId)/\(action)" }
++    var method: HTTPMethod { .post }
++    var body: Data? { try? JSONEncoder().encode(["__v": version]) }
++}
++
+ struct LaboratoryView: View {
+     @EnvironmentObject var appState: AppState
+     @StateObject private var viewModel = LaboratoryViewModel()
+     @State private var filter = ""
++    @State private var labToEdit: LabOrder?
+     
+     var body: some View {
+         NavigationStack {
+@@ -599,6 +632,32 @@
+                                 }.buttonStyle(.borderedProminent)
+                             }
+                             
++                            if lab.status == "COLLECTED" && appState.role == "NURSE" {
++                                Button("Process") {
++                                    Task { await viewModel.processLab(labId: lab.id, version: lab.__v ?? 1) }
++                                }.buttonStyle(.borderedProminent)
++                            }
++                            
++                            if (lab.status == "PROCESSING" || lab.status == "AVAILABLE" || lab.status == "REVIEWED") && appState.role == "NURSE" {
++                                Button(lab.status == "PROCESSING" ? "Enter Result" : "Amend Result") {
++                                    labToEdit = lab
++                                }.buttonStyle(.bordered)
++                            }
++                            
++                            if lab.status == "AVAILABLE" && appState.role == "DOCTOR" {
++                                Button("Review Result") {
++                                    Task { await viewModel.reviewLab(labId: lab.id, version: lab.__v ?? 1) }
++                                }.buttonStyle(.borderedProminent)
++                            }
++                            
+                             if lab.status == "AVAILABLE" || lab.status == "REVIEWED" {
+                                 if let val = lab.result {
+                                     Text("Result: \(val) \(lab.unit ?? "")")
+@@ -619,10 +678,41 @@
+             .task {
+                 await viewModel.fetchLabs()
+             }
++            .sheet(item: $labToEdit) { lab in
++                LabResultSheet(viewModel: viewModel, lab: lab)
++            }
+         }
+     }
+ }
+ 
++struct LabResultSheet: View {
++    @Environment(\.dismiss) var dismiss
++    @ObservedObject var viewModel: LaboratoryViewModel
++    let lab: LabOrder
++    @State private var result = ""
++    @State private var unit = ""
++    @State private var referenceRange = ""
++    
++    var body: some View {
++        NavigationView {
++            Form {
++                Section("Result Details") {
++                    TextField("Result Value", text: $result)
++                    TextField("Unit (e.g., mg/dL)", text: $unit)
++                    TextField("Reference Range (e.g., 70-110)", text: $referenceRange)
++                }
++            }
++            .navigationTitle("Enter Result")
++            .toolbar {
++                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
++                ToolbarItem(placement: .confirmationAction) {
++                    Button("Save") {
++                        Task { await viewModel.enterResult(labId: lab.id, version: lab.__v ?? 1, result: result, unit: unit, referenceRange: referenceRange); dismiss() }
++                    }.disabled(result.isEmpty)
++                }
++            }
++        }
++        .onAppear { result = lab.result ?? ""; unit = lab.unit ?? ""; referenceRange = lab.reference_range ?? "" }
++    }
++}
++
+ struct EmptyResponse: Codable {}

@@ -9,7 +9,7 @@ struct PatientTrendsView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: StitchSpacing.xl) {
                     Picker("Time Range", selection: $timeRange) {
                         Text("7 Days").tag(7)
                         Text("30 Days").tag(30)
@@ -21,12 +21,12 @@ struct PatientTrendsView: View {
                     if viewModel.isLoading {
                         ProgressView().padding()
                     } else if let error = viewModel.trendsError, viewModel.timeline.isEmpty, viewModel.selfRecords.isEmpty {
-                        Text(error)
-                            .foregroundColor(.chettinadError)
-                            .padding()
+                        StitchErrorState(message: error) {
+                            Task { await viewModel.fetchTimeline() }
+                        }
                     } else if filteredTimeline.isEmpty && filteredSelfRecords.isEmpty {
                         Text("No data available for this time range.")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(Color.chettinadTextSecondary)
                             .padding()
                     } else {
                         glucoseSection
@@ -120,154 +120,147 @@ struct PatientTrendsView: View {
     // MARK: - Views
     
     private var glucoseSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Glucose / Blood Sugar").font(.headline).padding(.horizontal)
+        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+            Text("Glucose / Blood Sugar").font(Typography.titleMedium).padding(.horizontal)
             if glucoseData.isEmpty {
-                Text("No readings in this period.").font(.subheadline).foregroundColor(.secondary).padding(.horizontal)
+                Text("No readings in this period.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary).padding(.horizontal)
             } else {
-                Chart(glucoseData) { item in
-                    LineMark(
-                        x: .value("Date", item.date),
-                        y: .value("Level", item.value)
-                    )
-                    .symbol(Circle())
-                    .interpolationMethod(.monotone)
+                StitchCard {
+                    Chart(glucoseData) { item in
+                        LineMark(
+                            x: .value("Date", item.date),
+                            y: .value("Level", item.value)
+                        )
+                        .symbol(Circle())
+                        .interpolationMethod(.monotone)
+                    }
+                    .frame(height: 200)
                 }
-                .frame(height: 200)
-                .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(12)
                 .padding(.horizontal)
                 
                 // Table
-                VStack(spacing: 0) {
-                    ForEach(glucoseData.reversed().prefix(5)) { item in
-                        HStack {
-                            Text(item.date, format: .dateTime.month().day().hour().minute())
-                                .font(.subheadline)
-                            Spacer()
-                            Text("\(String(format: "%.1f", item.value)) mg/dL")
-                                .font(.subheadline).bold()
+                StitchCard {
+                    VStack(spacing: 0) {
+                        ForEach(glucoseData.reversed().prefix(5)) { item in
+                            HStack {
+                                Text(item.date, format: .dateTime.month().day().hour().minute())
+                                    .font(Typography.bodyLarge)
+                                Spacer()
+                                Text("\(String(format: "%.1f", item.value)) mg/dL")
+                                    .font(Typography.bodyLarge).bold()
+                            }
+                            .padding(.vertical, StitchSpacing.sm)
+                            if item.id != glucoseData.reversed().prefix(5).last?.id {
+                                Divider()
+                            }
                         }
-                        .padding()
-                        Divider()
                     }
                 }
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(12)
                 .padding(.horizontal)
             }
         }
     }
     
     private var insulinSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Insulin Adherence").font(.headline).padding(.horizontal)
+        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+            Text("Insulin Adherence").font(Typography.titleMedium).padding(.horizontal)
             if insulinRecords.isEmpty {
-                Text("No insulin records.").font(.subheadline).foregroundColor(.secondary).padding(.horizontal)
+                Text("No insulin records.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary).padding(.horizontal)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(insulinRecords.prefix(5)) { record in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(record.title ?? "Insulin").font(.subheadline).bold()
-                                Text(formatDate(record.recorded_at)).font(.caption).foregroundColor(.secondary)
+                StitchCard {
+                    VStack(spacing: 0) {
+                        ForEach(insulinRecords.prefix(5)) { record in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(record.title ?? "Insulin").font(Typography.bodyLarge).bold()
+                                    Text(formatDate(record.recorded_at)).font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                                }
+                                Spacer()
+                                StitchStatusChip(status: record.status)
                             }
-                            Spacer()
-                            statusBadge(record.status)
+                            .padding(.vertical, StitchSpacing.sm)
+                            if record.id != insulinRecords.prefix(5).last?.id {
+                                Divider()
+                            }
                         }
-                        .padding()
-                        Divider()
                     }
                 }
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(12)
                 .padding(.horizontal)
             }
         }
     }
     
     private var medicationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Medication History").font(.headline).padding(.horizontal)
+        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+            Text("Medication History").font(Typography.titleMedium).padding(.horizontal)
             if medicationRecords.isEmpty {
-                Text("No medication records.").font(.subheadline).foregroundColor(.secondary).padding(.horizontal)
+                Text("No medication records.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary).padding(.horizontal)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(medicationRecords.prefix(5)) { record in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(record.title ?? "Medication").font(.subheadline).bold()
-                                Text(formatDate(record.recorded_at)).font(.caption).foregroundColor(.secondary)
+                StitchCard {
+                    VStack(spacing: 0) {
+                        ForEach(medicationRecords.prefix(5)) { record in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(record.title ?? "Medication").font(Typography.bodyLarge).bold()
+                                    Text(formatDate(record.recorded_at)).font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                                }
+                                Spacer()
+                                StitchStatusChip(status: record.status)
                             }
-                            Spacer()
-                            statusBadge(record.status)
+                            .padding(.vertical, StitchSpacing.sm)
+                            if record.id != medicationRecords.prefix(5).last?.id {
+                                Divider()
+                            }
                         }
-                        .padding()
-                        Divider()
                     }
                 }
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(12)
                 .padding(.horizontal)
             }
         }
     }
     
     private var activitySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Activity History").font(.headline).padding(.horizontal)
+        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+            Text("Activity History").font(Typography.titleMedium).padding(.horizontal)
             if activityRecords.isEmpty && selfActivityRecords.isEmpty {
-                Text("No activity records.").font(.subheadline).foregroundColor(.secondary).padding(.horizontal)
+                Text("No activity records.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary).padding(.horizontal)
             } else {
-                VStack(spacing: 0) {
-                    // Combine and sort
-                    let combined: [(title: String, date: String, status: String?, mins: Int?)] = (
-                        activityRecords.map { ($0.title ?? "Activity", $0.recorded_at, $0.status, nil) } +
-                        selfActivityRecords.map { ($0.activity_name ?? "Activity", $0.observed_at, "RECORDED", $0.duration_minutes) }
-                    ).sorted { sortDate($0.date) > sortDate($1.date) }
-                    
-                    ForEach(Array(combined.prefix(5).enumerated()), id: \.offset) { _, item in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.title).font(.subheadline).bold()
-                                Text(formatDate(item.date)).font(.caption).foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            if let status = item.status {
-                                if status == "RECORDED", let mins = item.mins {
-                                    Text("\(mins) min").font(.caption).bold().padding(4).background(Color.blue.opacity(0.2)).foregroundColor(.blue).cornerRadius(4)
-                                } else {
-                                    statusBadge(status)
+                StitchCard {
+                    VStack(spacing: 0) {
+                        // Combine and sort
+                        let combined: [(title: String, date: String, status: String?, mins: Int?)] = (
+                            activityRecords.map { ($0.title ?? "Activity", $0.recorded_at, $0.status, nil) } +
+                            selfActivityRecords.map { ($0.activity_name ?? "Activity", $0.observed_at, "RECORDED", $0.duration_minutes) }
+                        ).sorted { sortDate($0.date) > sortDate($1.date) }
+                        
+                        ForEach(Array(combined.prefix(5).enumerated()), id: \.offset) { index, item in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(item.title).font(Typography.bodyLarge).bold()
+                                    Text(formatDate(item.date)).font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                                }
+                                Spacer()
+                                if let status = item.status {
+                                    if status == "RECORDED", let mins = item.mins {
+                                        Text("\(mins) min").font(Typography.bodyMedium).bold().padding(StitchSpacing.xs).background(Color.blue.opacity(0.2)).foregroundColor(.blue).cornerRadius(4)
+                                    } else {
+                                        StitchStatusChip(status: status)
+                                    }
                                 }
                             }
+                            .padding(.vertical, StitchSpacing.sm)
+                            if index != combined.prefix(5).count - 1 {
+                                Divider()
+                            }
                         }
-                        .padding()
-                        Divider()
                     }
                 }
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(12)
                 .padding(.horizontal)
             }
         }
     }
     
-    private func statusBadge(_ status: String) -> some View {
-        let color: Color
-        switch status.uppercased() {
-        case "COMPLETED", "TAKEN": color = .green
-        case "MISSED": color = .red
-        case "SKIPPED": color = .gray
-        default: color = .blue
-        }
-        return Text(status.capitalized)
-            .font(.caption2).bold()
-            .padding(.horizontal, 6).padding(.vertical, 2)
-            .background(color.opacity(0.2))
-            .foregroundColor(color)
-            .cornerRadius(4)
-    }
+
     
     private func formatDate(_ dateStr: String) -> String {
         ISODate.display(dateStr)

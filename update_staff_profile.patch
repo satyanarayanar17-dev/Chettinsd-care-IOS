@@ -1,0 +1,65 @@
+--- ChettinadCareStaff/Features/StaffViews.swift
++++ ChettinadCareStaff/Features/StaffViews.swift
+@@ -682,6 +682,7 @@
+     @State private var session: AuthSession?
+     @State private var isLoading = true
+     @State private var showingEdit = false
++    @State private var activeSessions: [SessionInfo] = []
+     
+     var body: some View {
+         NavigationView {
+@@ -714,6 +715,31 @@
+                     }
+                 }
+                 
++                if !activeSessions.isEmpty {
++                    Section(header: Text("Active Sessions")) {
++                        ForEach(activeSessions) { s in
++                            VStack(alignment: .leading, spacing: 4) {
++                                Text(s.current ? "This Device" : "Device")
++                                    .font(.headline)
++                                Text(s.device_name ?? "Unknown Device")
++                                    .font(.subheadline)
++                                Text("Expires: \(String(s.expires_at.prefix(10)))")
++                                    .font(.caption)
++                                    .foregroundColor(.secondary)
++                            }
++                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
++                                Button(role: .destructive) {
++                                    Task { await revokeSession(s) }
++                                } label: {
++                                    Label("Revoke", systemImage: "trash")
++                                }
++                            }
++                            .padding(.vertical, 4)
++                        }
++                    }
++                }
++                
+                 Section {
+                     Button(action: {
+                         appState.logout()
+@@ -729,6 +755,24 @@
+             .onAppear {
+                 self.session = SessionManager.shared.getSession()
+                 isLoading = false
++                Task { await fetchSessions() }
++            }
++        }
++    }
++    
++    private func fetchSessions() async {
++        do {
++            activeSessions = try await APIClient().execute(endpoint: GetSessionsEndpoint())
++        } catch {
++            print("Failed to fetch sessions: \(error)")
++        }
++    }
++    
++    private func revokeSession(_ session: SessionInfo) async {
++        do {
++            let _: [String: String]? = try? await APIClient().executeRaw(endpoint: RevokeSessionEndpoint(sessionId: session.id))
++            if session.current { appState.logout() }
++            else { await fetchSessions() }
++        } catch {
++            print("Failed to revoke session: \(error)")

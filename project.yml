@@ -69,7 +69,7 @@ targets:
         SUPPORTS_MACCATALYST: YES
       configs:
         Debug:
-          CC_API_BASE_URL: "http://Sids-MacBook-Pro.local:3001"
+          CC_API_BASE_URL: "https://chettinad-care-api.onrender.com"
           APP_ENV: "local"
         Staging:
           CC_API_BASE_URL: "https://staging-api.chettinad.care"
@@ -126,7 +126,7 @@ targets:
         SUPPORTS_MACCATALYST: YES
       configs:
         Debug:
-          CC_API_BASE_URL: "http://Sids-MacBook-Pro.local:3001"
+          CC_API_BASE_URL: "https://chettinad-care-api.onrender.com"
           APP_ENV: "local"
         Staging:
           CC_API_BASE_URL: "https://staging-api.chettinad.care"

@@ -31,6 +31,7 @@
 		5C556DF991F542DE28E6DB98 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5F36F04AB6265025AF5DD405 /* Assets.xcassets */; };
 		5F2ADCBF2F3AA4E94FDBE109 /* StaffLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680C59F078267ED61F6609C0 /* StaffLoginView.swift */; };
 		635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFFAB0359A98AECF841B4B12 /* ChettinadCarePatientApp.swift */; };
+		663C4F98CF7548121DD5BD42 /* LogActivitySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA8246AA493E3611AB2A97E /* LogActivitySheet.swift */; };
 		6818CD8C6DDAFA06E94D3FE7 /* ChettinadCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8814C3C49799AB6DA9B8C820 /* ChettinadCore.framework */; };
 		6A41A7F8DF8B0CF03C42C1B2 /* StaffViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE4F85494BDF60C306018C8D /* StaffViews.swift */; };
 		707B9C89DC77522FE7FEB4C3 /* SamePostgreSQLProofTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B604E66BA0793C7272CA8B49 /* SamePostgreSQLProofTests.swift */; };
@@ -38,6 +39,7 @@
 		798912C36E877ACE698D3C51 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5B3F221F432D33170B31C0 /* APIError.swift */; };
 		7C0AA74F165FA34F0A678C46 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EE8F6B447B641EE36E6184 /* Typography.swift */; };
 		8130C3D7B18AD2ABBCEBE071 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 463CBB4A1A0E6785099DF985 /* APIClient.swift */; };
+		823B112994455D9A63A85459 /* LogActivitySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC52EFB97AA4DBA2A23FFA3A /* LogActivitySheet.swift */; };
 		82EDFB5F1460FC0B8E560A84 /* Manrope.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5B3A613F35C64FEFE674F1EB /* Manrope.ttf */; };
 		84B4629CE8ADADC87493F21A /* AppHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E23D3B04BB4C16326E145C1 /* AppHeader.swift */; };
 		86A9F179E2C65AA1855877A4 /* EnvironmentConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8575A9281C709A159AA8BC64 /* EnvironmentConfig.swift */; };
@@ -148,7 +150,7 @@
 /* Begin PBXFileReference section */
 		05D979F2B95D92E189C62EDB /* PatientTrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientTrendsView.swift; sourceTree = "<group>"; };
 		0E23D3B04BB4C16326E145C1 /* AppHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHeader.swift; sourceTree = "<group>"; };
-		0ED7C4197D65A7C5E48D574A /* ChettinadCareStaffTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChettinadCareStaffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0ED7C4197D65A7C5E48D574A /* ChettinadCareStaffTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCareStaffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		10B5B357A6406D1C008FB53D /* StitchComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StitchComponents.swift; sourceTree = "<group>"; };
 		10E0DDAA488C3EAA7A0D3376 /* CarePlanViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarePlanViewModel.swift; sourceTree = "<group>"; };
 		146A78CAED3201570D881234 /* LogoutEndpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogoutEndpoint.swift; sourceTree = "<group>"; };
@@ -156,10 +158,11 @@
 		31C07BCFCE4E5F3AC48D7304 /* SideTabsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideTabsView.swift; sourceTree = "<group>"; };
 		371488B1F40F465A3B63E8CB /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		39D7B24F32C85E077EA6271A /* ChettinadCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChettinadCoreTests.swift; sourceTree = "<group>"; };
-		3B02288037FB94426AA7D51B /* ChettinadCarePatient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChettinadCarePatient.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		3B446A8A97827B3AB1760656 /* ChettinadCareStaff.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChettinadCareStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B02288037FB94426AA7D51B /* ChettinadCarePatient.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCarePatient.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3B446A8A97827B3AB1760656 /* ChettinadCareStaff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ChettinadCareStaff.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D7EBE307CB379EDB4764443 /* NurseTriageViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NurseTriageViews.swift; sourceTree = "<group>"; };
 		3DEE6773E5751FEC1F4360C8 /* StaffMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffMainView.swift; sourceTree = "<group>"; };
+		3FA8246AA493E3611AB2A97E /* LogActivitySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogActivitySheet.swift; sourceTree = "<group>"; };
 		463CBB4A1A0E6785099DF985 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		4A8406B2B66CA1FE64E0E853 /* DoctorConsultationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoctorConsultationViews.swift; sourceTree = "<group>"; };
 		4C4E1C4514065784F2686C17 /* OPDModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OPDModels.swift; sourceTree = "<group>"; };
@@ -209,7 +212,8 @@
 		EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatientCarePlanView.swift; sourceTree = "<group>"; };
 		F6F53AFF6EE28DF0B83FFC31 /* ISODate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ISODate.swift; sourceTree = "<group>"; };
 		F7064BAAC03DD101978E8B3C /* NurseViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NurseViewModels.swift; sourceTree = "<group>"; };
-		FD0029DD98CDB95FF61AEE9D /* ChettinadCarePatientTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChettinadCarePatientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC52EFB97AA4DBA2A23FFA3A /* LogActivitySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogActivitySheet.swift; sourceTree = "<group>"; };
+		FD0029DD98CDB95FF61AEE9D /* ChettinadCarePatientTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ChettinadCarePatientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -304,6 +308,7 @@
 				5C2CD27E00BD329B88E08CD1 /* AdminViews.swift */,
 				4A8406B2B66CA1FE64E0E853 /* DoctorConsultationViews.swift */,
 				E364ED96535DF98EB5A40AB8 /* DoctorViewModels.swift */,
+				3FA8246AA493E3611AB2A97E /* LogActivitySheet.swift */,
 				3D7EBE307CB379EDB4764443 /* NurseTriageViews.swift */,
 				F7064BAAC03DD101978E8B3C /* NurseViewModels.swift */,
 				204116B3828F504B56AD96DC /* PatientCarePlanMonitoringView.swift */,
@@ -365,6 +370,7 @@
 			isa = PBXGroup;
 			children = (
 				10E0DDAA488C3EAA7A0D3376 /* CarePlanViewModel.swift */,
+				FC52EFB97AA4DBA2A23FFA3A /* LogActivitySheet.swift */,
 				A60190ADFFCFD5DCC5171A22 /* LoginView.swift */,
 				8837F515753F7E3D4B49BF2C /* MainTabView.swift */,
 				EDFC7B7526582EC5A6CE4A93 /* PatientCarePlanView.swift */,
@@ -566,7 +572,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2700;
+				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					2C9D8450DB4D9DF15C9B3C83 = {
 						DevelopmentTeam = 47797T9SLZ;
@@ -678,6 +684,7 @@
 			files = (
 				F2D70BED513EC1DE9E09AFA3 /* CarePlanViewModel.swift in Sources */,
 				635E314D037DA031CAF7957D /* ChettinadCarePatientApp.swift in Sources */,
+				823B112994455D9A63A85459 /* LogActivitySheet.swift in Sources */,
 				0715CF879F30DC1312570593 /* LoginView.swift in Sources */,
 				02562C291B9ED397F1E5B02D /* MainTabView.swift in Sources */,
 				E496357C14C799390032FE4C /* PatientCarePlanView.swift in Sources */,
@@ -697,6 +704,7 @@
 				DE6FED09318C2A52A86FC7C7 /* ChettinadCareStaffApp.swift in Sources */,
 				D932AC18C2E3A39546313EBE /* DoctorConsultationViews.swift in Sources */,
 				DE7128CEE5F06F273781D193 /* DoctorViewModels.swift in Sources */,
+				663C4F98CF7548121DD5BD42 /* LogActivitySheet.swift in Sources */,
 				DC09FD46FA6C4A6D940AD0DB /* NurseTriageViews.swift in Sources */,
 				F88DFFD49CD3AE1817445104 /* NurseViewModels.swift in Sources */,
 				571815FA78AEBD115C36DCF6 /* PatientCarePlanMonitoringView.swift in Sources */,
@@ -801,7 +809,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -835,7 +842,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -850,7 +856,6 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -862,13 +867,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCarePatientTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -887,16 +890,12 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCore;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -917,12 +916,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 47797T9SLZ;
 				INFOPLIST_FILE = ChettinadCarePatient/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.patient;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -936,13 +933,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCareStaffTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -957,13 +952,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCareStaffTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -978,17 +971,15 @@
 			buildSettings = {
 				APP_ENV = local;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CC_API_BASE_URL = "http://Sids-MacBook-Pro.local:3001";
+				CC_API_BASE_URL = "https://chettinad-care-api.onrender.com";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 47797T9SLZ;
 				INFOPLIST_FILE = ChettinadCareStaff/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.staff;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1001,14 +992,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 47797T9SLZ;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCoreTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1021,14 +1011,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 47797T9SLZ;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCoreTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1042,17 +1031,15 @@
 			buildSettings = {
 				APP_ENV = local;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CC_API_BASE_URL = "http://Sids-MacBook-Pro.local:3001";
+				CC_API_BASE_URL = "https://chettinad-care-api.onrender.com";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 47797T9SLZ;
 				INFOPLIST_FILE = ChettinadCarePatient/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.patient;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1071,12 +1058,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 47797T9SLZ;
 				INFOPLIST_FILE = ChettinadCarePatient/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.patient;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1089,7 +1074,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1123,7 +1107,6 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1145,7 +1128,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -1161,16 +1143,12 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCore;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1186,13 +1164,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCarePatientTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1206,7 +1182,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1240,7 +1215,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1255,7 +1229,6 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -1266,14 +1239,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = 47797T9SLZ;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCoreTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1292,12 +1264,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 47797T9SLZ;
 				INFOPLIST_FILE = ChettinadCareStaff/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.staff;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1316,12 +1286,10 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 47797T9SLZ;
 				INFOPLIST_FILE = ChettinadCareStaff/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.staff;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1335,13 +1303,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCareStaffTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;
@@ -1360,16 +1326,12 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
-				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu11 gnu++14";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCore;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1385,13 +1347,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.chettinadcare.ChettinadCarePatientTests;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = YES;

@@ -376,3 +376,92 @@ struct AdminConfirmEndpoint: APIEndpoint {
     var method: HTTPMethod { .post }
     var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": 1]) }
 }
+
+struct AdminAllAppointmentsEndpoint: APIEndpoint {
+    var path: String { "/api/v1/opd/appointments" }
+    var method: HTTPMethod { .get }
+}
+
+struct OPDUnavailability: Codable, Identifiable {
+    let id: String
+    let doctor_id: String
+    let date: String
+    let reason: String
+}
+
+
+struct UnavailabilityEndpoint: APIEndpoint {
+    typealias Response = [OPDUnavailability]
+    var path: String { "/api/v1/opd/unavailability" }
+    var method: HTTPMethod { .get }
+}
+
+struct CreateUnavailabilityEndpoint: APIEndpoint {
+    typealias Response = EmptyResponse
+    var path: String { "/api/v1/opd/unavailability" }
+    var method: HTTPMethod { .post }
+    var body: Data?
+    
+    struct Payload: Codable {
+        let doctor_id: String
+        let date: String
+        let reason: String
+    }
+    
+    init(payload: Payload) {
+        self.body = try? JSONEncoder().encode(payload)
+    }
+}
+
+struct DeleteUnavailabilityEndpoint: APIEndpoint {
+    typealias Response = EmptyResponse
+    let id: String
+    var path: String { "/api/v1/opd/unavailability/\(id)" }
+    var method: HTTPMethod { .delete }
+}
+
+
+@MainActor
+class DoctorScheduleViewModel: ObservableObject {
+    @Published var directory: OPDDirectory?
+    @Published var unavailability: [OPDUnavailability] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    
+    let apiClient = APIClient()
+    
+    func fetchData() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            async let d: OPDDirectory = apiClient.execute(endpoint: DirectoryEndpoint())
+            async let u: [OPDUnavailability] = apiClient.execute(endpoint: UnavailabilityEndpoint())
+            self.directory = try await d
+            self.unavailability = try await u
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+    
+    func addLeave(doctorId: String, date: String, reason: String) async -> Bool {
+        do {
+            let payload = CreateUnavailabilityEndpoint.Payload(doctor_id: doctorId, date: date, reason: reason)
+            let _: EmptyResponse = try await apiClient.execute(endpoint: CreateUnavailabilityEndpoint(payload: payload))
+            await fetchData()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+    
+    func deleteLeave(id: String) async {
+        do {
+            let _: EmptyResponse = try await apiClient.execute(endpoint: DeleteUnavailabilityEndpoint(id: id))
+            await fetchData()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+}

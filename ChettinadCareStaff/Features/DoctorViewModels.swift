@@ -37,6 +37,25 @@ struct CompleteConsultEndpoint: APIEndpoint {
     }
 }
 
+struct AmendConsultEndpoint: APIEndpoint {
+    typealias Response = EncounterMutationResponse
+    let encounterId: String
+    let v: Int
+    let data: ConsultationData
+    let reason: String
+    var path: String { "/api/v1/opd/encounters/\(encounterId)/amend" }
+    var method: HTTPMethod { .post }
+    var body: Data? {
+        struct AmendPayload: Codable {
+            let __v: Int
+            let data: ConsultationData
+            let reason: String
+        }
+        return try? JSONEncoder().encode(AmendPayload(__v: v, data: data, reason: reason))
+    }
+}
+
+
 struct CompletePayload: Codable {
     let __v: Int
     let data: ConsultationData
@@ -73,11 +92,48 @@ struct PatientRecordEndpoint: APIEndpoint {
 @MainActor
 class DoctorQueueViewModel: ObservableObject {
     @Published var queue: [QueueEntry] = []
+    @Published var appointments: [Appointment] = []
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
     @Published var metrics: AdminMetricsResponse? = nil
     
     let apiClient = APIClient()
+    var pendingAppointments: [Appointment] {
+        appointments.filter { $0.status == "PENDING_CONFIRMATION" }.sorted { $0.scheduled_at < $1.scheduled_at }
+    }
+    
+    var todayAppointments: [Appointment] {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
+        let today = formatter.string(from: Date())
+        
+        return appointments.filter { 
+            ($0.status == "CONFIRMED" || $0.status == "CHECKED_IN" || $0.status == "READY_FOR_DOCTOR" || $0.status == "IN_CONSULTATION") && 
+            $0.scheduled_at.hasPrefix(today)
+        }.sorted { $0.scheduled_at < $1.scheduled_at }
+    }
+    
+    func confirmAppointment(appointmentId: String) async {
+        do {
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            await fetchQueue()
+        } catch {
+            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
+        }
+    }
+    
+    func checkIn(appointmentId: String) async {
+        do {
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
+            await fetchQueue()
+        } catch {
+            self.errorMessage = "Check-in failed: \(error.localizedDescription)"
+        }
+    }
+
     
     func fetchQueue() async {
         isLoading = true
@@ -85,13 +141,25 @@ class DoctorQueueViewModel: ObservableObject {
         do {
             async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
             async let metricsTask: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
-            let (fetchedQueue, metrics) = try await (fetchedQueueTask, metricsTask)
+            async let appointmentsTask: [Appointment] = {
+                do {
+                    return try await apiClient.execute(endpoint: AdminAllAppointmentsEndpoint())
+                } catch {
+                    print("Appointments error:", error)
+                    return []
+                }
+            }()
+            let (fetchedQueue, metrics, fetchedAppointments) = try await (fetchedQueueTask, metricsTask, appointmentsTask)
             self.metrics = metrics
+            self.appointments = fetchedAppointments
             self.queue = fetchedQueue.filter { $0.status == "WAITING_DOCTOR" || $0.status == "DOCTOR_READY" || $0.status == "CONSULTATION" }
         } catch {
+            if error is CancellationError { return }
+            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
             self.errorMessage = error.localizedDescription
         }
         isLoading = false
+
     }
 }
 
@@ -104,7 +172,7 @@ class DoctorConsultationViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     
     @Published var currentVersion: Int
-    let encounterId: String
+    let encounterId: String?
     let patientId: String
     
     // Consultation note fields
@@ -123,6 +191,8 @@ class DoctorConsultationViewModel: ObservableObject {
     @Published var labOrdersInFlight: Set<String> = []
     /// Set only after "Complete & Sign" succeeds; the dossier closes only in that case.
     @Published var consultationCompleted = false
+    @Published var amendReason: String = ""
+
 
     /// Lab tests already ordered on this encounter.
     var orderedTestIds: Set<String> {
@@ -131,7 +201,7 @@ class DoctorConsultationViewModel: ObservableObject {
     
     let apiClient = APIClient()
     
-    init(encounterId: String, patientId: String, initialVersion: Int) {
+    init(encounterId: String?, patientId: String, initialVersion: Int) {
         self.encounterId = encounterId
         self.patientId = patientId
         self.currentVersion = initialVersion
@@ -162,6 +232,7 @@ class DoctorConsultationViewModel: ObservableObject {
     }
     
     func startConsultation() async -> Bool {
+        guard let encounterId = encounterId else { return false }
         isSubmitting = true
         errorMessage = nil
         do {
@@ -193,6 +264,7 @@ class DoctorConsultationViewModel: ObservableObject {
     }
     
     func orderLab(testId: String) async {
+        guard let encounterId = encounterId else { return }
         guard !orderedTestIds.contains(testId), !labOrdersInFlight.contains(testId) else { return }
         labOrdersInFlight.insert(testId)
         defer { labOrdersInFlight.remove(testId) }
@@ -206,7 +278,42 @@ class DoctorConsultationViewModel: ObservableObject {
         }
     }
     
+    func amendConsultation() async -> Bool {
+        guard let encounterId = encounterId else { return false }
+        isSubmitting = true
+        errorMessage = nil
+        do {
+            let cData = ConsultationData(
+                complaint: noteComplaint.isEmpty ? nil : noteComplaint,
+                history: noteHistory.isEmpty ? nil : noteHistory,
+                previous_history: nil,
+                examination: noteExamination.isEmpty ? nil : noteExamination,
+                assessment: noteAssessment.isEmpty ? nil : noteAssessment,
+                diagnosis_ids: Array(selectedDiagnoses),
+                treatment: nil,
+                advice: noteAdvice.isEmpty ? nil : noteAdvice,
+                medications: medications
+            )
+            let response: EncounterMutationResponse = try await apiClient.execute(
+                endpoint: AmendConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData, reason: amendReason)
+            )
+            if let newV = response.__v {
+                self.currentVersion = newV
+            }
+            consultationCompleted = true
+            isSubmitting = false
+            return true
+        } catch let error as APIError {
+            handleAPIError(error)
+        } catch {
+            self.errorMessage = error.localizedDescription
+        }
+        isSubmitting = false
+        return false
+    }
+
     func completeConsultation() async -> Bool {
+        guard let encounterId = encounterId else { return false }
         isSubmitting = true
         errorMessage = nil
         do {

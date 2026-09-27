@@ -2,6 +2,7 @@ import SwiftUI
 import ChettinadCore
 
 struct AdminDashboardView: View {
+    @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = AdminDashboardViewModel()
     @State private var showBooking = false
     @State private var pendingCheckIn: Appointment?
@@ -28,7 +29,7 @@ struct AdminDashboardView: View {
                 
                 List {
                     if let error = viewModel.errorMessage {
-                        Text(error).foregroundColor(.red)
+                        StitchErrorState(message: error)
                     }
                     
                     if viewModel.isLoading {
@@ -96,10 +97,10 @@ struct AppointmentAdminCard: View {
     let role: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: StitchSpacing.sm) {
             HStack {
-                Text(appointment.patient_name ?? "Patient: \(appointment.patient_id.prefix(8))")
-                    .font(.headline)
+                Text(appointment.patient_name ?? "Patient: \((appointment.patient_id ?? "").prefix(8))")
+                    .font(Typography.titleMedium)
                 Spacer()
                 Text(appointment.status)
                     .font(.caption)
@@ -112,10 +113,10 @@ struct AppointmentAdminCard: View {
             }
             
             Text("Doctor: \(appointment.doctor_id)")
-                .font(.subheadline)
+                .font(Typography.bodyLarge)
             
             Text(formatDate(appointment.scheduled_at))
-                .font(.subheadline)
+                .font(Typography.bodyLarge)
                 .foregroundColor(.secondary)
             
             if let reason = appointment.reason {
@@ -177,7 +178,7 @@ struct BookAppointmentView: View {
             Form {
                 if let error = viewModel.errorMessage {
                     Section {
-                        Text(error).foregroundColor(.red)
+                        StitchErrorState(message: error)
                     }
                 }
                 
@@ -294,7 +295,7 @@ struct StaffManagementView: View {
                 
                 List {
                     if let error = viewModel.errorMessage {
-                        Text(error).foregroundColor(.red)
+                        StitchErrorState(message: error)
                     }
                     
                     if viewModel.isLoading {
@@ -308,9 +309,9 @@ struct StaffManagementView: View {
                                 HStack {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(staff.name)
-                                        .font(.headline)
+                                        .font(Typography.titleMedium)
                                     Text("\(staff.role)\(staff.department != nil ? " • \(staff.department!)" : "")")
-                                        .font(.subheadline)
+                                        .font(Typography.bodyLarge)
                                         .foregroundColor(.secondary)
                                 }
                                 Spacer()
@@ -379,7 +380,7 @@ struct AdminMetricsView: View {
             VStack(spacing: 0) {
                 AppHeader(title: "Dashboard")
                 if let error = viewModel.errorMessage {
-                    Text(error).foregroundColor(.red).padding()
+                    StitchErrorState(message: error).padding()
                 }
                 if let metrics = viewModel.metrics {
                     List {
@@ -393,14 +394,14 @@ struct AdminMetricsView: View {
                         Section(header: Text("Doctor Metrics")) {
                             ForEach(metrics.doctors) { d in
                                 VStack(alignment: .leading) {
-                                    Text(d.name).font(.headline)
+                                    Text(d.name).font(Typography.titleMedium)
                                     HStack {
                                         Text("Appts: \(d.appointments)")
                                         Spacer()
                                         Text("Wait: \(d.waiting)")
                                         Spacer()
                                         Text("Done: \(d.completed)")
-                                    }.font(.subheadline).foregroundColor(.secondary)
+                                    }.font(Typography.bodyLarge).foregroundColor(.secondary)
                                 }
                             }
                         }

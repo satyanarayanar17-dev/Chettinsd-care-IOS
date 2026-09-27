@@ -1,0 +1,904 @@
+diff --git a/ChettinadCareStaff/Features/AdminViewModels.swift b/ChettinadCareStaff/Features/AdminViewModels.swift
+index 7ce540a..173680b 100644
+--- a/ChettinadCareStaff/Features/AdminViewModels.swift
++++ b/ChettinadCareStaff/Features/AdminViewModels.swift
+@@ -376,3 +376,92 @@ struct AdminConfirmEndpoint: APIEndpoint {
+     var method: HTTPMethod { .post }
+     var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": 1]) }
+ }
++
++struct AdminAllAppointmentsEndpoint: APIEndpoint {
++    var path: String { "/api/v1/opd/appointments" }
++    var method: HTTPMethod { .get }
++}
++
++struct OPDUnavailability: Codable, Identifiable {
++    let id: String
++    let doctor_id: String
++    let date: String
++    let reason: String
++}
++
++
++struct UnavailabilityEndpoint: APIEndpoint {
++    typealias Response = [OPDUnavailability]
++    var path: String { "/api/v1/opd/unavailability" }
++    var method: HTTPMethod { .get }
++}
++
++struct CreateUnavailabilityEndpoint: APIEndpoint {
++    typealias Response = EmptyResponse
++    var path: String { "/api/v1/opd/unavailability" }
++    var method: HTTPMethod { .post }
++    var body: Data?
++    
++    struct Payload: Codable {
++        let doctor_id: String
++        let date: String
++        let reason: String
++    }
++    
++    init(payload: Payload) {
++        self.body = try? JSONEncoder().encode(payload)
++    }
++}
++
++struct DeleteUnavailabilityEndpoint: APIEndpoint {
++    typealias Response = EmptyResponse
++    let id: String
++    var path: String { "/api/v1/opd/unavailability/\(id)" }
++    var method: HTTPMethod { .delete }
++}
++
++
++@MainActor
++class DoctorScheduleViewModel: ObservableObject {
++    @Published var directory: OPDDirectory?
++    @Published var unavailability: [OPDUnavailability] = []
++    @Published var isLoading = false
++    @Published var errorMessage: String?
++    
++    let apiClient = APIClient()
++    
++    func fetchData() async {
++        isLoading = true
++        errorMessage = nil
++        do {
++            async let d: OPDDirectory = apiClient.execute(endpoint: DirectoryEndpoint())
++            async let u: [OPDUnavailability] = apiClient.execute(endpoint: UnavailabilityEndpoint())
++            self.directory = try await d
++            self.unavailability = try await u
++        } catch {
++            errorMessage = error.localizedDescription
++        }
++        isLoading = false
++    }
++    
++    func addLeave(doctorId: String, date: String, reason: String) async -> Bool {
++        do {
++            let payload = CreateUnavailabilityEndpoint.Payload(doctor_id: doctorId, date: date, reason: reason)
++            let _: EmptyResponse = try await apiClient.execute(endpoint: CreateUnavailabilityEndpoint(payload: payload))
++            await fetchData()
++            return true
++        } catch {
++            errorMessage = error.localizedDescription
++            return false
++        }
++    }
++    
++    func deleteLeave(id: String) async {
++        do {
++            let _: EmptyResponse = try await apiClient.execute(endpoint: DeleteUnavailabilityEndpoint(id: id))
++            await fetchData()
++        } catch {
++            errorMessage = error.localizedDescription
++        }
++    }
++}
+diff --git a/ChettinadCareStaff/Features/AdminViews.swift b/ChettinadCareStaff/Features/AdminViews.swift
+index 9d39eca..fd70537 100644
+--- a/ChettinadCareStaff/Features/AdminViews.swift
++++ b/ChettinadCareStaff/Features/AdminViews.swift
+@@ -28,7 +28,7 @@ struct AdminDashboardView: View {
+                 
+                 List {
+                     if let error = viewModel.errorMessage {
+-                        Text(error).foregroundColor(.red)
++                        StitchErrorState(message: error)
+                     }
+                     
+                     if viewModel.isLoading {
+@@ -96,10 +96,10 @@ struct AppointmentAdminCard: View {
+     let role: String
+     
+     var body: some View {
+-        VStack(alignment: .leading, spacing: 8) {
++        VStack(alignment: .leading, spacing: StitchSpacing.sm) {
+             HStack {
+                 Text(appointment.patient_name ?? "Patient: \(appointment.patient_id.prefix(8))")
+-                    .font(.headline)
++                    .font(Typography.titleMedium)
+                 Spacer()
+                 Text(appointment.status)
+                     .font(.caption)
+@@ -112,10 +112,10 @@ struct AppointmentAdminCard: View {
+             }
+             
+             Text("Doctor: \(appointment.doctor_id)")
+-                .font(.subheadline)
++                .font(Typography.bodyLarge)
+             
+             Text(formatDate(appointment.scheduled_at))
+-                .font(.subheadline)
++                .font(Typography.bodyLarge)
+                 .foregroundColor(.secondary)
+             
+             if let reason = appointment.reason {
+@@ -177,7 +177,7 @@ struct BookAppointmentView: View {
+             Form {
+                 if let error = viewModel.errorMessage {
+                     Section {
+-                        Text(error).foregroundColor(.red)
++                        StitchErrorState(message: error)
+                     }
+                 }
+                 
+@@ -294,7 +294,7 @@ struct StaffManagementView: View {
+                 
+                 List {
+                     if let error = viewModel.errorMessage {
+-                        Text(error).foregroundColor(.red)
++                        StitchErrorState(message: error)
+                     }
+                     
+                     if viewModel.isLoading {
+@@ -308,9 +308,9 @@ struct StaffManagementView: View {
+                                 HStack {
+                                 VStack(alignment: .leading, spacing: 4) {
+                                     Text(staff.name)
+-                                        .font(.headline)
++                                        .font(Typography.titleMedium)
+                                     Text("\(staff.role)\(staff.department != nil ? " • \(staff.department!)" : "")")
+-                                        .font(.subheadline)
++                                        .font(Typography.bodyLarge)
+                                         .foregroundColor(.secondary)
+                                 }
+                                 Spacer()
+@@ -379,7 +379,7 @@ struct AdminMetricsView: View {
+             VStack(spacing: 0) {
+                 AppHeader(title: "Dashboard")
+                 if let error = viewModel.errorMessage {
+-                    Text(error).foregroundColor(.red).padding()
++                    StitchErrorState(message: error).padding()
+                 }
+                 if let metrics = viewModel.metrics {
+                     List {
+@@ -393,14 +393,14 @@ struct AdminMetricsView: View {
+                         Section(header: Text("Doctor Metrics")) {
+                             ForEach(metrics.doctors) { d in
+                                 VStack(alignment: .leading) {
+-                                    Text(d.name).font(.headline)
++                                    Text(d.name).font(Typography.titleMedium)
+                                     HStack {
+                                         Text("Appts: \(d.appointments)")
+                                         Spacer()
+                                         Text("Wait: \(d.waiting)")
+                                         Spacer()
+                                         Text("Done: \(d.completed)")
+-                                    }.font(.subheadline).foregroundColor(.secondary)
++                                    }.font(Typography.bodyLarge).foregroundColor(.secondary)
+                                 }
+                             }
+                         }
+diff --git a/ChettinadCareStaff/Features/DoctorConsultationViews.swift b/ChettinadCareStaff/Features/DoctorConsultationViews.swift
+index dc42ac7..535968d 100644
+--- a/ChettinadCareStaff/Features/DoctorConsultationViews.swift
++++ b/ChettinadCareStaff/Features/DoctorConsultationViews.swift
+@@ -13,7 +13,7 @@ struct PatientDossierView: View {
+                 ProgressView("Loading Dossier...")
+                     .padding(.top, 40)
+             } else if let error = viewModel.errorMessage {
+-                VStack(spacing: 12) {
++                VStack(spacing: StitchSpacing.md) {
+                     Image(systemName: "exclamationmark.triangle")
+                         .font(.largeTitle)
+                         .foregroundColor(.orange)
+@@ -34,10 +34,10 @@ struct PatientDossierView: View {
+                                 .font(.title2)
+                                 .fontWeight(.bold)
+                             Text("MRN: \(bundle.patient.mrn)")
+-                                .font(.subheadline)
++                                .font(Typography.bodyLarge)
+                                 .foregroundColor(.secondary)
+                             Text("\(bundle.patient.dob) • \(bundle.patient.gender)")
+-                                .font(.subheadline)
++                                .font(Typography.bodyLarge)
+                                 .foregroundColor(.secondary)
+                             if let allergies = bundle.patient.allergies, !allergies.isEmpty {
+                                 HStack {
+@@ -60,11 +60,12 @@ struct PatientDossierView: View {
+                     
+                     // Current Encounter Triage
+                     if let triage = bundle.triage.last(where: { $0.encounter_id == viewModel.encounterId }) {
+-                        VStack(alignment: .leading, spacing: 8) {
++                        StitchCard {
++                        VStack(alignment: .leading, spacing: StitchSpacing.sm) {
+                             Text("Current Triage")
+-                                .font(.headline)
++                                .font(Typography.titleMedium)
+                             if let d = triage.data {
+-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
++                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: StitchSpacing.sm) {
+                                     VitalCell(label: "Temp", value: d.temperature.map { String(format: "%.1f °C", $0) } ?? "—")
+                                     VitalCell(label: "BP", value: "\(d.systolic ?? 0)/\(d.diastolic ?? 0)")
+                                     VitalCell(label: "Pulse", value: d.pulse.map { "\($0) bpm" } ?? "—")
+@@ -74,15 +75,12 @@ struct PatientDossierView: View {
+                                 }
+                                 if let complaint = d.complaint {
+                                     Text("Complaint: \(complaint)")
+-                                        .font(.subheadline)
++                                        .font(Typography.bodyLarge)
+                                         .padding(.top, 4)
+                                 }
+                             }
+                         }
+-                        .padding()
+-                        .frame(maxWidth: .infinity, alignment: .leading)
+-                        .background(Color(.secondarySystemBackground))
+-                        .cornerRadius(12)
++                    }
+                     }
+                     
+                     // Start Consultation Button
+@@ -103,21 +101,17 @@ struct PatientDossierView: View {
+                                     .fontWeight(.bold)
+                             }
+                         }
+-                        .foregroundColor(.white)
+-                        .frame(maxWidth: .infinity)
+-                        .padding()
+-                        .background(Color.blue)
+-                        .cornerRadius(12)
++                        .buttonStyle(StitchPrimaryButtonStyle())
+                     }
+                     .disabled(viewModel.isSubmitting)
+                     
+                     // Historical Summary
+                     if !bundle.encounters.isEmpty {
+-                        VStack(alignment: .leading, spacing: 8) {
++                        VStack(alignment: .leading, spacing: StitchSpacing.sm) {
+                             Text("History")
+-                                .font(.headline)
++                                .font(Typography.titleMedium)
+                             Text("\(bundle.encounters.count) encounters • \(bundle.notes.count) notes • \(bundle.prescriptions.count) prescriptions • \(bundle.labs.count) labs")
+-                                .font(.subheadline)
++                                .font(Typography.bodyLarge)
+                                 .foregroundColor(.secondary)
+                         }
+                     }
+@@ -146,13 +140,13 @@ struct VitalCell: View {
+     var body: some View {
+         VStack(spacing: 2) {
+             Text(value)
+-                .font(.headline)
++                .font(Typography.titleMedium)
+             Text(label)
+                 .font(.caption)
+                 .foregroundColor(.secondary)
+         }
+         .frame(maxWidth: .infinity)
+-        .padding(8)
++        .padding(StitchSpacing.sm)
+         .background(Color(.tertiarySystemBackground))
+         .cornerRadius(8)
+     }
+@@ -224,9 +218,9 @@ struct ConsultationWorkspaceView: View {
+                         ForEach(Array(viewModel.medications.enumerated()), id: \.offset) { _, med in
+                             VStack(alignment: .leading) {
+                                 Text(cat.drugs.first(where: { $0.id == med.drug_id })?.name ?? med.drug_id)
+-                                    .font(.headline)
++                                    .font(Typography.titleMedium)
+                                 Text("\(med.dose) • \(med.frequency) • \(med.duration)")
+-                                    .font(.subheadline)
++                                    .font(Typography.bodyLarge)
+                                 if let inst = med.instructions, !inst.isEmpty {
+                                     Text(inst).font(.caption).foregroundColor(.secondary)
+                                 }
+diff --git a/ChettinadCareStaff/Features/DoctorViewModels.swift b/ChettinadCareStaff/Features/DoctorViewModels.swift
+index 7c3ad83..50d0857 100644
+--- a/ChettinadCareStaff/Features/DoctorViewModels.swift
++++ b/ChettinadCareStaff/Features/DoctorViewModels.swift
+@@ -37,6 +37,25 @@ struct CompleteConsultEndpoint: APIEndpoint {
+     }
+ }
+ 
++struct AmendConsultEndpoint: APIEndpoint {
++    typealias Response = EncounterMutationResponse
++    let encounterId: String
++    let v: Int
++    let data: ConsultationData
++    let reason: String
++    var path: String { "/api/v1/opd/encounters/\(encounterId)/amend" }
++    var method: HTTPMethod { .post }
++    var body: Data? {
++        struct AmendPayload: Codable {
++            let __v: Int
++            let data: ConsultationData
++            let reason: String
++        }
++        return try? JSONEncoder().encode(AmendPayload(__v: v, data: data, reason: reason))
++    }
++}
++
++
+ struct CompletePayload: Codable {
+     let __v: Int
+     let data: ConsultationData
+@@ -73,11 +92,48 @@ struct PatientRecordEndpoint: APIEndpoint {
+ @MainActor
+ class DoctorQueueViewModel: ObservableObject {
+     @Published var queue: [QueueEntry] = []
++    @Published var appointments: [Appointment] = []
+     @Published var isLoading = true
+     @Published var errorMessage: String? = nil
+     @Published var metrics: AdminMetricsResponse? = nil
+     
+     let apiClient = APIClient()
++    var pendingAppointments: [Appointment] {
++        appointments.filter { $0.status == "PENDING_CONFIRMATION" }.sorted { $0.scheduled_at < $1.scheduled_at }
++    }
++    
++    var todayAppointments: [Appointment] {
++        let formatter = ISO8601DateFormatter()
++        formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
++        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
++        let today = formatter.string(from: Date())
++        
++        return appointments.filter { 
++            ($0.status == "CONFIRMED" || $0.status == "CHECKED_IN" || $0.status == "READY_FOR_DOCTOR" || $0.status == "IN_CONSULTATION") && 
++            $0.scheduled_at.hasPrefix(today)
++        }.sorted { $0.scheduled_at < $1.scheduled_at }
++    }
++    
++    func confirmAppointment(appointmentId: String) async {
++        do {
++            struct AnyResponse: Codable {}
++            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
++            await fetchQueue()
++        } catch {
++            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
++        }
++    }
++    
++    func checkIn(appointmentId: String) async {
++        do {
++            struct AnyResponse: Codable {}
++            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
++            await fetchQueue()
++        } catch {
++            self.errorMessage = "Check-in failed: \(error.localizedDescription)"
++        }
++    }
++
+     
+     func fetchQueue() async {
+         isLoading = true
+@@ -85,13 +141,25 @@ class DoctorQueueViewModel: ObservableObject {
+         do {
+             async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+             async let metricsTask: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+-            let (fetchedQueue, metrics) = try await (fetchedQueueTask, metricsTask)
++            async let appointmentsTask: [Appointment] = {
++                do {
++                    return try await apiClient.execute(endpoint: AdminAllAppointmentsEndpoint())
++                } catch {
++                    print("Appointments error:", error)
++                    return []
++                }
++            }()
++            let (fetchedQueue, metrics, fetchedAppointments) = try await (fetchedQueueTask, metricsTask, appointmentsTask)
+             self.metrics = metrics
++            self.appointments = fetchedAppointments
+             self.queue = fetchedQueue.filter { $0.status == "WAITING_DOCTOR" || $0.status == "DOCTOR_READY" || $0.status == "CONSULTATION" }
+         } catch {
++            if error is CancellationError { return }
++            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
+             self.errorMessage = error.localizedDescription
+         }
+         isLoading = false
++
+     }
+ }
+ 
+@@ -104,7 +172,7 @@ class DoctorConsultationViewModel: ObservableObject {
+     @Published var errorMessage: String? = nil
+     
+     @Published var currentVersion: Int
+-    let encounterId: String
++    let encounterId: String?
+     let patientId: String
+     
+     // Consultation note fields
+@@ -123,6 +191,8 @@ class DoctorConsultationViewModel: ObservableObject {
+     @Published var labOrdersInFlight: Set<String> = []
+     /// Set only after "Complete & Sign" succeeds; the dossier closes only in that case.
+     @Published var consultationCompleted = false
++    @Published var amendReason: String = ""
++
+ 
+     /// Lab tests already ordered on this encounter.
+     var orderedTestIds: Set<String> {
+@@ -131,7 +201,7 @@ class DoctorConsultationViewModel: ObservableObject {
+     
+     let apiClient = APIClient()
+     
+-    init(encounterId: String, patientId: String, initialVersion: Int) {
++    init(encounterId: String?, patientId: String, initialVersion: Int) {
+         self.encounterId = encounterId
+         self.patientId = patientId
+         self.currentVersion = initialVersion
+@@ -162,6 +232,7 @@ class DoctorConsultationViewModel: ObservableObject {
+     }
+     
+     func startConsultation() async -> Bool {
++        guard let encounterId = encounterId else { return false }
+         isSubmitting = true
+         errorMessage = nil
+         do {
+@@ -193,6 +264,7 @@ class DoctorConsultationViewModel: ObservableObject {
+     }
+     
+     func orderLab(testId: String) async {
++        guard let encounterId = encounterId else { return }
+         guard !orderedTestIds.contains(testId), !labOrdersInFlight.contains(testId) else { return }
+         labOrdersInFlight.insert(testId)
+         defer { labOrdersInFlight.remove(testId) }
+@@ -206,7 +278,42 @@ class DoctorConsultationViewModel: ObservableObject {
+         }
+     }
+     
++    func amendConsultation() async -> Bool {
++        guard let encounterId = encounterId else { return false }
++        isSubmitting = true
++        errorMessage = nil
++        do {
++            let cData = ConsultationData(
++                complaint: noteComplaint.isEmpty ? nil : noteComplaint,
++                history: noteHistory.isEmpty ? nil : noteHistory,
++                previous_history: nil,
++                examination: noteExamination.isEmpty ? nil : noteExamination,
++                assessment: noteAssessment.isEmpty ? nil : noteAssessment,
++                diagnosis_ids: Array(selectedDiagnoses),
++                treatment: nil,
++                advice: noteAdvice.isEmpty ? nil : noteAdvice,
++                medications: medications
++            )
++            let response: EncounterMutationResponse = try await apiClient.execute(
++                endpoint: AmendConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData, reason: amendReason)
++            )
++            if let newV = response.__v {
++                self.currentVersion = newV
++            }
++            consultationCompleted = true
++            isSubmitting = false
++            return true
++        } catch let error as APIError {
++            handleAPIError(error)
++        } catch {
++            self.errorMessage = error.localizedDescription
++        }
++        isSubmitting = false
++        return false
++    }
++
+     func completeConsultation() async -> Bool {
++        guard let encounterId = encounterId else { return false }
+         isSubmitting = true
+         errorMessage = nil
+         do {
+diff --git a/ChettinadCareStaff/Features/NurseTriageViews.swift b/ChettinadCareStaff/Features/NurseTriageViews.swift
+index 7eee531..983595a 100644
+--- a/ChettinadCareStaff/Features/NurseTriageViews.swift
++++ b/ChettinadCareStaff/Features/NurseTriageViews.swift
+@@ -20,14 +20,7 @@ struct TriageFormView: View {
+             }
+             if let error = viewModel.errorMessage {
+                 Section {
+-                    VStack(spacing: 8) {
+-                        Image(systemName: "exclamationmark.triangle")
+-                            .foregroundColor(.orange)
+-                        Text(error)
+-                            .foregroundColor(.red)
+-                            .multilineTextAlignment(.center)
+-                    }
+-                    .frame(maxWidth: .infinity)
++                    StitchErrorState(message: error)
+                 }
+             }
+             
+diff --git a/ChettinadCareStaff/Features/NurseViewModels.swift b/ChettinadCareStaff/Features/NurseViewModels.swift
+index 8b09fc0..da417a5 100644
+--- a/ChettinadCareStaff/Features/NurseViewModels.swift
++++ b/ChettinadCareStaff/Features/NurseViewModels.swift
+@@ -30,11 +30,48 @@ struct SubmitTriageEndpoint: APIEndpoint {
+ @MainActor
+ class NurseTriageViewModel: ObservableObject {
+     @Published var queue: [QueueEntry] = []
++    @Published var appointments: [Appointment] = []
+     @Published var isLoading = true
+     @Published var errorMessage: String? = nil
+     @Published var metrics: AdminMetricsResponse? = nil
+     
+     let apiClient = APIClient()
++    var pendingAppointments: [Appointment] {
++        appointments.filter { $0.status == "PENDING_CONFIRMATION" }.sorted { $0.scheduled_at < $1.scheduled_at }
++    }
++    
++    var todayAppointments: [Appointment] {
++        let formatter = ISO8601DateFormatter()
++        formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
++        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
++        let today = formatter.string(from: Date())
++        
++        return appointments.filter { 
++            ($0.status == "CONFIRMED" || $0.status == "CHECKED_IN" || $0.status == "READY_FOR_DOCTOR" || $0.status == "IN_CONSULTATION") && 
++            $0.scheduled_at.hasPrefix(today)
++        }.sorted { $0.scheduled_at < $1.scheduled_at }
++    }
++    
++    func confirmAppointment(appointmentId: String) async {
++        do {
++            struct AnyResponse: Codable {}
++            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
++            await fetchQueue()
++        } catch {
++            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
++        }
++    }
++    
++    func checkIn(appointmentId: String) async {
++        do {
++            struct AnyResponse: Codable {}
++            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
++            await fetchQueue()
++        } catch {
++            self.errorMessage = "Check-in failed: \(error.localizedDescription)"
++        }
++    }
++
+     
+     func fetchQueue() async {
+         isLoading = true
+@@ -42,10 +79,21 @@ class NurseTriageViewModel: ObservableObject {
+         do {
+             async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+             async let metricsTask: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+-            let (fetchedQueue, metrics) = try await (fetchedQueueTask, metricsTask)
++            async let appointmentsTask: [Appointment] = {
++                do {
++                    return try await apiClient.execute(endpoint: AdminAllAppointmentsEndpoint())
++                } catch {
++                    print("Appointments error:", error)
++                    return []
++                }
++            }()
++            let (fetchedQueue, metrics, fetchedAppointments) = try await (fetchedQueueTask, metricsTask, appointmentsTask)
+             self.metrics = metrics
++            self.appointments = fetchedAppointments
+             self.queue = fetchedQueue.filter { $0.status == "WAITING" || $0.status == "TRIAGE" }
+         } catch {
++            if error is CancellationError { return }
++            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
+             self.errorMessage = error.localizedDescription
+         }
+         isLoading = false
+diff --git a/ChettinadCareStaff/Features/PatientCarePlanMonitoringView.swift b/ChettinadCareStaff/Features/PatientCarePlanMonitoringView.swift
+index b630548..02072f8 100644
+--- a/ChettinadCareStaff/Features/PatientCarePlanMonitoringView.swift
++++ b/ChettinadCareStaff/Features/PatientCarePlanMonitoringView.swift
+@@ -18,7 +18,7 @@ struct PatientCarePlanMonitoringView: View {
+     let apiClient = APIClient()
+     
+     var body: some View {
+-        VStack(alignment: .leading, spacing: 16) {
++        VStack(alignment: .leading, spacing: StitchSpacing.lg) {
+             Text("Active Care Plan")
+                 .font(.title2).bold()
+                 .padding(.horizontal)
+@@ -28,8 +28,8 @@ struct PatientCarePlanMonitoringView: View {
+                     .frame(maxWidth: .infinity)
+                     .padding()
+             } else if let error = errorMessage {
+-                VStack(spacing: 12) {
+-                    Text(error).foregroundColor(.red)
++                VStack(spacing: StitchSpacing.md) {
++                    StitchErrorState(message: error)
+                     Button("Try Again") { Task { await fetchCarePlan() } }
+                 }.frame(maxWidth: .infinity).padding()
+             } else if tasks.isEmpty {
+@@ -41,13 +41,13 @@ struct PatientCarePlanMonitoringView: View {
+                 let total = tasks.count
+                 let progress = total > 0 ? Double(completed)/Double(total) : 0
+                 
+-                VStack(spacing: 8) {
++                VStack(spacing: StitchSpacing.sm) {
+                     HStack {
+                         Text("Today's Adherence")
+-                            .font(.headline)
++                            .font(Typography.titleMedium)
+                         Spacer()
+                         Text("\(completed)/\(total)")
+-                            .font(.subheadline).bold()
++                            .font(Typography.bodyLarge).bold()
+                     }
+                     ProgressView(value: progress)
+                         .tint(progress >= 1.0 ? .green : .blue)
+@@ -57,11 +57,11 @@ struct PatientCarePlanMonitoringView: View {
+                 .cornerRadius(12)
+                 .padding(.horizontal)
+                 
+-                VStack(alignment: .leading, spacing: 12) {
++                VStack(alignment: .leading, spacing: StitchSpacing.md) {
+                     ForEach(tasks) { occurrence in
+                         HStack {
+                             VStack(alignment: .leading) {
+-                                Text(occurrence.title).font(.headline)
++                                Text(occurrence.title).font(Typography.titleMedium)
+                                 Text(occurrence.instruction).font(.caption).foregroundColor(.secondary)
+                                 if let obs = occurrence.recorded_value {
+                                     Text("Recorded: \(String(format: "%.1f", obs)) \(occurrence.target_unit ?? "")").font(.caption).bold().foregroundColor(.green)
+@@ -88,15 +88,15 @@ struct PatientCarePlanMonitoringView: View {
+                 // Timeline snippet
+                 if !timeline.isEmpty {
+                     Text("Recent Activity")
+-                        .font(.headline)
++                        .font(Typography.titleMedium)
+                         .padding(.horizontal)
+                         .padding(.top)
+                     
+-                    VStack(alignment: .leading, spacing: 12) {
++                    VStack(alignment: .leading, spacing: StitchSpacing.md) {
+                         ForEach(timeline.prefix(5)) { event in
+                             HStack {
+                                 VStack(alignment: .leading) {
+-                                    Text(event.status).font(.subheadline).bold()
++                                    Text(event.status).font(Typography.bodyLarge).bold()
+                                     if let obs = event.observation?.components?.first?.numeric_value {
+                                         Text("Value: \(String(format: "%.1f", obs))").font(.caption).foregroundColor(.secondary)
+                                     }
+@@ -115,11 +115,11 @@ struct PatientCarePlanMonitoringView: View {
+                 }
+ 
+                 if !selfRecords.isEmpty {
+-                    Text("Patient self-recorded observations").font(.headline).padding(.horizontal).padding(.top)
+-                    VStack(spacing: 8) {
++                    Text("Patient self-recorded observations").font(Typography.titleMedium).padding(.horizontal).padding(.top)
++                    VStack(spacing: StitchSpacing.sm) {
+                         ForEach(selfRecords.prefix(10)) { record in
+                             VStack(alignment: .leading, spacing: 3) {
+-                                Text(record.record_type.replacingOccurrences(of: "_", with: " ").capitalized).font(.subheadline).bold()
++                                Text(record.record_type.replacingOccurrences(of: "_", with: " ").capitalized).font(Typography.bodyLarge).bold()
+                                 if record.record_type == "ACTIVITY" { Text("\(record.activity_name ?? "Activity") · \(record.duration_minutes ?? 0) min") }
+                                 else if record.record_type == "BLOOD_PRESSURE" { Text("\(record.numeric_value ?? 0, specifier: "%.0f")/\(record.secondary_numeric_value ?? 0, specifier: "%.0f") mmHg") }
+                                 else { Text("\(record.numeric_value ?? 0, specifier: "%.1f") \(record.unit ?? "")") }
+@@ -130,8 +130,8 @@ struct PatientCarePlanMonitoringView: View {
+                 }
+ 
+                 if !documents.isEmpty {
+-                    Text("Patient documents").font(.headline).padding(.horizontal).padding(.top)
+-                    VStack(spacing: 8) { ForEach(documents) { document in Button { Task { previewURL = try? await apiClient.downloadPatientDocument(document) } } label: { HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(.subheadline).bold(); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }.padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8) }.buttonStyle(.plain) } }.padding(.horizontal)
++                    Text("Patient documents").font(Typography.titleMedium).padding(.horizontal).padding(.top)
++                    VStack(spacing: StitchSpacing.sm) { ForEach(documents) { document in Button { Task { previewURL = try? await apiClient.downloadPatientDocument(document) } } label: { HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(Typography.bodyLarge).bold(); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }.padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8) }.buttonStyle(.plain) } }.padding(.horizontal)
+                 }
+             }
+         }
+diff --git a/ChettinadCareStaff/Features/SideTabsView.swift b/ChettinadCareStaff/Features/SideTabsView.swift
+index 128f078..713ca47 100644
+--- a/ChettinadCareStaff/Features/SideTabsView.swift
++++ b/ChettinadCareStaff/Features/SideTabsView.swift
+@@ -8,8 +8,8 @@ struct SideTabsView: View {
+     private var destinations: [(String, String)] {
+         switch appState.role {
+         case "ADMIN": return [("Overview", "chart.bar"), ("Appointments", "calendar"), ("Doctor schedules", "clock"), ("Administration", "gearshape"), ("Audit trail", "doc.text.magnifyingglass"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
+-        case "DOCTOR": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My profile & sessions", "person.crop.circle")]
+-        case "NURSE": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("My profile & sessions", "person.crop.circle")]
++        case "DOCTOR": return [("Overview", "chart.bar"), ("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("Laboratory", "flask"), ("My Availability", "clock"), ("My profile & sessions", "person.crop.circle")]
++        case "NURSE": return [("Live queue", "person.3.sequence"), ("Appointments", "calendar"), ("Laboratory", "flask"), ("My profile & sessions", "person.crop.circle")]
+         default: return [("Overview", "chart.bar")]
+         }
+     }
+@@ -31,11 +31,13 @@ struct SideTabsView: View {
+             }
+         } detail: {
+             // Main content depending on selection
+-            if selectedTab == "Overview" || selectedTab == "Administration" {
++            if selectedTab == "Overview" {
++                AdminMetricsView()
++            } else if selectedTab == "Administration" {
+                 if appState.role == "ADMIN" {
+-                    AdminTabView()
++                    StaffManagementView()
+                 } else {
+-                    Text("Overview & Administration requires Admin access")
++                    Text("Administration requires Admin access")
+                 }
+             } else if selectedTab == "Appointments" {
+                 AdminDashboardView()
+@@ -47,6 +49,14 @@ struct SideTabsView: View {
+                 } else {
+                     Text("Queue requires clinical access")
+                 }
++            } else if selectedTab == "Laboratory" {
++                LaboratoryView()
++            } else if selectedTab == "My profile & sessions" {
++                StaffProfileView()
++            } else if selectedTab == "My Availability" || selectedTab == "Doctor schedules" {
++                DoctorScheduleView()
++            } else if selectedTab == "Audit trail" {
++                AuditTrailView()
+             } else {
+                 VStack(spacing: 12) { Image(systemName: "building.2").font(.largeTitle).foregroundColor(.secondary); Text(selectedTab ?? "Chettinad Care").font(.title2); Text("Obstetrics & Gynaecology pilot data will appear here when available.").foregroundColor(.secondary) }.padding()
+             }
+@@ -54,3 +64,85 @@ struct SideTabsView: View {
+         .onAppear { if appState.role == "NURSE" || appState.role == "DOCTOR" { selectedTab = "Live queue" } }
+     }
+ }
++
++struct AuditLogEntry: Codable, Identifiable {
++    let id: Int
++    let timestamp: String
++    let actor_id: String
++    let patient_id: String
++    let action: String
++    let new_state: String
++}
++
++struct GetAuditLogsEndpoint: APIEndpoint {
++    typealias Response = [AuditLogEntry]
++    var path: String { "/api/v1/opd/audit" }
++    var method: HTTPMethod { .get }
++    var requiresAuth: Bool { true }
++}
++
++class AuditTrailViewModel: ObservableObject {
++    @Published var logs: [AuditLogEntry] = []
++    @Published var errorMessage: String? = nil
++    @Published var isLoading = false
++    
++    @MainActor
++    func fetchLogs() async {
++        isLoading = true
++        do {
++            logs = try await APIClient().execute(endpoint: GetAuditLogsEndpoint())
++        } catch {
++            errorMessage = error.localizedDescription
++        }
++        isLoading = false
++    }
++}
++
++struct AuditTrailView: View {
++    @StateObject private var viewModel = AuditTrailViewModel()
++    
++    var body: some View {
++        NavigationView {
++            List {
++                if let error = viewModel.errorMessage {
++                    Section { Text(error).foregroundColor(.red) }
++                }
++                if viewModel.isLoading && viewModel.logs.isEmpty {
++                    ProgressView().frame(maxWidth: .infinity, alignment: .center)
++                }
++                
++                ForEach(viewModel.logs.sorted(by: { $0.timestamp > $1.timestamp })) { log in
++                    VStack(alignment: .leading, spacing: 4) {
++                        HStack {
++                            Text(log.action)
++                                .font(.headline)
++                                .foregroundColor(.primary)
++                            Spacer()
++                            Text(log.new_state)
++                                .font(.caption)
++                                .padding(.horizontal, 6)
++                                .padding(.vertical, 2)
++                                .background(Color.blue.opacity(0.1))
++                                .foregroundColor(.blue)
++                                .cornerRadius(4)
++                        }
++                        Text("Actor: \(log.actor_id) | Patient: \(log.patient_id)")
++                            .font(.subheadline)
++                            .foregroundColor(.secondary)
++                        Text(ISODate.display(log.timestamp))
++                            .font(.caption)
++                            .foregroundColor(.gray)
++                    }
++                    .padding(.vertical, 4)
++                }
++            }
++            .navigationTitle("Audit Trail")
++            .refreshable {
++                await viewModel.fetchLogs()
++            }
++            .task {
++                await viewModel.fetchLogs()
++            }
++        }
++    }
++}
+diff --git a/ChettinadCareStaff/Features/StaffViews.swift b/ChettinadCareStaff/Features/StaffViews.swift
+index f831d45..3ced18d 100644
+--- a/ChettinadCareStaff/Features/StaffViews.swift
++++ b/ChettinadCareStaff/Features/StaffViews.swift
+@@ -25,7 +25,7 @@ struct DoctorQueueView: View {
+                         // Metrics
+                         if let metrics = viewModel.metrics {
+                             ScrollView(.horizontal, showsIndicators: false) {
+-                                HStack(spacing: 16) {
++                                HStack(spacing: StitchSpacing.lg) {
+                                     MetricsCard(title: "Requires Action", value: "\(metrics.requires_action)", iconName: "exclamationmark.triangle.fill", trend: nil)
+                                         .frame(width: 160)
+                                     MetricsCard(title: "Confirmed Today", value: "\(metrics.today_confirmed)", iconName: "calendar.badge.clock", trend: nil)
+@@ -42,7 +42,7 @@ struct DoctorQueueView: View {
+                         }
+                         
+                         // Queue
+-                        VStack(alignment: .leading, spacing: 12) {
++                        VStack(alignment: .leading, spacing: StitchSpacing.md) {
+                             Text("Current Queue")
+                                 .textStyle(Typography.titleMedium, color: .chettinadPrimary)
+                                 .padding(.horizontal, 16)
+@@ -52,10 +52,10 @@ struct DoctorQueueView: View {
+                                     .frame(maxWidth: .infinity)
+                                     .padding()
+                             } else if viewModel.queue.isEmpty {
+-                                VStack(spacing: 12) {
++                                VStack(spacing: StitchSpacing.md) {
+                                     Image(systemName: "person.3.sequence").font(.system(size: 40)).foregroundColor(.secondary)
+-                                    Text("No patients currently waiting").font(.headline)
+-                                    Text("Your OBST patient queue will appear here\nas patients check in.").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
++                                    Text("No patients currently waiting").font(Typography.titleMedium)
++                                    Text("Your OBST patient queue will appear here\nas patients check in.").font(Typography.bodyLarge).foregroundColor(.secondary).multilineTextAlignment(.center)
+                                 }
+                                 .frame(maxWidth: .infinity, alignment: .center)
+                                 .padding(.vertical, 40)
+@@ -108,7 +108,7 @@ struct NurseTriageView: View {
+                         // Metrics
+                         if let metrics = viewModel.metrics {
+                             ScrollView(.horizontal, showsIndicators: false) {
+-                                HStack(spacing: 16) {
++                                HStack(spacing: StitchSpacing.lg) {
+                                     MetricsCard(title: "Requires Action", value: "\(metrics.requires_action)", iconName: "exclamationmark.triangle.fill", trend: nil)
+                                         .frame(width: 160)
+                                     MetricsCard(title: "Confirmed Today", value: "\(metrics.today_confirmed)", iconName: "calendar.badge.clock", trend: nil)
+@@ -132,10 +132,10 @@ struct NurseTriageView: View {
+                                 .frame(maxWidth: .infinity)
+                                 .padding()
+                         } else if viewModel.queue.isEmpty {
+-                            VStack(spacing: 12) {
++                            VStack(spacing: StitchSpacing.md) {
+                                 Image(systemName: "cross.case.fill").font(.system(size: 40)).foregroundColor(.secondary)
+-                                Text("No patients to triage").font(.headline)
+-                                Text("Your OBST triage queue will appear here\nas patients check in.").font(.subheadline).foregroundColor(.secondary).multilineTextAlignment(.center)
++                                Text("No patients to triage").font(Typography.titleMedium)
++                                Text("Your OBST triage queue will appear here\nas patients check in.").font(Typography.bodyLarge).foregroundColor(.secondary).multilineTextAlignment(.center)
+                             }
+                             .frame(maxWidth: .infinity, alignment: .center)
+                             .padding(.vertical, 40)
+@@ -167,7 +167,7 @@ struct QueueCard: View {
+     let entry: QueueEntry
+     
+     var body: some View {
+-        HStack(spacing: 16) {
++        HStack(spacing: StitchSpacing.lg) {
+             VStack(alignment: .leading, spacing: 4) {
+                 HStack {
+                     Text(entry.patient_name)
+@@ -190,7 +190,7 @@ struct QueueCard: View {
+             Image(systemName: "chevron.right")
+                 .foregroundColor(.chettinadSecondary)
+         }
+-        .padding(16)
++        .padding(StitchSpacing.lg)
+         .background(Color.surfaceContainerLowest)
+         .cornerRadius(12)
+         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)

@@ -1,0 +1,54 @@
+--- ChettinadCarePatient/Features/PatientViews.swift
++++ ChettinadCarePatient/Features/PatientViews.swift
+@@ -522,6 +522,7 @@
+     @State private var showingEdit = false
+     @State private var showingSettings = false
+     @State private var activeSessions: [SessionInfo] = []
+     
+     var body: some View {
+         NavigationStack {
+@@ -582,6 +583,28 @@
+                     }
+                 }
+                 
++                if !activeSessions.isEmpty {
++                    Section(header: Text("Active Sessions")) {
++                        ForEach(activeSessions) { s in
++                            VStack(alignment: .leading, spacing: 4) {
++                                Text(s.current ? "This Device" : "Device").font(.headline)
++                                Text(s.device_name ?? "Unknown Device").font(.subheadline)
++                                Text("Expires: \(String(s.expires_at.prefix(10)))").font(.caption).foregroundColor(.secondary)
++                            }
++                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
++                                Button(role: .destructive) {
++                                    Task { await revokeSession(s) }
++                                } label: { Label("Revoke", systemImage: "trash") }
++                            }
++                            .padding(.vertical, 4)
++                        }
++                    }
++                }
++                
+                 Section {
+                     Button(action: { showingEdit = true }) { Text("Edit Profile").foregroundColor(.blue).frame(maxWidth: .infinity, alignment: .center) }
+                     Button(role: .destructive, action: { appState.logout() }) { Text("Sign Out").frame(maxWidth: .infinity, alignment: .center) }
+@@ -594,8 +617,19 @@
+             }
+         }
+         .task {
++            await fetchSessions()
+         }
+     }
++    
++    private func fetchSessions() async {
++        do { activeSessions = try await APIClient().execute(endpoint: GetSessionsEndpoint()) } catch { print("Error: \(error)") }
++    }
++    private func revokeSession(_ session: SessionInfo) async {
++        do {
++            let _: [String: String]? = try? await APIClient().executeRaw(endpoint: RevokeSessionEndpoint(sessionId: session.id))
++            if session.current { appState.logout() } else { await fetchSessions() }
++        } catch { print("Error: \(error)") }
++    }
+ }
+
+ struct EditProfileSheet: View {

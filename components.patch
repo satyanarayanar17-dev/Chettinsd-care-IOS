@@ -1,0 +1,206 @@
+diff --git a/ChettinadCore/DesignSystem/StitchComponents.swift b/ChettinadCore/DesignSystem/StitchComponents.swift
+index 1385da6..619ba9c 100644
+--- a/ChettinadCore/DesignSystem/StitchComponents.swift
++++ b/ChettinadCore/DesignSystem/StitchComponents.swift
+@@ -95,3 +95,201 @@ public extension View {
+             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.chettinadOutline.opacity(0.4), lineWidth: 1))
+     }
+ }
++
++// MARK: - Spacing & Layout Constants
++public enum StitchSpacing {
++    public static let xs: CGFloat = 4
++    public static let sm: CGFloat = 8
++    public static let md: CGFloat = 12
++    public static let lg: CGFloat = 16
++    public static let xl: CGFloat = 24
++    public static let xxl: CGFloat = 32
++}
++
++// MARK: - Standardized Buttons
++
++public struct StitchPrimaryButtonStyle: ButtonStyle {
++    @Environment(\.isEnabled) private var enabled
++    public init() {}
++    public func makeBody(configuration: Configuration) -> some View {
++        configuration.label
++            .font(Typography.labelLarge).fontWeight(.bold)
++            .frame(maxWidth: .infinity, minHeight: 52)
++            .padding(.horizontal, StitchSpacing.lg)
++            .foregroundStyle(.white)
++            .background(Color.chettinadPrimary)
++            .clipShape(RoundedRectangle(cornerRadius: 12))
++            .opacity(enabled ? (configuration.isPressed ? 0.8 : 1) : 0.5)
++            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
++    }
++}
++
++public struct StitchSecondaryButtonStyle: ButtonStyle {
++    @Environment(\.isEnabled) private var enabled
++    public init() {}
++    public func makeBody(configuration: Configuration) -> some View {
++        configuration.label
++            .font(Typography.labelLarge).fontWeight(.bold)
++            .padding(.vertical, StitchSpacing.md)
++            .padding(.horizontal, StitchSpacing.lg)
++            .foregroundStyle(Color.chettinadPrimary)
++            .background(Color.chettinadPrimary.opacity(0.1))
++            .clipShape(RoundedRectangle(cornerRadius: 12))
++            .opacity(enabled ? (configuration.isPressed ? 0.8 : 1) : 0.5)
++            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
++    }
++}
++
++public struct StitchDestructiveButtonStyle: ButtonStyle {
++    @Environment(\.isEnabled) private var enabled
++    public init() {}
++    public func makeBody(configuration: Configuration) -> some View {
++        configuration.label
++            .font(Typography.labelLarge).fontWeight(.bold)
++            .padding(.vertical, StitchSpacing.md)
++            .padding(.horizontal, StitchSpacing.lg)
++            .foregroundStyle(Color.chettinadError)
++            .background(Color.chettinadErrorContainer)
++            .clipShape(RoundedRectangle(cornerRadius: 12))
++            .opacity(enabled ? (configuration.isPressed ? 0.8 : 1) : 0.5)
++    }
++}
++
++public struct StitchCompactButtonStyle: ButtonStyle {
++    @Environment(\.isEnabled) private var enabled
++    public init() {}
++    public func makeBody(configuration: Configuration) -> some View {
++        configuration.label
++            .font(Typography.labelSmall).fontWeight(.bold)
++            .padding(.vertical, StitchSpacing.sm)
++            .padding(.horizontal, StitchSpacing.md)
++            .foregroundStyle(Color.chettinadPrimary)
++            .background(Color.chettinadPrimary.opacity(0.1))
++            .clipShape(RoundedRectangle(cornerRadius: 8))
++            .opacity(enabled ? (configuration.isPressed ? 0.8 : 1) : 0.5)
++    }
++}
++
++// MARK: - Status Chips
++
++public struct StitchStatusChip: View {
++    let status: String
++    
++    public init(status: String) {
++        self.status = status
++    }
++    
++    private var treatment: (bg: Color, fg: Color, icon: String?) {
++        let normalized = status.uppercased().replacingOccurrences(of: " ", with: "_")
++        switch normalized {
++        case "COMPLETED", "TAKEN", "CONFIRMED", "CHECKED_IN", "READY_FOR_DOCTOR":
++            return (.chettinadSuccessContainer, .onChettinadSuccessContainer, "checkmark.circle.fill")
++        case "PENDING", "PENDING_CONFIRMATION", "WAITING", "WAITING_DOCTOR", "DUE", "UPCOMING":
++            return (.chettinadWarningContainer, .onChettinadWarningContainer, "clock.fill")
++        case "IN_TRIAGE", "IN_CONSULTATION":
++            return (.chettinadPrimary.opacity(0.15), .chettinadPrimary, "stethoscope")
++        case "CANCELLED", "NO_SHOW", "MISSED":
++            return (.chettinadErrorContainer, .onChettinadErrorContainer, "xmark.circle.fill")
++        case "SKIPPED":
++            return (.surfaceContainerHigh, .chettinadTextSecondary, "arrow.uturn.right.circle.fill")
++        default:
++            return (.surfaceContainerHigh, .chettinadTextSecondary, nil)
++        }
++    }
++    
++    public var body: some View {
++        HStack(spacing: StitchSpacing.xs) {
++            if let icon = treatment.icon {
++                Image(systemName: icon).font(.system(size: 10, weight: .bold))
++            }
++            Text(status.replacingOccurrences(of: "_", with: " ").capitalized)
++                .font(Typography.labelSmall).fontWeight(.bold)
++        }
++        .padding(.vertical, 6)
++        .padding(.horizontal, StitchSpacing.md)
++        .foregroundStyle(treatment.fg)
++        .background(treatment.bg)
++        .clipShape(Capsule())
++    }
++}
++
++// MARK: - Empty & Error States
++
++public struct StitchEmptyState: View {
++    let icon: String
++    let title: String
++    let message: String
++    let ctaTitle: String?
++    let action: (() -> Void)?
++    
++    public init(icon: String, title: String, message: String, ctaTitle: String? = nil, action: (() -> Void)? = nil) {
++        self.icon = icon
++        self.title = title
++        self.message = message
++        self.ctaTitle = ctaTitle
++        self.action = action
++    }
++    
++    public var body: some View {
++        VStack(spacing: StitchSpacing.lg) {
++            Image(systemName: icon)
++                .font(.system(size: 48))
++                .foregroundStyle(Color.chettinadOutline)
++            VStack(spacing: StitchSpacing.sm) {
++                Text(title)
++                    .font(Typography.titleMedium)
++                    .foregroundStyle(Color.chettinadTextPrimary)
++                Text(message)
++                    .font(Typography.bodyMedium)
++                    .foregroundStyle(Color.chettinadTextSecondary)
++                    .multilineTextAlignment(.center)
++            }
++            if let ctaTitle = ctaTitle, let action = action {
++                Button(action: action) {
++                    Text(ctaTitle)
++                }
++                .buttonStyle(StitchSecondaryButtonStyle())
++                .padding(.top, StitchSpacing.sm)
++            }
++        }
++        .padding(StitchSpacing.xxl)
++        .frame(maxWidth: .infinity)
++    }
++}
++
++public struct StitchErrorState: View {
++    let message: String
++    let retryAction: (() -> Void)?
++    
++    public init(message: String, retryAction: (() -> Void)? = nil) {
++        self.message = message
++        self.retryAction = retryAction
++    }
++    
++    public var body: some View {
++        VStack(spacing: StitchSpacing.lg) {
++            Image(systemName: "exclamationmark.triangle.fill")
++                .font(.system(size: 40))
++                .foregroundStyle(Color.chettinadWarning)
++            VStack(spacing: StitchSpacing.sm) {
++                Text("Something went wrong")
++                    .font(Typography.titleMedium)
++                    .foregroundStyle(Color.chettinadTextPrimary)
++                Text(message)
++                    .font(Typography.bodyMedium)
++                    .foregroundStyle(Color.chettinadTextSecondary)
++                    .multilineTextAlignment(.center)
++            }
++            if let retryAction = retryAction {
++                Button(action: retryAction) {
++                    Text("Retry")
++                }
++                .buttonStyle(StitchSecondaryButtonStyle())
++            }
++        }
++        .padding(StitchSpacing.xxl)
++        .frame(maxWidth: .infinity)
++        .background(Color.surfaceContainerLowest)
++        .clipShape(RoundedRectangle(cornerRadius: 16))
++    }
++}

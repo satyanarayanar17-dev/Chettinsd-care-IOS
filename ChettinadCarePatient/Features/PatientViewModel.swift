@@ -128,3 +128,66 @@ class PatientViewModel: ObservableObject {
         } catch { errorMessage = error.localizedDescription; return false }
     }
 }
+import Foundation
+extension PatientViewModel {
+    func cancelAppointment(_ id: String, version: Int) async -> Bool {
+        do {
+            let endpoint = CancelAppointmentEndpoint(appointmentId: id, version: version)
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: endpoint)
+            await fetchRecords()
+            return true
+        } catch {
+            DispatchQueue.main.async { self.errorMessage = "Failed to cancel appointment." }
+            return false
+        }
+    }
+}
+struct CancelAppointmentEndpoint: APIEndpoint {
+    struct AnyResponse: Codable {}
+    typealias Response = AnyResponse
+    let appointmentId: String
+    let version: Int
+    var path: String { "/api/v1/appointments/\(appointmentId)/cancel" }
+    var method: HTTPMethod { .post }
+    var requiresAuth: Bool { true }
+    var body: Data? {
+        let payload = ["__v": version]
+        return try? JSONEncoder().encode(payload)
+    }
+}
+extension PatientViewModel {
+    func updateProfile(email: String, address: String, city: String, state: String, pinCode: String, emergencyContact: String, version: Int) async -> Bool {
+        guard let id = recordBundle?.patient.id else { return false }
+        do {
+            let payload = UpdateProfilePayload(email: email.isEmpty ? nil : email, address: address.isEmpty ? nil : address, city: city.isEmpty ? nil : city, state: state.isEmpty ? nil : state, pin_code: pinCode.isEmpty ? nil : pinCode, emergency_contact: emergencyContact.isEmpty ? nil : emergencyContact, __v: version)
+            let endpoint = UpdateProfileEndpoint(patientId: id, payload: payload)
+            struct AnyResponse: Codable {}
+            let _: AnyResponse = try await apiClient.execute(endpoint: endpoint)
+            await fetchRecords()
+            return true
+        } catch {
+            DispatchQueue.main.async { self.errorMessage = "Failed to update profile." }
+            return false
+        }
+    }
+}
+struct UpdateProfilePayload: Codable {
+    let email: String?
+    let address: String?
+    let city: String?
+    let state: String?
+    let pin_code: String?
+    let emergency_contact: String?
+    let __v: Int
+}
+struct UpdateProfileEndpoint: APIEndpoint {
+    struct AnyResponse: Codable {}
+    typealias Response = AnyResponse
+    let patientId: String
+    let payload: UpdateProfilePayload
+    var path: String { "/api/v1/patients/\(patientId)" }
+    var method: HTTPMethod { .put }
+    var requiresAuth: Bool { true }
+    var body: Data? { try? JSONEncoder().encode(payload) }
+}

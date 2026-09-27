@@ -1,0 +1,89 @@
+--- ChettinadCareStaff/Features/AdminViews.swift
++++ ChettinadCareStaff/Features/AdminViews.swift
+@@ -216,6 +216,7 @@
+     @StateObject private var viewModel = WalkInBookingViewModel()
+     @Environment(\.dismiss) var dismiss
++    @State private var showingCreatePatient = false
+     
+     var body: some View {
+         NavigationView {
+@@ -242,6 +243,10 @@
+                             }
+                         }
+                     }
++                    
++                    Button("Register New Patient") {
++                        showingCreatePatient = true
++                    }
+                 }
+                 
+                 Section(header: Text("Doctor & Schedule")) {
+@@ -311,6 +316,66 @@
+             .task {
+                 await viewModel.fetchDoctors()
+             }
++            .sheet(isPresented: $showingCreatePatient) {
++                CreatePatientSheet()
++            }
+         }
+     }
+ }
++
++struct CreatePatientSheet: View {
++    @Environment(\.dismiss) var dismiss
++    @State private var name = ""
++    @State private var gender = "OTHER"
++    @State private var dob = Date()
++    @State private var phone = ""
++    @State private var address = ""
++    @State private var isSubmitting = false
++    @State private var errorMsg: String?
++    
++    var body: some View {
++        NavigationView {
++            Form {
++                if let errorMsg = errorMsg {
++                    Section { Text(errorMsg).foregroundColor(.red) }
++                }
++                Section("Details") {
++                    TextField("Full Name", text: $name)
++                    Picker("Gender", selection: $gender) {
++                        Text("Male").tag("MALE")
++                        Text("Female").tag("FEMALE")
++                        Text("Other").tag("OTHER")
++                    }
++                    DatePicker("Date of Birth", selection: $dob, displayedComponents: .date)
++                    TextField("Phone", text: $phone).keyboardType(.phonePad)
++                    TextField("Address", text: $address)
++                }
++            }
++            .navigationTitle("Register Patient")
++            .navigationBarTitleDisplayMode(.inline)
++            .toolbar {
++                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
++                ToolbarItem(placement: .confirmationAction) {
++                    Button("Save") {
++                        isSubmitting = true
++                        Task {
++                            do {
++                                let df = DateFormatter()
++                                df.dateFormat = "yyyy-MM-dd"
++                                let payload = ["name": name, "gender": gender, "dob": df.string(from: dob), "phone": phone, "address": address, "blood_type": "UNKNOWN"]
++                                struct CreatePatientEndpoint: APIEndpoint {
++                                    typealias Response = [String: String]
++                                    var path: String { "/api/v1/opd/patients" }
++                                    var method: HTTPMethod { .post }
++                                    var body: Data?
++                                }
++                                let ep = CreatePatientEndpoint(body: try? JSONEncoder().encode(payload))
++                                let _: [String: String] = try await APIClient().execute(endpoint: ep)
++                                dismiss()
++                            } catch { errorMsg = error.localizedDescription }
++                            isSubmitting = false
++                        }
++                    }.disabled(name.isEmpty || phone.isEmpty || isSubmitting)
++                }
++            }
++        }
++    }
++}

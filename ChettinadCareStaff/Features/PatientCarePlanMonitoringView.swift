@@ -18,7 +18,7 @@ struct PatientCarePlanMonitoringView: View {
     let apiClient = APIClient()
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: StitchSpacing.lg) {
             Text("Active Care Plan")
                 .font(.title2).bold()
                 .padding(.horizontal)
@@ -28,8 +28,8 @@ struct PatientCarePlanMonitoringView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
             } else if let error = errorMessage {
-                VStack(spacing: 12) {
-                    Text(error).foregroundColor(.red)
+                VStack(spacing: StitchSpacing.md) {
+                    StitchErrorState(message: error)
                     Button("Try Again") { Task { await fetchCarePlan() } }
                 }.frame(maxWidth: .infinity).padding()
             } else if tasks.isEmpty {
@@ -41,13 +41,13 @@ struct PatientCarePlanMonitoringView: View {
                 let total = tasks.count
                 let progress = total > 0 ? Double(completed)/Double(total) : 0
                 
-                VStack(spacing: 8) {
+                VStack(spacing: StitchSpacing.sm) {
                     HStack {
                         Text("Today's Adherence")
-                            .font(.headline)
+                            .font(Typography.titleMedium)
                         Spacer()
                         Text("\(completed)/\(total)")
-                            .font(.subheadline).bold()
+                            .font(Typography.bodyLarge).bold()
                     }
                     ProgressView(value: progress)
                         .tint(progress >= 1.0 ? .green : .blue)
@@ -57,11 +57,11 @@ struct PatientCarePlanMonitoringView: View {
                 .cornerRadius(12)
                 .padding(.horizontal)
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: StitchSpacing.md) {
                     ForEach(tasks) { occurrence in
                         HStack {
                             VStack(alignment: .leading) {
-                                Text(occurrence.title).font(.headline)
+                                Text(occurrence.title).font(Typography.titleMedium)
                                 Text(occurrence.instruction).font(.caption).foregroundColor(.secondary)
                                 if let obs = occurrence.recorded_value {
                                     Text("Recorded: \(String(format: "%.1f", obs)) \(occurrence.target_unit ?? "")").font(.caption).bold().foregroundColor(.green)
@@ -88,15 +88,15 @@ struct PatientCarePlanMonitoringView: View {
                 // Timeline snippet
                 if !timeline.isEmpty {
                     Text("Recent Activity")
-                        .font(.headline)
+                        .font(Typography.titleMedium)
                         .padding(.horizontal)
                         .padding(.top)
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: StitchSpacing.md) {
                         ForEach(timeline.prefix(5)) { event in
                             HStack {
                                 VStack(alignment: .leading) {
-                                    Text(event.status).font(.subheadline).bold()
+                                    Text(event.status).font(Typography.bodyLarge).bold()
                                     if let obs = event.observation?.components?.first?.numeric_value {
                                         Text("Value: \(String(format: "%.1f", obs))").font(.caption).foregroundColor(.secondary)
                                     }
@@ -115,11 +115,11 @@ struct PatientCarePlanMonitoringView: View {
                 }
 
                 if !selfRecords.isEmpty {
-                    Text("Patient self-recorded observations").font(.headline).padding(.horizontal).padding(.top)
-                    VStack(spacing: 8) {
+                    Text("Patient self-recorded observations").font(Typography.titleMedium).padding(.horizontal).padding(.top)
+                    VStack(spacing: StitchSpacing.sm) {
                         ForEach(selfRecords.prefix(10)) { record in
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(record.record_type.replacingOccurrences(of: "_", with: " ").capitalized).font(.subheadline).bold()
+                                Text(record.record_type.replacingOccurrences(of: "_", with: " ").capitalized).font(Typography.bodyLarge).bold()
                                 if record.record_type == "ACTIVITY" { Text("\(record.activity_name ?? "Activity") · \(record.duration_minutes ?? 0) min") }
                                 else if record.record_type == "BLOOD_PRESSURE" { Text("\(record.numeric_value ?? 0, specifier: "%.0f")/\(record.secondary_numeric_value ?? 0, specifier: "%.0f") mmHg") }
                                 else { Text("\(record.numeric_value ?? 0, specifier: "%.1f") \(record.unit ?? "")") }
@@ -130,8 +130,8 @@ struct PatientCarePlanMonitoringView: View {
                 }
 
                 if !documents.isEmpty {
-                    Text("Patient documents").font(.headline).padding(.horizontal).padding(.top)
-                    VStack(spacing: 8) { ForEach(documents) { document in Button { Task { previewURL = try? await apiClient.downloadPatientDocument(document) } } label: { HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(.subheadline).bold(); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }.padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8) }.buttonStyle(.plain) } }.padding(.horizontal)
+                    Text("Patient documents").font(Typography.titleMedium).padding(.horizontal).padding(.top)
+                    VStack(spacing: StitchSpacing.sm) { ForEach(documents) { document in Button { Task { previewURL = try? await apiClient.downloadPatientDocument(document) } } label: { HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(Typography.bodyLarge).bold(); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }.padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8) }.buttonStyle(.plain) } }.padding(.horizontal)
                 }
             }
         }

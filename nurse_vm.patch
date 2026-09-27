@@ -1,0 +1,76 @@
+diff --git a/ChettinadCareStaff/Features/NurseViewModels.swift b/ChettinadCareStaff/Features/NurseViewModels.swift
+index 8b09fc0..da417a5 100644
+--- a/ChettinadCareStaff/Features/NurseViewModels.swift
++++ b/ChettinadCareStaff/Features/NurseViewModels.swift
+@@ -30,11 +30,48 @@ struct SubmitTriageEndpoint: APIEndpoint {
+ @MainActor
+ class NurseTriageViewModel: ObservableObject {
+     @Published var queue: [QueueEntry] = []
++    @Published var appointments: [Appointment] = []
+     @Published var isLoading = true
+     @Published var errorMessage: String? = nil
+     @Published var metrics: AdminMetricsResponse? = nil
+     
+     let apiClient = APIClient()
++    var pendingAppointments: [Appointment] {
++        appointments.filter { $0.status == "PENDING_CONFIRMATION" }.sorted { $0.scheduled_at < $1.scheduled_at }
++    }
++    
++    var todayAppointments: [Appointment] {
++        let formatter = ISO8601DateFormatter()
++        formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
++        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
++        let today = formatter.string(from: Date())
++        
++        return appointments.filter { 
++            ($0.status == "CONFIRMED" || $0.status == "CHECKED_IN" || $0.status == "READY_FOR_DOCTOR" || $0.status == "IN_CONSULTATION") && 
++            $0.scheduled_at.hasPrefix(today)
++        }.sorted { $0.scheduled_at < $1.scheduled_at }
++    }
++    
++    func confirmAppointment(appointmentId: String) async {
++        do {
++            struct AnyResponse: Codable {}
++            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
++            await fetchQueue()
++        } catch {
++            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
++        }
++    }
++    
++    func checkIn(appointmentId: String) async {
++        do {
++            struct AnyResponse: Codable {}
++            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
++            await fetchQueue()
++        } catch {
++            self.errorMessage = "Check-in failed: \(error.localizedDescription)"
++        }
++    }
++
+     
+     func fetchQueue() async {
+         isLoading = true
+@@ -42,10 +79,21 @@ class NurseTriageViewModel: ObservableObject {
+         do {
+             async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
+             async let metricsTask: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+-            let (fetchedQueue, metrics) = try await (fetchedQueueTask, metricsTask)
++            async let appointmentsTask: [Appointment] = {
++                do {
++                    return try await apiClient.execute(endpoint: AdminAllAppointmentsEndpoint())
++                } catch {
++                    print("Appointments error:", error)
++                    return []
++                }
++            }()
++            let (fetchedQueue, metrics, fetchedAppointments) = try await (fetchedQueueTask, metricsTask, appointmentsTask)
+             self.metrics = metrics
++            self.appointments = fetchedAppointments
+             self.queue = fetchedQueue.filter { $0.status == "WAITING" || $0.status == "TRIAGE" }
+         } catch {
++            if error is CancellationError { return }
++            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
+             self.errorMessage = error.localizedDescription
+         }
+         isLoading = false

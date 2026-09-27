@@ -13,7 +13,7 @@ struct PatientDossierView: View {
                 ProgressView("Loading Dossier...")
                     .padding(.top, 40)
             } else if let error = viewModel.errorMessage {
-                VStack(spacing: 12) {
+                VStack(spacing: StitchSpacing.md) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
                         .foregroundColor(.orange)
@@ -34,10 +34,10 @@ struct PatientDossierView: View {
                                 .font(.title2)
                                 .fontWeight(.bold)
                             Text("MRN: \(bundle.patient.mrn)")
-                                .font(.subheadline)
+                                .font(Typography.bodyLarge)
                                 .foregroundColor(.secondary)
                             Text("\(bundle.patient.dob) • \(bundle.patient.gender)")
-                                .font(.subheadline)
+                                .font(Typography.bodyLarge)
                                 .foregroundColor(.secondary)
                             if let allergies = bundle.patient.allergies, !allergies.isEmpty {
                                 HStack {
@@ -60,11 +60,12 @@ struct PatientDossierView: View {
                     
                     // Current Encounter Triage
                     if let triage = bundle.triage.last(where: { $0.encounter_id == viewModel.encounterId }) {
-                        VStack(alignment: .leading, spacing: 8) {
+                        StitchCard {
+                        VStack(alignment: .leading, spacing: StitchSpacing.sm) {
                             Text("Current Triage")
-                                .font(.headline)
+                                .font(Typography.titleMedium)
                             if let d = triage.data {
-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: StitchSpacing.sm) {
                                     VitalCell(label: "Temp", value: d.temperature.map { String(format: "%.1f °C", $0) } ?? "—")
                                     VitalCell(label: "BP", value: "\(d.systolic ?? 0)/\(d.diastolic ?? 0)")
                                     VitalCell(label: "Pulse", value: d.pulse.map { "\($0) bpm" } ?? "—")
@@ -74,15 +75,12 @@ struct PatientDossierView: View {
                                 }
                                 if let complaint = d.complaint {
                                     Text("Complaint: \(complaint)")
-                                        .font(.subheadline)
+                                        .font(Typography.bodyLarge)
                                         .padding(.top, 4)
                                 }
                             }
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(12)
+                    }
                     }
                     
                     // Start Consultation Button
@@ -103,21 +101,17 @@ struct PatientDossierView: View {
                                     .fontWeight(.bold)
                             }
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
+                        .buttonStyle(StitchPrimaryButtonStyle())
                     }
                     .disabled(viewModel.isSubmitting)
                     
                     // Historical Summary
                     if !bundle.encounters.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: StitchSpacing.sm) {
                             Text("History")
-                                .font(.headline)
+                                .font(Typography.titleMedium)
                             Text("\(bundle.encounters.count) encounters • \(bundle.notes.count) notes • \(bundle.prescriptions.count) prescriptions • \(bundle.labs.count) labs")
-                                .font(.subheadline)
+                                .font(Typography.bodyLarge)
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -146,13 +140,13 @@ struct VitalCell: View {
     var body: some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.headline)
+                .font(Typography.titleMedium)
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(8)
+        .padding(StitchSpacing.sm)
         .background(Color(.tertiarySystemBackground))
         .cornerRadius(8)
     }
@@ -224,9 +218,9 @@ struct ConsultationWorkspaceView: View {
                         ForEach(Array(viewModel.medications.enumerated()), id: \.offset) { _, med in
                             VStack(alignment: .leading) {
                                 Text(cat.drugs.first(where: { $0.id == med.drug_id })?.name ?? med.drug_id)
-                                    .font(.headline)
+                                    .font(Typography.titleMedium)
                                 Text("\(med.dose) • \(med.frequency) • \(med.duration)")
-                                    .font(.subheadline)
+                                    .font(Typography.bodyLarge)
                                 if let inst = med.instructions, !inst.isEmpty {
                                     Text(inst).font(.caption).foregroundColor(.secondary)
                                 }

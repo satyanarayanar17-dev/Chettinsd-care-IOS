@@ -102,6 +102,21 @@ public struct RecordBundle: Codable {
     public let notes: [Note]
     public let prescriptions: [Prescription]
     public let labs: [LabOrder]
+    public let journey: [JourneyEvent]?
+}
+
+public struct JourneyEvent: Codable, Identifiable {
+    public let id: String
+    public let code: String
+    public let occurred_at: String
+    public let actor_name: String?
+    public let context: JourneyContext?
+}
+
+public struct JourneyContext: Codable {
+    public let reason: String?
+    public let token: String?
+    public let test: String?
 }
 
 public struct TriageRecord: Codable, Identifiable {
@@ -214,6 +229,7 @@ public struct LabOrder: Codable, Identifiable {
     public let unit: String?
     public let reference_range: String?
     public let result: String?
+    public let __v: Int?
 }
 
 public struct QueueEntry: Codable, Identifiable {
@@ -227,6 +243,9 @@ public struct QueueEntry: Codable, Identifiable {
     public let doctor_id: String
     public let doctor_name: String
     public let priority: Int
+    public let patients_ahead: Int?
+    public let estimated_wait: Int?
+    public let wait_minutes: Int?
     public let __v: Int
 }
 
@@ -241,8 +260,8 @@ public struct Appointment: Codable, Identifiable {
     public let department_name: String?
     public let patient_name: String?
     public let id: String
-    public let patient_id: String
-    public let doctor_id: String
+    public let patient_id: String?
+    public let doctor_id: String?
     public let scheduled_at: String
     public let status: String
     public let reason: String?
@@ -322,3 +341,25 @@ public struct PatientDocument: Codable, Identifiable, Sendable {
     public let updated_at: String
     public let content_url: String
 }
+
+public struct OPDNotification: Codable, Identifiable {
+    public let id: String
+    public let user_id: String
+    public let code: String
+    public let read_at: String?
+    public let created_at: String
+    public let context: JourneyContext
+}
+
+public struct NotificationsEndpoint: APIEndpoint {
+    public var path: String { "/api/v1/opd/notifications" }
+    public var method: HTTPMethod { .get }
+    public init() {}
+}
+
+public struct MarkNotificationsReadEndpoint: APIEndpoint {
+    public var path: String { "/api/v1/opd/notifications/read" }
+    public var method: HTTPMethod { .post }
+    public init() {}
+}
+public struct EmptyResponse: Codable {}
