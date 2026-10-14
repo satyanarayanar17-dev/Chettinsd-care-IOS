@@ -7,9 +7,8 @@ final class TokenRefreshTests: XCTestCase {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let urlSession = URLSession(configuration: configuration)
-        let client = APIClient(urlSession: urlSession)
-        
-        let manager = SessionManager.shared
+        let manager = SessionManager(storage:MemorySessionStorage())
+        let client = APIClient(urlSession:urlSession,sessionManager:manager)
         await manager.clearSession()
         let session = AuthSession(accessToken: "old_token", role: "PATIENT", accountType: "PATIENT", userId: "1", name: "Test")
         try await manager.saveSession(session)
@@ -26,7 +25,7 @@ final class TokenRefreshTests: XCTestCase {
                 if path.contains("/auth/refresh") {
                     _refreshCount += 1
                     let json = """
-                    {"access_token": "new_token", "role": "PATIENT", "account_type": "PATIENT"}
+                    {"access_token": "new_token", "role": "PATIENT", "account_type": "PATIENT", "userId": "1"}
                     """
                     return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, json.data(using: .utf8)!)
                 } else if path.contains("/test") {
@@ -106,8 +105,8 @@ final class TokenRefreshTests: XCTestCase {
     func testStructured401RefreshesOnceAndRetriesOriginalRequest() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
-        let client = APIClient(urlSession: URLSession(configuration: configuration))
-        let manager = SessionManager.shared
+        let manager = SessionManager(storage:MemorySessionStorage())
+        let client = APIClient(urlSession:URLSession(configuration:configuration),sessionManager:manager)
         await manager.clearSession()
         try await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
 
@@ -122,7 +121,7 @@ final class TokenRefreshTests: XCTestCase {
             let path = request.url!.path
             if path.contains("/auth/refresh") {
                 counts.refresh += 1
-                let data = Data(#"{"access_token":"fresh","role":"patient","account_type":"patient"}"#.utf8)
+                let data = Data(#"{"access_token":"fresh","role":"patient","account_type":"patient","userId":"p1"}"#.utf8)
                 return (HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!, data)
             }
             counts.resource += 1
@@ -144,8 +143,8 @@ final class TokenRefreshTests: XCTestCase {
     func testFailedRefreshClearsSessionWithoutRetryLoop() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
-        let client = APIClient(urlSession: URLSession(configuration: configuration))
-        let manager = SessionManager.shared
+        let manager = SessionManager(storage:MemorySessionStorage())
+        let client = APIClient(urlSession:URLSession(configuration:configuration),sessionManager:manager)
         await manager.clearSession()
         try await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
 
@@ -192,5 +191,40 @@ final class TokenRefreshTests: XCTestCase {
         """
         let response = try JSONDecoder().decode(APIErrorResponse.self, from: jsonError.data(using: .utf8)!)
         XCTAssertEqual(response.error.code, "STALE_STATE")
+    }
+}
+
+final class MemorySessionStorage: AuthSessionStorage, @unchecked Sendable {
+    private let lock = NSLock(); private var value: Data?
+    func read() -> Data? { lock.lock(); defer { lock.unlock() }; return value }
+    func save(_ data: Data) -> Bool { lock.lock(); defer { lock.unlock() }; value = data; return true }
+    func delete() { lock.lock(); defer { lock.unlock() }; value = nil }
+}
+
+extension TokenRefreshTests {
+    func testLateRefreshCannotReplaceANewerLogin() async throws {
+        let manager = SessionManager(storage:MemorySessionStorage())
+        let config = URLSessionConfiguration.ephemeral;config.protocolClasses=[MockURLProtocol.self]
+        let client = APIClient(urlSession:URLSession(configuration:config),sessionManager:manager)
+        try await manager.saveSession(AuthSession(accessToken:"old",role:"PATIENT",accountType:"PATIENT",userId:"old-user",name:nil))
+        let entered = expectation(description:"Refresh entered")
+        MockURLProtocol.requestHandler = { request in
+            entered.fulfill();Thread.sleep(forTimeInterval:0.2)
+            return (HTTPURLResponse(url:request.url!,statusCode:200,httpVersion:nil,headerFields:nil)!,Data(#"{"userId":"old-user","access_token":"late-old-token","role":"PATIENT","account_type":"PATIENT"}"#.utf8))
+        }
+        let refresh = Task { try await manager.refreshToken(apiClient:client) }
+        await fulfillment(of:[entered],timeout:1)
+        try await manager.saveSession(AuthSession(accessToken:"new-login",role:"PATIENT",accountType:"PATIENT",userId:"new-user",name:nil))
+        do { _ = try await refresh.value;XCTFail("A stale response must be rejected") } catch {}
+        let current = await manager.getSession();XCTAssertEqual(current?.userId,"new-user");XCTAssertEqual(current?.accessToken,"new-login")
+    }
+    func testRefreshForAnotherAccountEndsTheInvalidSession() async throws {
+        let manager = SessionManager(storage:MemorySessionStorage())
+        let config=URLSessionConfiguration.ephemeral;config.protocolClasses=[MockURLProtocol.self]
+        let client=APIClient(urlSession:URLSession(configuration:config),sessionManager:manager)
+        try await manager.saveSession(AuthSession(accessToken:"old",role:"PATIENT",accountType:"PATIENT",userId:"my-user",name:nil))
+        MockURLProtocol.requestHandler={ request in (HTTPURLResponse(url:request.url!,statusCode:200,httpVersion:nil,headerFields:nil)!,Data(#"{"userId":"another-user","access_token":"wrong-token","role":"PATIENT","account_type":"PATIENT"}"#.utf8)) }
+        do { _ = try await manager.refreshToken(apiClient:client);XCTFail("Wrong account must be rejected") } catch {}
+        let current=await manager.getSession();XCTAssertNil(current)
     }
 }

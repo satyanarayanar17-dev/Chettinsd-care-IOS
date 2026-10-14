@@ -32,6 +32,9 @@ public struct Patient: Codable, Identifiable {
     public let preferred_language: String?
     public let existing_mrn: String?
     public let allergies: String?
+    public let allergy_review_status: String?
+    public let allergy_reviewed_at: String?
+    public let allergy_reviewed_by: String?
     public let __v: Int
 }
 
@@ -142,8 +145,9 @@ public struct TriageData: Codable, Sendable {
     public let notes: String?
     public let priority: Int?
     public let bmi: Double?
+    public let allergy_review_status: String?
     
-    public init(temperature: Double? = nil, systolic: Int? = nil, diastolic: Int? = nil, pulse: Int? = nil, spo2: Int? = nil, weight: Double? = nil, height: Double? = nil, complaint: String? = nil, allergies: String? = nil, pain: Int? = nil, notes: String? = nil, priority: Int? = nil, bmi: Double? = nil) {
+    public init(temperature: Double? = nil, systolic: Int? = nil, diastolic: Int? = nil, pulse: Int? = nil, spo2: Int? = nil, weight: Double? = nil, height: Double? = nil, complaint: String? = nil, allergies: String? = nil, pain: Int? = nil, notes: String? = nil, priority: Int? = nil, bmi: Double? = nil, allergy_review_status: String? = nil) {
         self.temperature = temperature
         self.systolic = systolic
         self.diastolic = diastolic
@@ -157,6 +161,7 @@ public struct TriageData: Codable, Sendable {
         self.notes = notes
         self.priority = priority
         self.bmi = bmi
+        self.allergy_review_status = allergy_review_status
     }
 }
 
@@ -167,6 +172,7 @@ public struct Note: Codable, Identifiable {
     public let status: String
     public let author_id: String
     public let created_at: String
+    public let updated_at: String?
     public let draft_content: NoteContent?
     public let author_name: String?
 }
@@ -198,6 +204,19 @@ public struct NoteContent: Codable, Sendable {
     public let treatment: String?
     public let advice: String?
     public let medications: [NoteMedication]?
+    public let diagnosis_ids: [String]?
+    public let follow_up: FollowUpRequest?
+}
+
+public struct FollowUpRequest: Codable, Equatable, Sendable {
+    public let doctor_id: String
+    public let scheduled_at: String
+    public let reason: String
+    public init(doctor_id: String, scheduled_at: String, reason: String) {
+        self.doctor_id = doctor_id
+        self.scheduled_at = scheduled_at
+        self.reason = reason
+    }
 }
 
 public struct Prescription: Codable, Identifiable {
@@ -208,12 +227,32 @@ public struct Prescription: Codable, Identifiable {
     public let created_at: String
     public let rx_content: PrescriptionContent?
     public let doctor_name: String?
+    public let __v: Int?
 }
 
+public struct PrescriptionPatientSnapshot: Codable, Sendable {
+    public let id: String
+    public let mrn: String
+    public let name: String
+    public let dob: String
+    public let gender: String
+    public let allergies: String?
+    public let allergy_review_status: String?
+    public let __v: Int
+}
 public struct PrescriptionContent: Codable, Sendable {
+    public let patient_snapshot: PrescriptionPatientSnapshot?
     public let medications: [NoteMedication]?
     public let diagnoses: [NoteDiagnosis]?
     public let advice: String?
+    public let follow_up: FollowUpRequest?
+    public let validation: PrescriptionValidation?
+}
+
+public struct PrescriptionValidation: Codable, Sendable {
+    public let issued_at: String?
+    public let signed_by: String?
+    public let sha256: String?
 }
 
 public struct LabOrder: Codable, Identifiable {
@@ -224,12 +263,31 @@ public struct LabOrder: Codable, Identifiable {
     public let ordered_at: String
     public let status: String
     public let patient_name: String?
+    public let patient_id: String?
+    public let mrn: String?
+    public let dob: String?
     public let name: String? // test name
     public let code: String?
     public let unit: String?
     public let reference_range: String?
-    public let result: String?
+    public let result: LabResult?
     public let __v: Int?
+}
+
+public struct LabResult: Codable, Sendable {
+    public let id: String
+    public let version: Int
+    public let value: String
+    public let unit: String
+    public let reference_range: String
+    public let flag: String
+    public let entered_name: String?
+    public let verified_name: String?
+    public let resulted_at: String
+    @FlexibleBool public var released: Bool
+    public let reason: String?
+    public let reviewed_at: String?
+    public let reviewed_by: String?
 }
 
 public struct QueueEntry: Codable, Identifiable {
@@ -237,6 +295,7 @@ public struct QueueEntry: Codable, Identifiable {
     public let encounter_id: String
     public let patient_id: String
     public let patient_name: String
+    public let department_name: String?
     public let mrn: String
     public let status: String
     public let token: String
@@ -256,6 +315,10 @@ public struct QueueEndpoint: APIEndpoint {
 }
 
 public struct Appointment: Codable, Identifiable {
+    public let ends_at: String?
+    public let mrn: String?
+    public let dob: String?
+    public let queue_status: String?
     public let doctor_name: String?
     public let department_name: String?
     public let patient_name: String?
@@ -362,4 +425,3 @@ public struct MarkNotificationsReadEndpoint: APIEndpoint {
     public var method: HTTPMethod { .post }
     public init() {}
 }
-public struct EmptyResponse: Codable {}
