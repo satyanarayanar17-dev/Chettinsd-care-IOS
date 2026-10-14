@@ -1,0 +1,13 @@
+# Chettinad patient and staff iOS release
+
+Both applications use the same connected OPD API. Debug builds connect to the synthetic Render demo and are named Care Demo and Staff Demo. They show a Demo banner. The patient app uses challenge-bound OTP login, confirmed date of birth, partial versioned profile updates, canonical booking/cancellation, private document previews and signed prescription PDF export. The staff app includes versioned triage/allergy review, doctor draft save/recovery/sign/amendment, scoped labs, follow-up and reception appointment actions. Patient identity appears with clinical actions.
+
+Generate the project with `xcodegen generate` after editing project.yml. Build environment validation runs with the macOS SDK even when building for an iPhone. Staging and Release require matching APP_ENV, an explicit owned HTTPS origin without credentials/path/query and CC_PILOT_ENDPOINT_APPROVED=YES. Verify the provisioned API hostname first; the default pilot hostname is a candidate, not provisioned infrastructure. Update both applications together.
+
+Run `scripts/run-native-acceptance.sh /absolute/backend-checkout /absolute/new-work-directory` for isolated actual-model integration and shared version/session/PDF tests. It creates its own SQLite backend, never changes an existing database, and shuts the fixture down afterwards. Patient unit tests are in ChettinadCarePatientTests. Physical UI smoke targets operate only when the configured cloud API reports demo_otp=true: they verify patient challenge login/records and staff admin overview. They do not prove nurse/doctor acceptance on real patient records.
+
+Protected local clinical drafts are keyed to actor, patient and encounter, excluded from backups, and isolated between app bundles. Review recovered content against the current server record. Keep server note version and patient version separate; signing/amendment sends both. A lost response is reconciled by exact server content/version before another signing action. Documents and prescription exports use protected temporary files and are removed on dismissal.
+
+The interface language picker supports English/Tamil/Telugu with 56 shared translated labels. Some native screens still use English; hospital terminology review remains required. Clinical authored text is not automatically translated. All schedule/day displays use Asia/Kolkata.
+
+Pilot release requires the backend CONTROLLED_PILOT_RUNBOOK.md gates: durable paid storage, actual OTP/DLT delivery, independent backup restore, clinical catalogues/protocol/language review, hospital printer output and physical nurse/doctor handover acceptance. Do not distribute a production build against the ephemeral demo.

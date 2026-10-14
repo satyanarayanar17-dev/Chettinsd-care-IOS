@@ -1,0 +1,1294 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Care Plan": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Care Plan"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "பராமரிப்புத் திட்டம்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సంరక్షణ ప్రణాళిక"
+          }
+        }
+      }
+    },
+    "Appointments": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appointments"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முன்பதிவுகள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "అపాయింట్‌మెంట్లు"
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Again"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "மீண்டும் முயல்க"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "మళ్లీ ప్రయత్నించండి"
+          }
+        }
+      }
+    },
+    "Mark Taken": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark Taken"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "எடுத்துக்கொண்டதாகக் குறி"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "తీసుకున్నట్లు గుర్తించండి"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "தவிர்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "దాటవేయండి"
+          }
+        }
+      }
+    },
+    "Action": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Action"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செயல்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "చర్య"
+          }
+        }
+      }
+    },
+    "Reading": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "அளவு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "కొలత"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ரத்து செய்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "రద్దు"
+          }
+        }
+      }
+    },
+    "Next Appointment": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Appointment"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "அடுத்த முன்பதிவு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "తదుపరి అపాయింట్‌మెంట్"
+          }
+        }
+      }
+    },
+    "Chief Complaint": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chief Complaint"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முக்கிய அறிகுறி"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ప్రధాన ఫిర్యాదు"
+          }
+        }
+      }
+    },
+    "Diagnoses": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnoses"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "நோயறிதல்கள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "నిర్ధారణలు"
+          }
+        }
+      }
+    },
+    "Advice": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advice"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "அறிவுரை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సలహా"
+          }
+        }
+      }
+    },
+    "Address": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Address"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முகவரி"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "చిరునామా"
+          }
+        }
+      }
+    },
+    "Active Sessions": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active Sessions"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செயலில் உள்ள அமர்வுகள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "క్రియాశీల సెషన్లు"
+          }
+        }
+      }
+    },
+    "Sign Out": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign Out"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "வெளியேறு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సైన్ అవుట్"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "திருத்து"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సవరించు"
+          }
+        }
+      }
+    },
+    "Upcoming": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upcoming"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "வரவுள்ளது"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "రాబోయేది"
+          }
+        }
+      }
+    },
+    "Department": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Department"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "துறை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "విభాగం"
+          }
+        }
+      }
+    },
+    "Book appointment": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Book appointment"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முன்பதிவு செய்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "అపాయింట్‌మెంట్ బుక్ చేయండి"
+          }
+        }
+      }
+    },
+    "Patients Ahead": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Patients Ahead"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முன்னால் உள்ள நோயாளர்கள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ముందున్న రోగులు"
+          }
+        }
+      }
+    },
+    "Pulse (bpm)": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulse (bpm)"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "நாடித்துடிப்பு (bpm)"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "నాడి వేగం (bpm)"
+          }
+        }
+      }
+    },
+    "Weight (kg)": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weight (kg)"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "எடை (kg)"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "బరువు (kg)"
+          }
+        }
+      }
+    },
+    "Routine": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routine"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "வழக்கமானது"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సాధారణం"
+          }
+        }
+      }
+    },
+    "Priority": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Priority"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முன்னுரிமை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ప్రాధాన్యత"
+          }
+        }
+      }
+    },
+    "Urgent": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Urgent"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "அவசரம்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "అత్యవసరం"
+          }
+        }
+      }
+    },
+    "Back": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "பின்செல்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "వెనుకకు"
+          }
+        }
+      }
+    },
+    "No patients currently waiting": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No patients currently waiting"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "காத்திருக்கும் நோயாளர்கள் இல்லை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "రోగులు ఎవరూ వేచి లేరు"
+          }
+        }
+      }
+    },
+    "Today": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "இன்று"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ఈరోజు"
+          }
+        }
+      }
+    },
+    "Confirm Appointment": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm Appointment"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முன்பதிவை உறுதி செய்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "బుకింగ్ నిర్ధారించండి"
+          }
+        }
+      }
+    },
+    "Check In": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check In"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "வருகைப் பதிவு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "చెక్ ఇన్"
+          }
+        }
+      }
+    },
+    "Search": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "தேடு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "వెతకండి"
+          }
+        }
+      }
+    },
+    "Book Appointment": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Book Appointment"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முன்பதிவு செய்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "అపాయింట్‌మెంట్ బుక్ చేయండి"
+          }
+        }
+      }
+    },
+    "Active": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செயலில் உள்ளது"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "క్రియాశీలం"
+          }
+        }
+      }
+    },
+    "Inactive": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inactive"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செயலில் இல்லை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "నిష్క్రియం"
+          }
+        }
+      }
+    },
+    "Checked In": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked In"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "வருகை பதிவு செய்யப்பட்டது"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "చెక్ ఇన్ నమోదు అయింది"
+          }
+        }
+      }
+    },
+    "Waiting": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "காத்திருப்பு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "వేచి ఉన్నారు"
+          }
+        }
+      }
+    },
+    "Completed": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "முடிந்தது"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "పూర్తయ్యాయి"
+          }
+        }
+      }
+    },
+    "Doctor": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doctor"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "மருத்துவர்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "వైద్యుడు"
+          }
+        }
+      }
+    },
+    "Nurse": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nurse"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செவிலியர்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "నర్సు"
+          }
+        }
+      }
+    },
+    "Choose doctor": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose doctor"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "மருத்துவரைத் தேர்வு செய்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "వైద్యుడిని ఎంచుకోండి"
+          }
+        }
+      }
+    },
+    "Start processing": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start processing"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செயலாக்கத்தைத் தொடங்கு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ప్రాసెసింగ్ ప్రారంభించండి"
+          }
+        }
+      }
+    },
+    "Laboratory": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laboratory"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ஆய்வகம்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ప్రయోగశాల"
+          }
+        }
+      }
+    },
+    "Confirm": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "உறுதி செய்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "నిర్ధారించు"
+          }
+        }
+      }
+    },
+    "Close": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "மூடு"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "మూసివేయి"
+          }
+        }
+      }
+    },
+    "Chettinad Care": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chettinad Care"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செட்டிநாடு கேர்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "చెట్టినాడ్ కేర్"
+          }
+        }
+      }
+    },
+    "Active sessions": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active sessions"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செயலில் உள்ள அமர்வுகள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "క్రియాశీల సెషన్లు"
+          }
+        }
+      }
+    },
+    "Restore availability": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore availability"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "கிடைக்கும் நிலையை மீட்டமை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "అందుబాటును పునరుద్ధరించండి"
+          }
+        }
+      }
+    },
+    "STAFF ID": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STAFF ID"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "பணியாளர் அடையாள எண்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సిబ్బంది ఐడీ"
+          }
+        }
+      }
+    },
+    "PASSWORD": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PASSWORD"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "கடவுச்சொல்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "పాస్‌వర్డ్"
+          }
+        }
+      }
+    },
+    "Save draft": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save draft"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "வரைவைச் சேமி"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "డ్రాఫ్ట్ సేవ్ చేయండి"
+          }
+        }
+      }
+    },
+    "Examination Findings": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Examination Findings"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "பரிசோதனை விவரங்கள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "పరీక్ష వివరాలు"
+          }
+        }
+      }
+    },
+    "Ordered": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordered"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "கோரப்பட்டது"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ఆర్డర్ చేయబడింది"
+          }
+        }
+      }
+    },
+    "Consultation": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consultation"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ஆலோசனை"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "సంప్రదింపు"
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "புதுப்பி"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "రిఫ్రెష్ చేయండి"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "அறிவிப்புகள்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "నోటిఫికేషన్లు"
+          }
+        }
+      }
+    },
+    "CHETTINAD CARE": {
+      "comment": "Interface label reused from the existing web vocabulary. Clinical language approval remains a release gate.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CHETTINAD CARE"
+          }
+        },
+        "ta": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "செட்டிநாடு கேர்"
+          }
+        },
+        "te": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "చెట్టినాడ్ కేర్"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

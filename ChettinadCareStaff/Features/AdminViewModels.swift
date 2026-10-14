@@ -16,6 +16,7 @@ struct DirectoryResponse: Codable {
 }
 
 struct PatientSearchResponse: Codable, Identifiable {
+    let dob: String?
     let id: String
     let name: String
     let mrn: String?
@@ -57,47 +58,55 @@ struct AdminCheckInEndpoint: APIEndpoint {
 @MainActor
 class AdminDashboardViewModel: ObservableObject {
     @Published var appointments: [Appointment] = []
-    @Published var isLoading = true
-    @Published var errorMessage: String? = nil
-    
-    let apiClient = APIClient()
-    
-    func fetchAppointments(for date: Date = Date()) async {
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var mutationsInFlight: Set<String> = []
+    private var currentLoad: UUID?
+    let apiClient: APIClient
+
+    init(apiClient: APIClient = APIClient()) { self.apiClient = apiClient }
+
+    func fetchAppointments(for date: Date = Date(), requestsOnly: Bool = false) async {
+        let load = UUID()
+        currentLoad = load
         isLoading = true
+        defer { if currentLoad == load { isLoading = false } }
         errorMessage = nil
         do {
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
             formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-            let dateString = formatter.string(from: date)
-            
-            let fetched: [Appointment] = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: dateString))
-            self.appointments = fetched
+            let fetched: [Appointment]
+            if requestsOnly { fetched = try await apiClient.execute(endpoint: AdminAllAppointmentsEndpoint()) }
+            else { fetched = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: formatter.string(from: date))) }
+            guard !Task.isCancelled, currentLoad == load else { return }
+            appointments = requestsOnly ? fetched.filter { $0.status == "PENDING_CONFIRMATION" } : fetched
         } catch {
-            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
-            self.errorMessage = error.localizedDescription
-        }
-        isLoading = false
-    }
-    
-    
-    func confirmAppointment(appointmentId: String, date: Date) async {
-        do {
-            struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
-            await fetchAppointments(for: date)
-        } catch {
-            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
+            guard !Task.isCancelled, currentLoad == load, (error as NSError).code != NSURLErrorCancelled else { return }
+            errorMessage = "We couldn't load the appointments. Please retry."
         }
     }
 
-    func checkIn(appointmentId: String) async {
+    func confirmAppointment(appointmentId: String) async -> Bool {
+        guard !mutationsInFlight.contains(appointmentId) else { return false }
+        mutationsInFlight.insert(appointmentId)
+        defer { mutationsInFlight.remove(appointmentId) }
+        errorMessage = nil
+        do {
+            let _: EmptyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            return true
+        } catch { errorMessage = "Confirm failed: \(error.localizedDescription)"; return false }
+    }
+
+    func checkIn(appointmentId: String) async -> Bool {
+        guard !mutationsInFlight.contains(appointmentId) else { return false }
+        mutationsInFlight.insert(appointmentId)
+        defer { mutationsInFlight.remove(appointmentId) }
+        errorMessage = nil
         do {
             let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
-            await fetchAppointments()
-        } catch {
-            self.errorMessage = "Check-in failed: \(error.localizedDescription)"
-        }
+            return true
+        } catch { errorMessage = "Check-in failed: \(error.localizedDescription)"; return false }
     }
 }
 
@@ -355,20 +364,26 @@ struct AdminMetricsResponse: Codable {
 @MainActor
 class AdminMetricsViewModel: ObservableObject {
     @Published var metrics: AdminMetricsResponse?
-    @Published var errorMessage: String? = nil
-    let apiClient = APIClient()
-    
+    @Published var errorMessage: String?
+    @Published var isLoading = false
+    let apiClient: APIClient
+
+    init(apiClient: APIClient = APIClient()) { self.apiClient = apiClient }
+
     func fetchMetrics() async {
+        isLoading = true
+        defer { isLoading = false }
+        errorMessage = nil
         do {
-            let res: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
-            self.metrics = res
+            let result: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+            guard !Task.isCancelled else { return }
+            metrics = result
         } catch {
-            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
-            self.errorMessage = error.localizedDescription
+            guard !Task.isCancelled, (error as NSError).code != NSURLErrorCancelled else { return }
+            errorMessage = "We couldn't load the overview. Please try again."
         }
     }
 }
-
 
 struct AdminConfirmEndpoint: APIEndpoint {
     let appointmentId: String
@@ -432,12 +447,15 @@ class DoctorScheduleViewModel: ObservableObject {
     
     func fetchData() async {
         isLoading = true
+        defer { isLoading = false }
         errorMessage = nil
         do {
             async let d: OPDDirectory = apiClient.execute(endpoint: DirectoryEndpoint())
             async let u: [OPDUnavailability] = apiClient.execute(endpoint: UnavailabilityEndpoint())
-            self.directory = try await d
-            self.unavailability = try await u
+            let loaded = try await (d, u)
+            guard !Task.isCancelled else { return }
+            self.directory = loaded.0
+            self.unavailability = loaded.1
         } catch {
             errorMessage = error.localizedDescription
         }
