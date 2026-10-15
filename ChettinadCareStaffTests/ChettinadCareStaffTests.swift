@@ -54,10 +54,20 @@ final class StaffContractTests: XCTestCase {
         XCTAssertNoThrow(try JSONDecoder().decode(EncounterMutationResponse.self, from: data))
     }
     func testClinicalPayloadPreservesHistoryAndNoteVersion() throws {
-        let value = ConsultationData(complaint: "Complaint", history: "History", previous_history: nil, examination: "Exam", assessment: "Assessment", diagnosis_ids: ["dx"], treatment: nil, advice: "Advice", medications: [PrescriptionDrug(drug_id: "drug", dose: "1", frequency: "Daily", duration: "3 days", instructions: nil)])
-        let endpoint = CompleteConsultEndpoint(encounterId: "encounter", v: 2, data: value)
+        let value = ConsultationData(complaint: "Complaint", history: "History", previous_history: nil, examination: "Exam", assessment: "Assessment", diagnosis_ids: ["dx"], treatment: nil, advice: "Advice", medications: [PrescriptionDrug(drug_id: "drug", dose: "1", frequency: "Daily", duration: "3 days", instructions: nil)], follow_up: nil)
+        let endpoint = CompleteConsultEndpoint(encounterId: "encounter", v: 2, data: value, patientVersion: 7)
         let body = try XCTUnwrap(try JSONSerialization.jsonObject(with: XCTUnwrap(endpoint.body)) as? [String:Any])
         XCTAssertEqual(body["__v"] as? Int,2)
+        XCTAssertEqual(body["patient__v"] as? Int,7)
         XCTAssertEqual((body["data"] as? [String:Any])?["history"] as? String,"History")
+    }
+    @MainActor func testTriageRequiresCompleteMeasuredVitalsAndComplaint() {
+        let model = TriageFormViewModel(encounterId: "encounter", initialVersion: 3)
+        XCTAssertNotNil(model.validationError)
+        model.temperature = "37"; model.systolic = "120"; model.diastolic = "80"; model.pulse = "75"
+        model.spo2 = "99"; model.weight = "60"; model.height = "160"; model.pain = "0"; model.complaint = "Synthetic complaint"
+        XCTAssertNil(model.validationError)
+        model.systolic = "70"; XCTAssertNotNil(model.validationError)
+        model.systolic = "120"; model.spo2 = "NaN"; XCTAssertNotNil(model.validationError)
     }
 }

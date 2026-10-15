@@ -1,0 +1,61 @@
+name: Shared client iOS verification
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        scheme: [ChettinadCarePatient, ChettinadCareStaff]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: satyanarayanar17-dev/CHINAD123
+          ref: cd3256223d32527a249e6c4b02b434b04035bcb0
+          path: shared-api
+          sparse-checkout: |
+            backend
+            tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Start disposable shared backend
+        run: |
+          npm ci --prefix shared-api/backend
+          node shared-api/tests/start-clinical.cjs > "$RUNNER_TEMP/shared-api.log" 2>&1 &
+          for attempt in {1..60}; do
+            if curl --silent --fail http://127.0.0.1:3005/api/v1/auth/opd/config > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --fail http://127.0.0.1:3005/api/v1/auth/opd/config > /dev/null
+      - name: Select simulator
+        run: |
+          if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app; fi
+          xcodebuild -version
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
+          python3 - <<'PY'
+          import json,os
+          devices=json.load(open(os.environ['RUNNER_TEMP']+'/devices.json'))['devices']
+          ordered=sorted(devices,key=lambda key: ('iOS-18-5' not in key, key))
+          candidates=[device for key in ordered for device in devices[key] if device['name'].startswith('iPhone')]
+          assert candidates, 'No iPhone simulator available'
+          with open(os.environ['GITHUB_ENV'],'a') as out: out.write('IOS_DESTINATION=platform=iOS Simulator,id='+candidates[0]['udid']+'\n')
+          PY
+      - name: Build and test against shared API
+        run: |
+          set -o pipefail
+          xcodebuild test -project ChettinadCare-iOS.xcodeproj -scheme '${{ matrix.scheme }}' -destination "$IOS_DESTINATION" -resultBundlePath '${{ matrix.scheme }}.xcresult' CODE_SIGNING_ALLOWED=NO 'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG CC_SHARED_FIXTURE' | tee '${{ matrix.scheme }}-build.log'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.scheme }}-verification
+          path: |
+            *.xcresult
+            *-build.log

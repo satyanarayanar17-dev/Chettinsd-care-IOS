@@ -12,7 +12,11 @@ final class BackendIntegrationTests: XCTestCase {
     
     func testBackendHealth() async throws {
         // Just a dummy to check if backend is reachable
-        guard let base = ProcessInfo.processInfo.environment["CC_INTEGRATION_BASE_URL"] else { throw XCTSkip("Run against tests/start-native.cjs disposable fixture") }
+        #if CC_SHARED_FIXTURE
+        let base = "http://127.0.0.1:3005"
+        #else
+        guard let base = ProcessInfo.processInfo.environment["CC_INTEGRATION_BASE_URL"] else { throw XCTSkip("Run against a disposable fixture") }
+        #endif
         let url = URL(string: base + "/api/v1/health")!
         let (_, response) = try await URLSession.shared.data(from: url)
         let httpResponse = response as! HTTPURLResponse

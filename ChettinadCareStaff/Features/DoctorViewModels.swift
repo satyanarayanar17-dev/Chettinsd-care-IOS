@@ -29,10 +29,11 @@ struct CompleteConsultEndpoint: APIEndpoint {
     let encounterId: String
     let v: Int
     let data: ConsultationData
+    let patientVersion: Int
     var path: String { "/api/v1/opd/encounters/\(encounterId)/complete" }
     var method: HTTPMethod { .post }
     var body: Data? {
-        let payload = CompletePayload(__v: v, data: data)
+        let payload = CompletePayload(__v: v, data: data, patient__v: patientVersion)
         return try? JSONEncoder().encode(payload)
     }
 }
@@ -59,6 +60,7 @@ struct AmendConsultEndpoint: APIEndpoint {
 struct CompletePayload: Codable {
     let __v: Int
     let data: ConsultationData
+    let patient__v: Int
 }
 
 struct ConsultationData: Codable {
@@ -71,6 +73,7 @@ struct ConsultationData: Codable {
     let treatment: String?
     let advice: String?
     let medications: [PrescriptionDrug]
+    let follow_up: ConsultationFollowUp?
 }
 
 struct PrescriptionDrug: Codable {
@@ -178,7 +181,11 @@ class DoctorConsultationViewModel: ObservableObject {
     // Consultation note fields
     @Published var noteComplaint = ""
     @Published var noteHistory = ""
+    private var notePreviousHistory = ""
+    private var noteTreatment = ""
+    private var noteFollowUp: ConsultationFollowUp?
     @Published var noteVersion = 0
+    private var hasLoadedDraft = false
     @Published var noteExamination = ""
     @Published var noteAssessment = ""
     @Published var noteAdvice = ""
@@ -224,7 +231,23 @@ class DoctorConsultationViewModel: ObservableObject {
                 endpoint: PatientRecordEndpoint(patientId: patientId)
             )
             self.recordBundle = bundle
-            self.noteVersion = bundle.notes.first(where: { $0.encounter_id == encounterId })?.__v ?? 0
+            let note = bundle.notes.first(where: { $0.encounter_id == encounterId })
+            let remoteVersion = note?.__v ?? 0
+            if !hasLoadedDraft {
+                noteVersion = remoteVersion
+                if let content = note?.draft_content {
+                    noteComplaint = content.complaint ?? ""; noteHistory = content.history ?? ""
+                    noteExamination = content.examination ?? ""; noteAssessment = content.assessment ?? ""
+                    noteAdvice = content.advice ?? ""
+                    notePreviousHistory = content.previous_history ?? ""; noteTreatment = content.treatment ?? ""
+                    noteFollowUp = content.follow_up
+                    selectedDiagnoses = Set(content.diagnoses?.map(\.id) ?? [])
+                    medications = content.medications?.map { PrescriptionDrug(drug_id: $0.drug_id, dose: $0.dose, frequency: $0.frequency, duration: $0.duration, instructions: $0.instructions) } ?? []
+                }
+                hasLoadedDraft = true
+            } else if remoteVersion != noteVersion {
+                errorMessage = "This note changed in another app. Your edits are kept here. Close and reopen the visit to review the hospital draft before signing."
+            }
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -286,16 +309,17 @@ class DoctorConsultationViewModel: ObservableObject {
             let cData = ConsultationData(
                 complaint: noteComplaint.isEmpty ? nil : noteComplaint,
                 history: noteHistory.isEmpty ? nil : noteHistory,
-                previous_history: nil,
+                previous_history: notePreviousHistory.isEmpty ? nil : notePreviousHistory,
                 examination: noteExamination.isEmpty ? nil : noteExamination,
                 assessment: noteAssessment.isEmpty ? nil : noteAssessment,
                 diagnosis_ids: Array(selectedDiagnoses),
-                treatment: nil,
+                treatment: noteTreatment.isEmpty ? nil : noteTreatment,
                 advice: noteAdvice.isEmpty ? nil : noteAdvice,
-                medications: medications
+                medications: medications,
+                follow_up: noteFollowUp
             )
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: AmendConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData, reason: amendReason)
+                endpoint: AmendConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData, reason: amendReason)
             )
             if let newV = response.__v {
                 self.currentVersion = newV
@@ -314,23 +338,28 @@ class DoctorConsultationViewModel: ObservableObject {
 
     func completeConsultation() async -> Bool {
         guard let encounterId = encounterId else { return false }
+        guard let reviewedPatient = recordBundle?.patient, reviewedPatient.id == patientId else {
+            errorMessage = "Load and review this patient's hospital record before signing."
+            return false
+        }
         isSubmitting = true
         errorMessage = nil
         do {
             let cData = ConsultationData(
                 complaint: noteComplaint.isEmpty ? nil : noteComplaint,
                 history: noteHistory.isEmpty ? nil : noteHistory,
-                previous_history: nil,
+                previous_history: notePreviousHistory.isEmpty ? nil : notePreviousHistory,
                 examination: noteExamination.isEmpty ? nil : noteExamination,
                 assessment: noteAssessment.isEmpty ? nil : noteAssessment,
                 diagnosis_ids: Array(selectedDiagnoses),
-                treatment: nil,
+                treatment: noteTreatment.isEmpty ? nil : noteTreatment,
                 advice: noteAdvice.isEmpty ? nil : noteAdvice,
-                medications: medications
+                medications: medications,
+                follow_up: noteFollowUp
             )
             
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: currentVersion, data: cData)
+                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData, patientVersion: reviewedPatient.__v)
             )
             if let newV = response.__v {
                 self.currentVersion = newV

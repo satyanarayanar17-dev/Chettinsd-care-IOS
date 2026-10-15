@@ -118,6 +118,7 @@ class TriageFormViewModel: ObservableObject {
     @Published var notes: String = ""
     @Published var priority: Int = 0
     @Published var complaint: String = ""
+    @Published var recordedAllergies: String = "Not recorded"
     
     @Published var isLoading = false
     @Published var isSubmitting = false
@@ -137,6 +138,8 @@ class TriageFormViewModel: ObservableObject {
             let queue: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
             guard let entry = queue.first(where: { $0.encounter_id == encounterId }) else { throw APIError.invalidResponse }
             currentVersion = entry.__v
+            let record: RecordBundle = try await apiClient.execute(endpoint: PatientRecordEndpoint(patientId: entry.patient_id))
+            recordedAllergies = record.patient.allergies?.isEmpty == false ? record.patient.allergies! : "Not recorded"
             if entry.status == "WAITING" {
                 let _: EncounterMutationResponse = try await apiClient.execute(endpoint: StartTriageEndpoint(encounterId: encounterId, v: currentVersion))
                 let updated: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
@@ -155,8 +158,12 @@ class TriageFormViewModel: ObservableObject {
     }
     
     func submitTriage() async -> Bool {
+        guard !isSubmitting else { return false }
         isSubmitting = true
         errorMessage = nil
+        if let problem = validationError {
+            errorMessage = problem; isSubmitting = false; return false
+        }
 
         // Never silently drop a vital the nurse typed: reject anything that isn't a number.
         let numericFields: [(label: String, value: String, isInteger: Bool)] = [
@@ -213,6 +220,20 @@ class TriageFormViewModel: ObservableObject {
     
     private static func clean(_ s: String) -> String {
         s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var validationError: String? {
+        let values: [(String, Double?, ClosedRange<Double>)] = [
+            ("Temperature", Self.decimal(temperature), 25...45), ("Systolic BP", Self.integer(systolic).map(Double.init), 40...300),
+            ("Diastolic BP", Self.integer(diastolic).map(Double.init), 20...200), ("Pulse", Self.integer(pulse).map(Double.init), 20...250),
+            ("SpO2", Self.integer(spo2).map(Double.init), 1...100), ("Weight", Self.decimal(weight), 0.5...500),
+            ("Height", Self.decimal(height), 20...250), ("Pain", Self.integer(pain).map(Double.init), 0...10)
+        ]
+        if let invalid = values.first(where: { row in guard let value = row.1 else { return true }; return !value.isFinite || !row.2.contains(value) }) {
+            return "Enter a valid \(invalid.0) before submitting."
+        }
+        guard let sys = Self.integer(systolic), let dia = Self.integer(diastolic), sys > dia else { return "Systolic BP must be higher than diastolic BP." }
+        return Self.clean(complaint).isEmpty ? "Enter the presenting complaint before submitting." : nil
     }
 
     private static func decimal(_ s: String) -> Double? {

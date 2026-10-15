@@ -198,6 +198,13 @@ public struct NoteContent: Codable, Sendable {
     public let treatment: String?
     public let advice: String?
     public let medications: [NoteMedication]?
+    public let follow_up: ConsultationFollowUp?
+}
+
+public struct ConsultationFollowUp: Codable, Sendable {
+    public let doctor_id: String
+    public let scheduled_at: String
+    public let reason: String
 }
 
 public struct Prescription: Codable, Identifiable {

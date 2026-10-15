@@ -148,7 +148,7 @@ struct CancelAppointmentEndpoint: APIEndpoint {
     typealias Response = AnyResponse
     let appointmentId: String
     let version: Int
-    var path: String { "/api/v1/appointments/\(appointmentId)/cancel" }
+    var path: String { "/api/v1/opd/appointments/\(appointmentId)/cancel" }
     var method: HTTPMethod { .post }
     var requiresAuth: Bool { true }
     var body: Data? {
@@ -160,7 +160,7 @@ extension PatientViewModel {
     func updateProfile(email: String, address: String, city: String, state: String, pinCode: String, emergencyContact: String, version: Int) async -> Bool {
         guard let id = recordBundle?.patient.id else { return false }
         do {
-            let payload = UpdateProfilePayload(email: email.isEmpty ? nil : email, address: address.isEmpty ? nil : address, city: city.isEmpty ? nil : city, state: state.isEmpty ? nil : state, pin_code: pinCode.isEmpty ? nil : pinCode, emergency_contact: emergencyContact.isEmpty ? nil : emergencyContact, __v: version)
+            let payload = UpdateProfilePayload(email: email, address: address.isEmpty ? nil : address, city: city.isEmpty ? nil : city, state: state.isEmpty ? nil : state, pin_code: pinCode.isEmpty ? nil : pinCode, emergency_contact: emergencyContact.isEmpty ? nil : emergencyContact, __v: version)
             let endpoint = UpdateProfileEndpoint(patientId: id, payload: payload)
             struct AnyResponse: Codable {}
             let _: AnyResponse = try await apiClient.execute(endpoint: endpoint)
@@ -186,8 +186,17 @@ struct UpdateProfileEndpoint: APIEndpoint {
     typealias Response = AnyResponse
     let patientId: String
     let payload: UpdateProfilePayload
-    var path: String { "/api/v1/patients/\(patientId)" }
-    var method: HTTPMethod { .put }
+    var path: String { "/api/v1/opd/patients/\(patientId)" }
+    var method: HTTPMethod { .patch }
     var requiresAuth: Bool { true }
-    var body: Data? { try? JSONEncoder().encode(payload) }
+    var body: Data? {
+        struct Changes: Encodable {
+            let email: String?; let address: String?; let city: String?; let state: String?
+            let pin_code: String?; let emergency_contact: String?
+        }
+        struct Envelope: Encodable { let __v: Int; let data: Changes }
+        return try? JSONEncoder().encode(Envelope(__v: payload.__v, data: Changes(
+            email: payload.email, address: payload.address, city: payload.city, state: payload.state,
+            pin_code: payload.pin_code, emergency_contact: payload.emergency_contact)))
+    }
 }

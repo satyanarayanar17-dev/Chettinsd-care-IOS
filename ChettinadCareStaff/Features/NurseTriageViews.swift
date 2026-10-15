@@ -9,6 +9,7 @@ struct TriageFormView: View {
     
     var body: some View {
         Form {
+            Section("Recorded allergies") { Text(viewModel.recordedAllergies) }
             Section("Care Plan") {
                 NavigationLink("View adherence and readings") {
                     ScrollView {
@@ -98,7 +99,7 @@ struct TriageFormView: View {
                         }
                     }
                 }
-                .disabled(viewModel.isSubmitting || viewModel.isLoading)
+                .disabled(viewModel.isSubmitting || viewModel.isLoading || viewModel.validationError != nil)
             }
         }
         .task {

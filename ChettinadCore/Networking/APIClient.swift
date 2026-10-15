@@ -24,7 +24,7 @@ public final class APIClient: @unchecked Sendable {
         do {
             return try await executeInternal(endpoint: endpoint)
         } catch let error as APIError {
-            let isAuthRoute = endpoint.path.contains("/auth/login") || endpoint.path.contains("/auth/opd/otp") || endpoint.path.contains("/auth/refresh")
+            let isAuthRoute = endpoint.path.contains("/auth/login") || endpoint.path.contains("/auth/opd/otp") || endpoint.path.contains("/auth/refresh") || endpoint.path.hasSuffix("/auth/change-password")
             if error.isUnauthorized && retryCount > 0 && !isAuthRoute {
                 // Attempt refresh
                 _ = try await SessionManager.shared.refreshToken(apiClient: self)
