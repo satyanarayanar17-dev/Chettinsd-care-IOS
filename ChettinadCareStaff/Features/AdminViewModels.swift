@@ -49,9 +49,10 @@ struct AdminAppointmentsEndpoint: APIEndpoint {
 
 struct AdminCheckInEndpoint: APIEndpoint {
     let appointmentId: String
+    let version: Int
     var path: String { "/api/v1/opd/appointments/\(appointmentId)/check-in" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["identity_verified": true]) }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: ["identity_verified": true, "__v": version] as [String: Any]) }
 }
 
 @MainActor
@@ -81,10 +82,15 @@ class AdminDashboardViewModel: ObservableObject {
     }
     
     
+    private func appointmentVersion(_ id: String) throws -> Int {
+        guard let appointment = appointments.first(where: { $0.id == id }) else { throw APIError.invalidResponse }
+        return appointment.__v
+    }
+
     func confirmAppointment(appointmentId: String, date: Date) async {
         do {
             struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             await fetchAppointments(for: date)
         } catch {
             self.errorMessage = "Confirm failed: \(error.localizedDescription)"
@@ -93,7 +99,7 @@ class AdminDashboardViewModel: ObservableObject {
 
     func checkIn(appointmentId: String) async {
         do {
-            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
+            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             await fetchAppointments()
         } catch {
             self.errorMessage = "Check-in failed: \(error.localizedDescription)"
@@ -372,9 +378,10 @@ class AdminMetricsViewModel: ObservableObject {
 
 struct AdminConfirmEndpoint: APIEndpoint {
     let appointmentId: String
+    let version: Int
     var path: String { "/api/v1/opd/appointments/\(appointmentId)/confirm" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": 1]) }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": version]) }
 }
 
 struct AdminAllAppointmentsEndpoint: APIEndpoint {

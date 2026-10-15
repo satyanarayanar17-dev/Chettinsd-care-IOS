@@ -42,6 +42,7 @@ struct AmendConsultEndpoint: APIEndpoint {
     typealias Response = EncounterMutationResponse
     let encounterId: String
     let v: Int
+    let patientVersion: Int
     let data: ConsultationData
     let reason: String
     var path: String { "/api/v1/opd/encounters/\(encounterId)/amend" }
@@ -51,8 +52,9 @@ struct AmendConsultEndpoint: APIEndpoint {
             let __v: Int
             let data: ConsultationData
             let reason: String
+            let patient__v: Int
         }
-        return try? JSONEncoder().encode(AmendPayload(__v: v, data: data, reason: reason))
+        return try? JSONEncoder().encode(AmendPayload(__v: v, data: data, reason: reason, patient__v: patientVersion))
     }
 }
 
@@ -117,10 +119,15 @@ class DoctorQueueViewModel: ObservableObject {
         }.sorted { $0.scheduled_at < $1.scheduled_at }
     }
     
+    private func appointmentVersion(_ id: String) throws -> Int {
+        guard let appointment = appointments.first(where: { $0.id == id }) else { throw APIError.invalidResponse }
+        return appointment.__v
+    }
+
     func confirmAppointment(appointmentId: String) async {
         do {
             struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             await fetchQueue()
         } catch {
             self.errorMessage = "Confirm failed: \(error.localizedDescription)"
@@ -130,7 +137,7 @@ class DoctorQueueViewModel: ObservableObject {
     func checkIn(appointmentId: String) async {
         do {
             struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             await fetchQueue()
         } catch {
             self.errorMessage = "Check-in failed: \(error.localizedDescription)"
@@ -248,26 +255,26 @@ class DoctorConsultationViewModel: ObservableObject {
     }
     
     func acceptDossier(_ bundle: RecordBundle) {
-    self.recordBundle = bundle
-    let note = bundle.notes.first(where: { $0.encounter_id == encounterId })
-    let remoteVersion = note?.__v ?? 0
-    if !hasLoadedDraft {
-        noteVersion = remoteVersion
-        reviewedPatientVersion = bundle.patient.__v
-        if let content = note?.draft_content {
-            noteComplaint = content.complaint ?? ""; noteHistory = content.history ?? ""
-            noteExamination = content.examination ?? ""; noteAssessment = content.assessment ?? ""
-            noteAdvice = content.advice ?? ""
-            notePreviousHistory = content.previous_history ?? ""; noteTreatment = content.treatment ?? ""
-            noteFollowUp = content.follow_up
-            selectedDiagnoses = Set(content.diagnoses?.map(\.id) ?? [])
-            medications = content.medications?.map { PrescriptionDrug(drug_id: $0.drug_id, dose: $0.dose, frequency: $0.frequency, duration: $0.duration, instructions: $0.instructions) } ?? []
+        self.recordBundle = bundle
+        let note = bundle.notes.first(where: { $0.encounter_id == encounterId })
+        let remoteVersion = note?.__v ?? 0
+        if !hasLoadedDraft {
+            noteVersion = remoteVersion
+            reviewedPatientVersion = bundle.patient.__v
+            if let content = note?.draft_content {
+                noteComplaint = content.complaint ?? ""; noteHistory = content.history ?? ""
+                noteExamination = content.examination ?? ""; noteAssessment = content.assessment ?? ""
+                noteAdvice = content.advice ?? ""
+                notePreviousHistory = content.previous_history ?? ""; noteTreatment = content.treatment ?? ""
+                noteFollowUp = content.follow_up
+                selectedDiagnoses = Set(content.diagnoses?.map(\.id) ?? [])
+                medications = content.medications?.map { PrescriptionDrug(drug_id: $0.drug_id, dose: $0.dose, frequency: $0.frequency, duration: $0.duration, instructions: $0.instructions) } ?? []
+            }
+            hasLoadedDraft = true
+        } else if remoteVersion != noteVersion || reviewedPatientVersion != bundle.patient.__v {
+            recordChangedElsewhere = true
+            errorMessage = "This note or patient record changed in another app. Your edits are kept here. Close and reopen the visit to review the hospital draft before signing."
         }
-        hasLoadedDraft = true
-    } else if remoteVersion != noteVersion || reviewedPatientVersion != bundle.patient.__v {
-        recordChangedElsewhere = true
-        errorMessage = "This note changed in another app. Your edits are kept here. Close and reopen the visit to review the hospital draft before signing."
-    }
     }
 
     func startConsultation() async -> Bool {
@@ -318,7 +325,7 @@ class DoctorConsultationViewModel: ObservableObject {
     }
     
     func amendConsultation() async -> Bool {
-        guard let encounterId = encounterId else { return false }
+        guard !isSubmitting, !recordChangedElsewhere, let encounterId, let reviewedPatientVersion else { return false }
         isSubmitting = true
         errorMessage = nil
         do {
@@ -335,10 +342,10 @@ class DoctorConsultationViewModel: ObservableObject {
                 follow_up: noteFollowUp
             )
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: AmendConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData, reason: amendReason)
+                endpoint: AmendConsultEndpoint(encounterId: encounterId, v: noteVersion, patientVersion: reviewedPatientVersion, data: cData, reason: amendReason)
             )
             if let newV = response.__v {
-                self.currentVersion = newV
+                self.noteVersion = newV
             }
             consultationCompleted = true
             isSubmitting = false
@@ -380,7 +387,7 @@ class DoctorConsultationViewModel: ObservableObject {
                 endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData, patientVersion: reviewedPatientVersion)
             )
             if let newV = response.__v {
-                self.currentVersion = newV
+                self.noteVersion = newV
             }
             consultationCompleted = true
             isSubmitting = false

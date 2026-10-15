@@ -49,6 +49,15 @@ final class StaffContractTests: XCTestCase {
         XCTAssertEqual(AdminAppointmentsEndpoint(date: "2026-09-21").queryItems?.first?.name, "date")
         XCTAssertEqual(SlotsEndpoint(doctorId: "doctor", date: "2026-09-21").queryItems?.count, 2)
     }
+    func testReceptionActionsCarryDisplayedAppointmentVersion() throws {
+        let confirm = AdminConfirmEndpoint(appointmentId: "appointment", version: 7)
+        let checkIn = AdminCheckInEndpoint(appointmentId: "appointment", version: 8)
+        let confirmed = try XCTUnwrap(try JSONSerialization.jsonObject(with: XCTUnwrap(confirm.body)) as? [String: Any])
+        let checked = try XCTUnwrap(try JSONSerialization.jsonObject(with: XCTUnwrap(checkIn.body)) as? [String: Any])
+        XCTAssertEqual(confirmed["__v"] as? Int, 7)
+        XCTAssertEqual(checked["__v"] as? Int, 8)
+        XCTAssertEqual(checked["identity_verified"] as? Bool, true)
+    }
     func testCheckInAcceptsBackendMutationResponse() throws {
         let data = Data("{\"success\":true}".utf8)
         XCTAssertNoThrow(try JSONDecoder().decode(EncounterMutationResponse.self, from: data))
@@ -59,6 +68,10 @@ final class StaffContractTests: XCTestCase {
         let body = try XCTUnwrap(try JSONSerialization.jsonObject(with: XCTUnwrap(endpoint.body)) as? [String:Any])
         XCTAssertEqual(body["__v"] as? Int,2)
         XCTAssertEqual(body["patient__v"] as? Int,7)
+        let amend = AmendConsultEndpoint(encounterId: "encounter", v: 2, patientVersion: 7, data: value, reason: "Synthetic correction")
+        let amendment = try XCTUnwrap(try JSONSerialization.jsonObject(with: XCTUnwrap(amend.body)) as? [String: Any])
+        XCTAssertEqual(amendment["__v"] as? Int, 2)
+        XCTAssertEqual(amendment["patient__v"] as? Int, 7)
         XCTAssertEqual((body["data"] as? [String:Any])?["history"] as? String,"History")
     }
     @MainActor func testTriageRequiresCompleteMeasuredVitalsAndComplaint() {
@@ -73,7 +86,7 @@ final class StaffContractTests: XCTestCase {
     @MainActor func testRemoteClinicalDraftCannotReplaceEditsOrAdvanceSigningVersion() throws {
         func bundle(noteVersion: Int, patientVersion: Int = 7) throws -> RecordBundle {
             let json = """
-            {"patient":{"id":"patient","mrn":"MRN","name":"Synthetic patient","phone":"+919100000001","dob":"1990-01-01","gender":"Female","__v":\(patientVersion)},"encounters":[],"triage":[],"prescriptions":[],"labs":[],"notes":[{"id":"note","encounter_id":"encounter","status":"DRAFT","__v":\(noteVersion),"draft_content":{"history":"Hospital history","previous_history":"Previous history","treatment":"Treatment kept"}}]}
+            {"patient":{"id":"patient","mrn":"MRN","name":"Synthetic patient","phone":"+919100000001","dob":"1990-01-01","gender":"Female","__v":\(patientVersion)},"encounters":[],"triage":[],"prescriptions":[],"labs":[],"notes":[{"id":"note","encounter_id":"encounter","author_id":"doctor","created_at":"2026-10-15T04:30:00Z","status":"DRAFT","__v":\(noteVersion),"draft_content":{"history":"Hospital history","previous_history":"Previous history","treatment":"Treatment kept"}}]}
             """
             return try JSONDecoder().decode(RecordBundle.self, from: Data(json.utf8))
         }

@@ -52,10 +52,15 @@ class NurseTriageViewModel: ObservableObject {
         }.sorted { $0.scheduled_at < $1.scheduled_at }
     }
     
+    private func appointmentVersion(_ id: String) throws -> Int {
+        guard let appointment = appointments.first(where: { $0.id == id }) else { throw APIError.invalidResponse }
+        return appointment.__v
+    }
+
     func confirmAppointment(appointmentId: String) async {
         do {
             struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             await fetchQueue()
         } catch {
             self.errorMessage = "Confirm failed: \(error.localizedDescription)"
@@ -65,7 +70,7 @@ class NurseTriageViewModel: ObservableObject {
     func checkIn(appointmentId: String) async {
         do {
             struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
+            let _: AnyResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             await fetchQueue()
         } catch {
             self.errorMessage = "Check-in failed: \(error.localizedDescription)"
