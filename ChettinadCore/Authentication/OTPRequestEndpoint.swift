@@ -15,7 +15,7 @@ public struct OTPRequestEndpoint: APIEndpoint {
     }
 }
 
-public struct OTPRequestResponse: Codable {
+public struct OTPRequestResponse: Codable, Sendable {
     public let sent: Bool
     public let expires_in: Int?
     public let development_code: String?

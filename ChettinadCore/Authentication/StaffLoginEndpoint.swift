@@ -20,7 +20,7 @@ public struct StaffLoginEndpoint: APIEndpoint {
     }
 }
 
-public struct LoginResponse: Codable {
+public struct LoginResponse: Codable, Sendable {
     public let access_token: String
     public let role: String
     public let account_type: String

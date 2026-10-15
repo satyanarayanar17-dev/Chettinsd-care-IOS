@@ -139,7 +139,7 @@ struct RefreshResponse: Codable {
     let account_type: String
 }
 
-public struct SessionInfo: Codable, Identifiable {
+public struct SessionInfo: Codable, Identifiable, Sendable {
     public let id: String
     public let device_name: String?
     public let current: Bool

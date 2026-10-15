@@ -1,6 +1,6 @@
 import Foundation
 
-public struct UserSession: Codable {
+public struct UserSession: Codable, Sendable {
     public let id: String
     public let name: String
     public let role: String
@@ -16,7 +16,7 @@ public struct OPDSessionEndpoint: APIEndpoint {
     public init() {}
 }
 
-public struct Patient: Codable, Identifiable {
+public struct Patient: Codable, Identifiable, Sendable {
     public let id: String
     public let mrn: String
     public let name: String
@@ -35,7 +35,7 @@ public struct Patient: Codable, Identifiable {
     public let __v: Int
 }
 
-public struct Encounter: Codable, Identifiable {
+public struct Encounter: Codable, Identifiable, Sendable {
     public let id: String
     public let patient_id: String
     public let assigned_doctor_id: String?
@@ -95,7 +95,7 @@ public struct Encounter: Codable, Identifiable {
     }
 }
 
-public struct RecordBundle: Codable {
+public struct RecordBundle: Codable, Sendable {
     public let patient: Patient
     public let encounters: [Encounter]
     public let triage: [TriageRecord]
@@ -105,7 +105,7 @@ public struct RecordBundle: Codable {
     public let journey: [JourneyEvent]?
 }
 
-public struct JourneyEvent: Codable, Identifiable {
+public struct JourneyEvent: Codable, Identifiable, Sendable {
     public let id: String
     public let code: String
     public let occurred_at: String
@@ -113,13 +113,13 @@ public struct JourneyEvent: Codable, Identifiable {
     public let context: JourneyContext?
 }
 
-public struct JourneyContext: Codable {
+public struct JourneyContext: Codable, Sendable {
     public let reason: String?
     public let token: String?
     public let test: String?
 }
 
-public struct TriageRecord: Codable, Identifiable {
+public struct TriageRecord: Codable, Identifiable, Sendable {
     public let id: String
     public let encounter_id: String
     public let version: Int
@@ -160,7 +160,7 @@ public struct TriageData: Codable, Sendable {
     }
 }
 
-public struct Note: Codable, Identifiable {
+public struct Note: Codable, Identifiable, Sendable {
     public let __v: Int?
     public let id: String
     public let encounter_id: String
@@ -207,7 +207,7 @@ public struct ConsultationFollowUp: Codable, Sendable {
     public let reason: String
 }
 
-public struct Prescription: Codable, Identifiable {
+public struct Prescription: Codable, Identifiable, Sendable {
     public let id: String
     public let encounter_id: String
     public let status: String
@@ -223,7 +223,7 @@ public struct PrescriptionContent: Codable, Sendable {
     public let advice: String?
 }
 
-public struct LabOrder: Codable, Identifiable {
+public struct LabOrder: Codable, Identifiable, Sendable {
     public let id: String
     public let encounter_id: String
     public let test_id: String
@@ -239,7 +239,7 @@ public struct LabOrder: Codable, Identifiable {
     public let __v: Int?
 }
 
-public struct QueueEntry: Codable, Identifiable {
+public struct QueueEntry: Codable, Identifiable, Sendable {
     public var id: String { encounter_id }
     public let encounter_id: String
     public let patient_id: String
@@ -262,7 +262,7 @@ public struct QueueEndpoint: APIEndpoint {
     public init() {}
 }
 
-public struct Appointment: Codable, Identifiable {
+public struct Appointment: Codable, Identifiable, Sendable {
     public let doctor_name: String?
     public let department_name: String?
     public let patient_name: String?
@@ -349,7 +349,7 @@ public struct PatientDocument: Codable, Identifiable, Sendable {
     public let content_url: String
 }
 
-public struct OPDNotification: Codable, Identifiable {
+public struct OPDNotification: Codable, Identifiable, Sendable {
     public let id: String
     public let user_id: String
     public let code: String
@@ -369,4 +369,4 @@ public struct MarkNotificationsReadEndpoint: APIEndpoint {
     public var method: HTTPMethod { .post }
     public init() {}
 }
-public struct EmptyResponse: Codable {}
+public struct EmptyResponse: Codable, Sendable {}
