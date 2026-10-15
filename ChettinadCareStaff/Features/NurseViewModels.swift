@@ -53,8 +53,8 @@ class NurseTriageViewModel: ObservableObject {
     }
     
     private func appointmentVersion(_ id: String) throws -> Int {
-        guard let appointment = appointments.first(where: { $0.id == id }) else { throw APIError.invalidResponse }
-        return appointment.__v
+        guard let appointment = appointments.first(where: { $0.id == id }), let version = appointment.__v else { throw APIError.invalidResponse }
+        return version
     }
 
     func confirmAppointment(appointmentId: String) async {
