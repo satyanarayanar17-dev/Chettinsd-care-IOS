@@ -3,9 +3,11 @@ import Foundation
 public final class APIClient: @unchecked Sendable {
     public let baseURL: URL
     private let urlSession: URLSession
+    private let sessionManager: SessionManager
     
-    public init(baseURL: URL = EnvironmentConfig.current.baseURL, urlSession: URLSession? = nil) {
+    public init(baseURL: URL = EnvironmentConfig.current.baseURL, urlSession: URLSession? = nil, sessionManager: SessionManager = .shared) {
         self.baseURL = baseURL
+        self.sessionManager = sessionManager
         if let urlSession {
             self.urlSession = urlSession
         } else {
@@ -27,7 +29,7 @@ public final class APIClient: @unchecked Sendable {
             let isAuthRoute = endpoint.path.contains("/auth/login") || endpoint.path.contains("/auth/opd/otp") || endpoint.path.contains("/auth/refresh") || endpoint.path.hasSuffix("/auth/change-password")
             if error.isUnauthorized && retryCount > 0 && !isAuthRoute {
                 // Attempt refresh
-                _ = try await SessionManager.shared.refreshToken(apiClient: self)
+                _ = try await sessionManager.refreshToken(apiClient: self)
                 return try await executeWithRetry(endpoint: endpoint, retryCount: retryCount - 1)
             }
             throw error
@@ -62,7 +64,7 @@ public final class APIClient: @unchecked Sendable {
         let correlationId = UUID().uuidString
         request.setValue(correlationId, forHTTPHeaderField: "X-Correlation-ID")
         
-        if let token = await SessionManager.shared.getAccessToken() {
+        if let token = await sessionManager.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -171,7 +173,7 @@ public final class APIClient: @unchecked Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(await SessionManager.shared.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(await sessionManager.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
         request.setValue(UUID().uuidString, forHTTPHeaderField: "X-Correlation-ID")
         
         let (data, response) = try await urlSession.upload(for: request, fromFile: tempFileURL)
@@ -190,7 +192,7 @@ public final class APIClient: @unchecked Sendable {
     public func downloadPatientDocument(_ document: PatientDocument) async throws -> URL {
         guard let url = URL(string: document.content_url, relativeTo: baseURL) else { throw APIError.invalidResponse }
         var request = URLRequest(url: url)
-        request.setValue("Bearer \(await SessionManager.shared.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(await sessionManager.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
         request.setValue(UUID().uuidString, forHTTPHeaderField: "X-Correlation-ID")
         let (data, response) = try await urlSession.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw APIError.invalidResponse }

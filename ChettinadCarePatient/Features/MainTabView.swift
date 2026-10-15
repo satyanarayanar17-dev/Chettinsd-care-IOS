@@ -51,10 +51,8 @@ struct MainTabView: View {
                 }
         }
         .environmentObject(viewModel)
-        .task {
-            if viewModel.recordBundle == nil {
-                await viewModel.fetchRecords()
-            }
+        .refreshFromHospital {
+            await viewModel.fetchRecords(silent: viewModel.recordBundle != nil)
         }
     }
 }

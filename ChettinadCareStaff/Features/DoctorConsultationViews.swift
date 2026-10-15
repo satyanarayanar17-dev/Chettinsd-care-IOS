@@ -121,7 +121,7 @@ struct PatientDossierView: View {
         }
         .navigationTitle("Dossier")
         .navigationBarTitleDisplayMode(.inline)
-        .task {
+        .refreshFromHospital {
             await viewModel.fetchPatientDossier()
         }
         .sheet(isPresented: $showConsultation, onDismiss: {
@@ -273,7 +273,7 @@ struct ConsultationWorkspaceView: View {
                             }
                         }
                     }
-                    .disabled(viewModel.isSubmitting || viewModel.noteHistory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteExamination.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAssessment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAdvice.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.selectedDiagnoses.isEmpty)
+                    .disabled(viewModel.isSubmitting || viewModel.recordChangedElsewhere || viewModel.noteHistory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteExamination.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAssessment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAdvice.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.selectedDiagnoses.isEmpty)
                 }
             }
             .task {

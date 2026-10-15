@@ -138,8 +138,12 @@ class DoctorQueueViewModel: ObservableObject {
     }
 
     
+    private var queueFetchInFlight = false
     func fetchQueue() async {
-        isLoading = true
+        guard !queueFetchInFlight else { return }
+        queueFetchInFlight = true
+        defer { queueFetchInFlight = false; isLoading = false }
+        if metrics == nil { isLoading = true }
         errorMessage = nil
         do {
             async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())
@@ -186,6 +190,9 @@ class DoctorConsultationViewModel: ObservableObject {
     private var noteFollowUp: ConsultationFollowUp?
     @Published var noteVersion = 0
     private var hasLoadedDraft = false
+    private var reviewedPatientVersion: Int?
+    @Published var recordChangedElsewhere = false
+    private var dossierFetchInFlight = false
     @Published var noteExamination = ""
     @Published var noteAssessment = ""
     @Published var noteAdvice = ""
@@ -224,36 +231,45 @@ class DoctorConsultationViewModel: ObservableObject {
     }
     
     func fetchPatientDossier() async {
-        isLoading = true
+        guard !isSubmitting, !dossierFetchInFlight else { return }
+        dossierFetchInFlight = true
+        defer { dossierFetchInFlight = false; isLoading = false }
+        if recordBundle == nil { isLoading = true }
         errorMessage = nil
         do {
             let bundle: RecordBundle = try await apiClient.execute(
                 endpoint: PatientRecordEndpoint(patientId: patientId)
             )
-            self.recordBundle = bundle
-            let note = bundle.notes.first(where: { $0.encounter_id == encounterId })
-            let remoteVersion = note?.__v ?? 0
-            if !hasLoadedDraft {
-                noteVersion = remoteVersion
-                if let content = note?.draft_content {
-                    noteComplaint = content.complaint ?? ""; noteHistory = content.history ?? ""
-                    noteExamination = content.examination ?? ""; noteAssessment = content.assessment ?? ""
-                    noteAdvice = content.advice ?? ""
-                    notePreviousHistory = content.previous_history ?? ""; noteTreatment = content.treatment ?? ""
-                    noteFollowUp = content.follow_up
-                    selectedDiagnoses = Set(content.diagnoses?.map(\.id) ?? [])
-                    medications = content.medications?.map { PrescriptionDrug(drug_id: $0.drug_id, dose: $0.dose, frequency: $0.frequency, duration: $0.duration, instructions: $0.instructions) } ?? []
-                }
-                hasLoadedDraft = true
-            } else if remoteVersion != noteVersion {
-                errorMessage = "This note changed in another app. Your edits are kept here. Close and reopen the visit to review the hospital draft before signing."
-            }
+            acceptDossier(bundle)
         } catch {
             self.errorMessage = error.localizedDescription
         }
         isLoading = false
     }
     
+    func acceptDossier(_ bundle: RecordBundle) {
+    self.recordBundle = bundle
+    let note = bundle.notes.first(where: { $0.encounter_id == encounterId })
+    let remoteVersion = note?.__v ?? 0
+    if !hasLoadedDraft {
+        noteVersion = remoteVersion
+        reviewedPatientVersion = bundle.patient.__v
+        if let content = note?.draft_content {
+            noteComplaint = content.complaint ?? ""; noteHistory = content.history ?? ""
+            noteExamination = content.examination ?? ""; noteAssessment = content.assessment ?? ""
+            noteAdvice = content.advice ?? ""
+            notePreviousHistory = content.previous_history ?? ""; noteTreatment = content.treatment ?? ""
+            noteFollowUp = content.follow_up
+            selectedDiagnoses = Set(content.diagnoses?.map(\.id) ?? [])
+            medications = content.medications?.map { PrescriptionDrug(drug_id: $0.drug_id, dose: $0.dose, frequency: $0.frequency, duration: $0.duration, instructions: $0.instructions) } ?? []
+        }
+        hasLoadedDraft = true
+    } else if remoteVersion != noteVersion || reviewedPatientVersion != bundle.patient.__v {
+        recordChangedElsewhere = true
+        errorMessage = "This note changed in another app. Your edits are kept here. Close and reopen the visit to review the hospital draft before signing."
+    }
+    }
+
     func startConsultation() async -> Bool {
         guard let encounterId = encounterId else { return false }
         isSubmitting = true
@@ -337,8 +353,10 @@ class DoctorConsultationViewModel: ObservableObject {
     }
 
     func completeConsultation() async -> Bool {
+        guard !isSubmitting, !recordChangedElsewhere else { return false }
         guard let encounterId = encounterId else { return false }
-        guard let reviewedPatient = recordBundle?.patient, reviewedPatient.id == patientId else {
+        guard let reviewedPatient = recordBundle?.patient, reviewedPatient.id == patientId,
+              let reviewedPatientVersion else {
             errorMessage = "Load and review this patient's hospital record before signing."
             return false
         }
@@ -359,7 +377,7 @@ class DoctorConsultationViewModel: ObservableObject {
             )
             
             let response: EncounterMutationResponse = try await apiClient.execute(
-                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData, patientVersion: reviewedPatient.__v)
+                endpoint: CompleteConsultEndpoint(encounterId: encounterId, v: noteVersion, data: cData, patientVersion: reviewedPatientVersion)
             )
             if let newV = response.__v {
                 self.currentVersion = newV

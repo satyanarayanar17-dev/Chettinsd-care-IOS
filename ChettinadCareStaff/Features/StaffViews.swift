@@ -73,7 +73,7 @@ struct DoctorQueueView: View {
                     .padding(.bottom, 24)
                 }
                 .background(Color.chettinadBackground)
-                .task {
+                .refreshFromHospital {
                     await viewModel.fetchQueue()
                 }
                 .refreshable {
@@ -151,7 +151,7 @@ struct NurseTriageView: View {
                     }
                 }
                 .background(Color.chettinadBackground)
-                .task {
+                .refreshFromHospital {
                     await viewModel.fetchQueue()
                 }
                 .refreshable {

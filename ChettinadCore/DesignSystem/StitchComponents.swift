@@ -293,3 +293,24 @@ public struct StitchErrorState: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
+
+private struct HospitalRefreshModifier: ViewModifier {
+    @Environment(\.scenePhase) private var phase
+    let action: @MainActor () async -> Void
+    func body(content: Content) -> some View {
+        content.task(id: phase) {
+            guard phase == .active else { return }
+            while !Task.isCancelled {
+                await action()
+                do { try await Task.sleep(for: .seconds(15)) } catch { return }
+            }
+        }
+    }
+}
+
+public extension View {
+    /// Refresh on foreground entry and while visible; scene changes cancel the task.
+    func refreshFromHospital(_ action: @escaping @MainActor () async -> Void) -> some View {
+        modifier(HospitalRefreshModifier(action: action))
+    }
+}

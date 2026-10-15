@@ -17,10 +17,13 @@ class PatientViewModel: ObservableObject {
     
     let apiClient = APIClient()
     private var patientId: String?
+    private var recordsRevision = 0
     
-    func fetchRecords() async {
-        isLoading = true
-        errorMessage = nil
+    func fetchRecords(silent: Bool = false) async {
+        recordsRevision += 1
+        let revision = recordsRevision
+        if !silent { isLoading = true; errorMessage = nil }
+        defer { if revision == recordsRevision { isLoading = false } }
         do {
             let session: UserSession = try await apiClient.execute(endpoint: OPDSessionEndpoint())
             guard let patientId = session.patient_id else {
@@ -43,22 +46,21 @@ class PatientViewModel: ObservableObject {
             }
             
             let bundle: RecordBundle = try await apiClient.execute(endpoint: PatientRecordEndpoint(patientId: patientId))
-            self.recordBundle = bundle
-            
             let apts: [Appointment] = try await apiClient.execute(endpoint: PatientAppointmentsEndpoint(patientId: patientId))
-            self.appointments = apts
             async let directoryRequest: OPDDirectory = apiClient.execute(endpoint: DirectoryEndpoint())
             async let selfRecordsRequest: [PatientSelfRecord] = apiClient.execute(endpoint: PatientSelfRecordsEndpoint(patientId: patientId))
             async let documentsRequest: [PatientDocument] = apiClient.execute(endpoint: PatientDocumentsEndpoint(patientId: patientId))
             async let careTasksRequest: [CarePlanOccurrenceDTO] = apiClient.execute(endpoint: GetTodayAdherenceEndpoint(patientId: patientId))
-            self.directory = try await directoryRequest
-            self.selfRecords = try await selfRecordsRequest
-            self.documents = try await documentsRequest
-            self.todayCareTasks = try await careTasksRequest
+            let (directory, selfRecords, documents, tasks) = try await (directoryRequest, selfRecordsRequest, documentsRequest, careTasksRequest)
+            try Task.checkCancellation()
+            guard revision == recordsRevision else { return }
+            self.recordBundle = bundle; self.appointments = apts
+            self.directory = directory; self.selfRecords = selfRecords
+            self.documents = documents; self.todayCareTasks = tasks
         } catch {
+            guard !Task.isCancelled, revision == recordsRevision else { return }
             self.errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
     func fetchTimeline() async {

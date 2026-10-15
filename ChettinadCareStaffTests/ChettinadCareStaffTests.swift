@@ -70,4 +70,22 @@ final class StaffContractTests: XCTestCase {
         model.systolic = "70"; XCTAssertNotNil(model.validationError)
         model.systolic = "120"; model.spo2 = "NaN"; XCTAssertNotNil(model.validationError)
     }
+    @MainActor func testRemoteClinicalDraftCannotReplaceEditsOrAdvanceSigningVersion() throws {
+        func bundle(noteVersion: Int, patientVersion: Int = 7) throws -> RecordBundle {
+            let json = """
+            {"patient":{"id":"patient","mrn":"MRN","name":"Synthetic patient","phone":"+919100000001","dob":"1990-01-01","gender":"Female","__v":\(patientVersion)},"encounters":[],"triage":[],"prescriptions":[],"labs":[],"notes":[{"id":"note","encounter_id":"encounter","status":"DRAFT","__v":\(noteVersion),"draft_content":{"history":"Hospital history","previous_history":"Previous history","treatment":"Treatment kept"}}]}
+            """
+            return try JSONDecoder().decode(RecordBundle.self, from: Data(json.utf8))
+        }
+        let model = DoctorConsultationViewModel(encounterId: "encounter", patientId: "patient", initialVersion: 9)
+        model.acceptDossier(try bundle(noteVersion: 2))
+        XCTAssertEqual(model.noteHistory, "Hospital history")
+        XCTAssertEqual(model.noteVersion, 2)
+        model.noteHistory = "Unsaved local history"
+        model.acceptDossier(try bundle(noteVersion: 3, patientVersion: 8))
+        XCTAssertEqual(model.noteHistory, "Unsaved local history")
+        XCTAssertEqual(model.noteVersion, 2)
+        XCTAssertTrue(model.recordChangedElsewhere)
+    }
+
 }

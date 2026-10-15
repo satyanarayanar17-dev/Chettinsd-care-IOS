@@ -70,12 +70,12 @@ struct PatientDashboardView: View {
                                         Text("No tasks scheduled for today.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary)
                                     } else {
                                         let completed = viewModel.todayCareTasks.filter { $0.status == .COMPLETED || $0.status == .SKIPPED || $0.status == .MISSED }.count
-                                        Text("(completed) of (viewModel.todayCareTasks.count) tasks completed").font(Typography.titleMedium).foregroundStyle(Color.chettinadPrimary)
+                                        Text("\(completed) of \(viewModel.todayCareTasks.count) tasks completed").font(Typography.titleMedium).foregroundStyle(Color.chettinadPrimary)
                                         ProgressView(value: Double(completed), total: Double(max(viewModel.todayCareTasks.count, 1)))
                                             .tint(.chettinadPrimary)
                                         
                                         if let nextDue = viewModel.todayCareTasks.first(where: { $0.status == .DUE || $0.status == .UPCOMING }) {
-                                            Text("Next due: (nextDue.title) at (nextDue.scheduled_time)").font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                                            Text("Next due: \(nextDue.title) at \(nextDue.scheduled_time)").font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
                                         } else if completed == viewModel.todayCareTasks.count {
                                             Text("All caught up for today!").font(Typography.bodyMedium).foregroundStyle(Color.chettinadSuccess)
                                         }

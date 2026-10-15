@@ -51,7 +51,7 @@ jobs:
       - name: Build and test against shared API
         run: |
           set -o pipefail
-          xcodebuild test -project ChettinadCare-iOS.xcodeproj -scheme '${{ matrix.scheme }}' -destination "$IOS_DESTINATION" -resultBundlePath '${{ matrix.scheme }}.xcresult' CODE_SIGNING_ALLOWED=NO 'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG CC_SHARED_FIXTURE' | tee '${{ matrix.scheme }}-build.log'
+          xcodebuild test -project ChettinadCare-iOS.xcodeproj -scheme '${{ matrix.scheme }}' -destination "$IOS_DESTINATION" -resultBundlePath '${{ matrix.scheme }}.xcresult' CODE_SIGNING_ALLOWED=NO 'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG CC_SHARED_FIXTURE' 2>&1 | tee '${{ matrix.scheme }}-build.log'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

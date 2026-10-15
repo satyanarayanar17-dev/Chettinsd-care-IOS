@@ -4,12 +4,12 @@ import XCTest
 final class TokenRefreshTests: XCTestCase {
     
     func testSingleFlightRefresh() async throws {
+        let manager = SessionManager(persistence: MemorySessionPersistence())
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
         let urlSession = URLSession(configuration: configuration)
-        let client = APIClient(urlSession: urlSession)
+        let client = APIClient(urlSession: urlSession, sessionManager: manager)
         
-        let manager = SessionManager.shared
         await manager.clearSession()
         let session = AuthSession(accessToken: "old_token", role: "PATIENT", accountType: "PATIENT", userId: "1", name: "Test")
         try await manager.saveSession(session)
@@ -104,10 +104,10 @@ final class TokenRefreshTests: XCTestCase {
     }
 
     func testStructured401RefreshesOnceAndRetriesOriginalRequest() async throws {
+        let manager = SessionManager(persistence: MemorySessionPersistence())
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
-        let client = APIClient(urlSession: URLSession(configuration: configuration))
-        let manager = SessionManager.shared
+        let client = APIClient(urlSession: URLSession(configuration: configuration), sessionManager: manager)
         await manager.clearSession()
         try await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
 
@@ -142,10 +142,10 @@ final class TokenRefreshTests: XCTestCase {
     }
 
     func testFailedRefreshClearsSessionWithoutRetryLoop() async throws {
+        let manager = SessionManager(persistence: MemorySessionPersistence())
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [MockURLProtocol.self]
-        let client = APIClient(urlSession: URLSession(configuration: configuration))
-        let manager = SessionManager.shared
+        let client = APIClient(urlSession: URLSession(configuration: configuration), sessionManager: manager)
         await manager.clearSession()
         try await manager.saveSession(AuthSession(accessToken: "expired", role: "PATIENT", accountType: "PATIENT", userId: "p1", name: "Patient"))
 
@@ -193,4 +193,13 @@ final class TokenRefreshTests: XCTestCase {
         let response = try JSONDecoder().decode(APIErrorResponse.self, from: jsonError.data(using: .utf8)!)
         XCTAssertEqual(response.error.code, "STALE_STATE")
     }
+}
+
+// Refresh coordination is isolated from Keychain entitlements of the unhosted XCTest runner.
+private final class MemorySessionPersistence: SessionPersistence, @unchecked Sendable {
+    private var data: Data?
+    private let lock = NSLock()
+    func save(_ value: Data, service: String, account: String) -> Bool { lock.lock(); defer { lock.unlock() }; data = value; return true }
+    func read(service: String, account: String) -> Data? { lock.lock(); defer { lock.unlock() }; return data }
+    func delete(service: String, account: String) { lock.lock(); defer { lock.unlock() }; data = nil }
 }

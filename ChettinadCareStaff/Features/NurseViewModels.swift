@@ -73,8 +73,12 @@ class NurseTriageViewModel: ObservableObject {
     }
 
     
+    private var queueFetchInFlight = false
     func fetchQueue() async {
-        isLoading = true
+        guard !queueFetchInFlight else { return }
+        queueFetchInFlight = true
+        defer { queueFetchInFlight = false; isLoading = false }
+        if metrics == nil { isLoading = true }
         errorMessage = nil
         do {
             async let fetchedQueueTask: [QueueEntry] = try await apiClient.execute(endpoint: QueueEndpoint())

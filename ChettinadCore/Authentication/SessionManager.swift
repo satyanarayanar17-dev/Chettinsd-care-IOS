@@ -26,12 +26,14 @@ public actor SessionManager {
     
     private let service = "com.chettinadcare.auth"
     private let account = "session"
+    private let persistence: any SessionPersistence
     
     private var currentSession: AuthSession?
     private var refreshTask: Task<AuthSession, Error>?
     
-    public init() {
-        if let data = KeychainHelper.shared.read(service: service, account: account),
+    public init(persistence: any SessionPersistence = KeychainHelper.shared) {
+        self.persistence = persistence
+        if let data = persistence.read(service: service, account: account),
            let session = try? JSONDecoder().decode(AuthSession.self, from: data) {
             self.currentSession = session
         }
@@ -43,7 +45,7 @@ public actor SessionManager {
     
     public func saveSession(_ session: AuthSession) throws {
         guard let data = try? JSONEncoder().encode(session),
-              KeychainHelper.shared.save(data, service: service, account: account) else {
+              persistence.save(data, service: service, account: account) else {
             throw SessionError.persistenceFailed
         }
         self.currentSession = session
@@ -63,7 +65,7 @@ public actor SessionManager {
         refreshTask?.cancel()
         refreshTask = nil
         self.currentSession = nil
-        KeychainHelper.shared.delete(service: service, account: account)
+        persistence.delete(service: service, account: account)
         if let cookies = HTTPCookieStorage.shared.cookies {
             for cookie in cookies {
                 HTTPCookieStorage.shared.deleteCookie(cookie)
