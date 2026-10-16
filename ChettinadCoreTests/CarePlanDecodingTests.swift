@@ -88,4 +88,38 @@ final class CarePlanDecodingTests: XCTestCase {
         let observation = try JSONDecoder().decode(PatientObservation.self, from: Data(json.utf8))
         XCTAssertEqual(observation.components?.first?.numeric_value, 105)
     }
+    func testReminderPolicyHonorsBooleanAndSQLiteFlagsAndOnlyTheActivePlan() throws {
+        let data = Data("""
+        {"plan":{"id":"plan"},"tasks":[
+          {"id":"disabled","plan_id":"plan","status":"ACTIVE","reminder_enabled":0},
+          {"id":"numeric","plan_id":"plan","status":"ACTIVE","reminder_enabled":1},
+          {"id":"boolean","plan_id":"plan","status":"ACTIVE","reminder_enabled":true},
+          {"id":"stopped","plan_id":"plan","status":"INACTIVE","reminder_enabled":1},
+          {"id":"old-plan","plan_id":"old","status":"ACTIVE","reminder_enabled":1},
+          {"id":"missing-policy","plan_id":"plan","status":"ACTIVE"}]}
+        """.utf8)
+        let policy = try JSONDecoder().decode(CarePlanReminderPolicy.self, from: data)
+        let ids = ["disabled","numeric","boolean","stopped","old-plan","missing-policy"]
+        let occurrences = try ids.map { try occurrence(taskId:$0) }
+        XCTAssertEqual(policy.eligible(occurrences).map(\.task_id), ["numeric","boolean"])
+        let empty = try JSONDecoder().decode(CarePlanReminderPolicy.self, from: Data("{\"plan\":null,\"tasks\":[]}".utf8))
+        XCTAssertTrue(empty.eligible(occurrences).isEmpty)
+    }
+    @MainActor func testReminderUsesScheduledInstantAcrossDeviceTimeZones() throws {
+        let original = NSTimeZone.default
+        defer { NSTimeZone.default = original }
+        let now = try XCTUnwrap(ISODate.parse("2026-10-16T03:30:00Z"))
+        let task = try occurrence(taskId:"numeric")
+        for zone in ["Asia/Kolkata","America/Los_Angeles","Pacific/Auckland"] {
+            NSTimeZone.default = try XCTUnwrap(TimeZone(identifier:zone))
+            XCTAssertEqual(NotificationManager.reminderDate(for:task,now:now), ISODate.parse("2026-10-16T04:30:00Z"))
+        }
+        XCTAssertNil(NotificationManager.reminderDate(for:task,now:now.addingTimeInterval(7200)))
+    }
+    private func occurrence(taskId: String) throws -> CarePlanOccurrenceDTO {
+        try JSONDecoder().decode(CarePlanOccurrenceDTO.self, from: Data("""
+        {"id":"\(taskId)","task_id":"\(taskId)","plan_id":"plan","series_id":"series","revision":1,"task_type":"ACTIVITY","title":"Synthetic","description":"Synthetic","instruction":"Synthetic","occurrence_date":"2026-10-16","due_date":"2026-10-16","due_time":"10:00","scheduled_for":"2026-10-16T04:30:00Z","status":"UPCOMING","__v":0}
+        """.utf8))
+    }
+
 }

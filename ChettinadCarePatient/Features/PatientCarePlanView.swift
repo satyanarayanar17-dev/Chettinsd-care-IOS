@@ -69,8 +69,7 @@ struct PatientCarePlanView: View {
                 }
             }
             .navigationTitle("Care Plan")
-            .task(id: scenePhase) {
-                guard scenePhase == .active else { return }
+            .refreshFromHospital {
                 await viewModel.fetchTodayCarePlan()
                 await viewModel.fetchTimeline()
             }

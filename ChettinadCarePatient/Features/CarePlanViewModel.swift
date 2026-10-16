@@ -24,20 +24,24 @@ class CarePlanViewModel: ObservableObject {
     }
     
     func fetchTodayCarePlan() async {
+        guard !isLoading else { return }
         isLoading = true
+        defer { isLoading = false }
         errorMessage = nil
         do {
             let patientId = try await getPatientId()
             let endpoint = GetTodayAdherenceEndpoint(patientId: patientId)
             self.tasks = try await apiClient.execute(endpoint: endpoint)
             
-            // Schedule local reminders
+            let policy: CarePlanReminderPolicy = try await apiClient.execute(endpoint: GetCarePlanEndpoint(patientId: patientId))
             _ = try? await NotificationManager.shared.requestAuthorization()
-            await NotificationManager.shared.scheduleCarePlanReminders(tasks: self.tasks)
+            await NotificationManager.shared.scheduleCarePlanReminders(tasks: policy.eligible(self.tasks))
         } catch {
+            if Task.isCancelled { return }
+            // Unknown policy must not leave obsolete task reminders armed.
+            await NotificationManager.shared.scheduleCarePlanReminders(tasks: [])
             errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
     
     func fetchTimeline() async {
