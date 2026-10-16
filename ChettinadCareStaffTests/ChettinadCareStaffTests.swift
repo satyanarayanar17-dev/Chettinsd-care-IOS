@@ -245,8 +245,8 @@ final class StaffWorkflowTests: XCTestCase {
 // These tests only mutate the explicitly configured disposable local fixture.
 @MainActor
 final class PatientStaffIntegrationTests: XCTestCase {
-    private var baseURL: URL!
-    private var session: URLSession!
+    private let baseURL = URL(string: "http://127.0.0.1:3011")!
+    private let session = URLSession(configuration: .ephemeral)
 
     override func setUpWithError() throws {
         #if !CC_SHARED_FIXTURE
@@ -254,8 +254,6 @@ final class PatientStaffIntegrationTests: XCTestCase {
             throw XCTSkip("Requires the isolated synthetic native fixture on port 3011")
         }
         #endif
-        baseURL = URL(string: "http://127.0.0.1:3011")!
-        session = URLSession(configuration: .ephemeral)
     }
 
     private func raw(_ endpoint: APIEndpoint, token: String? = nil, expected: Int = 200) async throws -> Data {

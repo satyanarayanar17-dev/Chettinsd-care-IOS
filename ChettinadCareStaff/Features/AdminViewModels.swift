@@ -50,9 +50,14 @@ struct AdminAppointmentsEndpoint: APIEndpoint {
 
 struct AdminCheckInEndpoint: APIEndpoint {
     let appointmentId: String
+    var version: Int? = nil
     var path: String { "/api/v1/opd/appointments/\(appointmentId)/check-in" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["identity_verified": true]) }
+    var body: Data? {
+        var payload: [String: Any] = ["identity_verified": true]
+        if let version { payload["__v"] = version }
+        return try? JSONSerialization.data(withJSONObject: payload)
+    }
 }
 
 @MainActor
@@ -87,13 +92,18 @@ class AdminDashboardViewModel: ObservableObject {
         }
     }
 
+    private func appointmentVersion(_ id: String) throws -> Int {
+        guard let version = appointments.first(where: { $0.id == id })?.__v else { throw APIError.invalidResponse }
+        return version
+    }
+
     func confirmAppointment(appointmentId: String) async -> Bool {
         guard !mutationsInFlight.contains(appointmentId) else { return false }
         mutationsInFlight.insert(appointmentId)
         defer { mutationsInFlight.remove(appointmentId) }
         errorMessage = nil
         do {
-            let _: EmptyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
+            let _: EmptyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             return true
         } catch { errorMessage = "Confirm failed: \(error.localizedDescription)"; return false }
     }
@@ -104,7 +114,7 @@ class AdminDashboardViewModel: ObservableObject {
         defer { mutationsInFlight.remove(appointmentId) }
         errorMessage = nil
         do {
-            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
+            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
             return true
         } catch { errorMessage = "Check-in failed: \(error.localizedDescription)"; return false }
     }
@@ -415,9 +425,10 @@ class AdminMetricsViewModel: ObservableObject {
 
 struct AdminConfirmEndpoint: APIEndpoint {
     let appointmentId: String
+    var version: Int? = nil
     var path: String { "/api/v1/opd/appointments/\(appointmentId)/confirm" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": 1]) }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: version.map { ["__v": $0] } ?? [:]) }
 }
 
 struct AdminAllAppointmentsEndpoint: APIEndpoint {
