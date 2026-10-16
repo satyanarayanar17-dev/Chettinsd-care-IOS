@@ -279,7 +279,7 @@ final class PatientStaffIntegrationTests: XCTestCase {
     }
     private func patientLogin(_ phone: String) async throws -> String {
         let otp: OTPRequestResponse = try await load(OTPRequestEndpoint(phone: phone))
-        let result: OTPVerifyResponse = try await load(OTPVerifyEndpoint(phone: phone, code: try XCTUnwrap(otp.development_code)))
+        let result: OTPVerifyResponse = try await load(OTPVerifyEndpoint(phone: phone, code: try XCTUnwrap(otp.development_code), challengeId: otp.challenge_id))
         XCTAssertEqual(result.role.uppercased(), "PATIENT")
         return result.access_token
     }
@@ -342,12 +342,12 @@ final class PatientStaffIntegrationTests: XCTestCase {
         let requests: [Appointment] = try await load(AdminAllAppointmentsEndpoint(), token: doctor)
         XCTAssertTrue(requests.contains { $0.id == booked.id && $0.patient_id == patientId })
         _ = try await raw(AdminConfirmEndpoint(appointmentId: booked.id), token: nurse, expected: 403)
-        let confirmed: Appointment = try await load(AdminConfirmEndpoint(appointmentId: booked.id), token: doctor)
+        let confirmed: Appointment = try await load(AdminConfirmEndpoint(appointmentId: booked.id, version: booked.__v), token: doctor)
         XCTAssertEqual(confirmed.status, "CONFIRMED")
         let patientAppointments: [Appointment] = try await load(AdminAllAppointmentsEndpoint(), token: patient)
         XCTAssertEqual(patientAppointments.first(where: { $0.id == booked.id })?.status, "CONFIRMED")
         _ = try await raw(AdminCheckInEndpoint(appointmentId: booked.id), token: nurse, expected: 403)
-        _ = try await raw(AdminCheckInEndpoint(appointmentId: booked.id), token: doctor)
+        _ = try await raw(AdminCheckInEndpoint(appointmentId: booked.id, version: confirmed.__v), token: doctor)
         let nurseQueue: [QueueEntry] = try await load(QueueEndpoint(), token: nurse)
         let checkedIn = try XCTUnwrap(nurseQueue.first { $0.patient_id == patientId })
         let encounter = checkedIn.encounter_id
@@ -366,8 +366,8 @@ final class PatientStaffIntegrationTests: XCTestCase {
         XCTAssertEqual(dossier.triage.first(where: { $0.encounter_id == encounter })?.data?.notes, "Exact native nurse handoff")
         let noteVersion = dossier.notes.first(where: { $0.encounter_id == encounter })?.__v ?? 0
         let clinical = ConsultationData(complaint: "Synthetic native handoff", history: "Synthetic clinical history", previous_history: nil, examination: "Synthetic examination", assessment: "Synthetic assessment", diagnosis_ids: ["native_diagnosis"], treatment: nil, advice: "Synthetic patient advice", medications: [PrescriptionDrug(drug_id: "native_drug", dose: "1", frequency: "Daily", duration: "3 days", instructions: "Synthetic instructions")])
-        _ = try await raw(CompleteConsultEndpoint(encounterId: encounter, v: noteVersion, data: clinical), token: nurse, expected: 403)
-        _ = try await raw(CompleteConsultEndpoint(encounterId: encounter, v: noteVersion, data: clinical), token: doctor)
+        _ = try await raw(CompleteConsultEndpoint(encounterId: encounter, v: noteVersion, data: clinical, patientVersion: dossier.patient.__v), token: nurse, expected: 403)
+        _ = try await raw(CompleteConsultEndpoint(encounterId: encounter, v: noteVersion, data: clinical, patientVersion: dossier.patient.__v), token: doctor)
         let patientRecord: RecordBundle = try await load(PatientRecordEndpoint(patientId: patientId), token: patient)
         XCTAssertEqual(patientRecord.patient.id, patientId)
         XCTAssertTrue(patientRecord.notes.contains { $0.encounter_id == encounter })
@@ -555,14 +555,15 @@ final class NativeModelServerIntegrationTests: XCTestCase {
         let slots: [AppointmentSlot] = try await client.execute(endpoint:AppointmentSlotsEndpoint(doctorId:"native_doctor",date:formatter.string(from:Date())))
         let appointment: Appointment = try await client.execute(endpoint:BookAppointmentEndpoint(doctorId:"native_doctor",scheduledAt:try XCTUnwrap(slots.first).scheduled_at,reason:"Synthetic actual-model journey"))
         try await staff("native_admin")
-        let _: Appointment = try await client.execute(endpoint:AdminConfirmEndpoint(appointmentId:appointment.id))
-        let _: EncounterMutationResponse = try await client.execute(endpoint:AdminCheckInEndpoint(appointmentId:appointment.id))
+        let confirmed: Appointment = try await client.execute(endpoint:AdminConfirmEndpoint(appointmentId:appointment.id,version:appointment.__v))
+        let _: EncounterMutationResponse = try await client.execute(endpoint:AdminCheckInEndpoint(appointmentId:appointment.id,version:confirmed.__v))
         try await staff("native_nurse")
         let nurseQueue: [QueueEntry] = try await client.execute(endpoint:QueueEndpoint());let entry = try XCTUnwrap(nurseQueue.first { $0.patient_id == patientId })
         let nurse = TriageFormViewModel(encounterId:entry.encounter_id,initialVersion:entry.__v,apiClient:client)
         let started = await nurse.startTriage();XCTAssertTrue(started)
         XCTAssertEqual(nurse.patient?.id,patientId)
         nurse.temperature="37";nurse.systolic="120";nurse.diastolic="80";nurse.pulse="75";nurse.spo2="99";nurse.weight="60";nurse.height="160";nurse.pain="0";nurse.complaint="Synthetic actual-model complaint"
+        nurse.allergyReviewConfirmed = true
         let triaged = await nurse.submitTriage();XCTAssertTrue(triaged,nurse.errorMessage ?? "")
         try await staff("native_doctor")
         let doctorQueue: [QueueEntry] = try await client.execute(endpoint:QueueEndpoint());let handoff = try XCTUnwrap(doctorQueue.first { $0.patient_id == patientId })
