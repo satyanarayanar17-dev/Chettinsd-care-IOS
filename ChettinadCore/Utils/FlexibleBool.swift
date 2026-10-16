@@ -1,7 +1,7 @@
 import Foundation
 
 @propertyWrapper
-public struct FlexibleBool: Codable {
+public struct FlexibleBool: Codable, Sendable {
     public var wrappedValue: Bool
 
     public init(wrappedValue: Bool) {

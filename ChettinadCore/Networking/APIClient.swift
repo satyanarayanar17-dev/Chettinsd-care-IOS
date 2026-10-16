@@ -3,8 +3,10 @@ import Foundation
 public final class APIClient: @unchecked Sendable {
     public let baseURL: URL
     private let urlSession: URLSession
+    public let sessionManager: SessionManager
     
-    public init(baseURL: URL = EnvironmentConfig.current.baseURL, urlSession: URLSession? = nil) {
+    public init(baseURL: URL = EnvironmentConfig.current.baseURL, urlSession: URLSession? = nil, sessionManager: SessionManager = .shared) {
+        self.sessionManager = sessionManager
         self.baseURL = baseURL
         if let urlSession {
             self.urlSession = urlSession
@@ -24,10 +26,10 @@ public final class APIClient: @unchecked Sendable {
         do {
             return try await executeInternal(endpoint: endpoint)
         } catch let error as APIError {
-            let isAuthRoute = endpoint.path.contains("/auth/login") || endpoint.path.contains("/auth/opd/otp") || endpoint.path.contains("/auth/refresh")
+            let isAuthRoute = endpoint.path.contains("/auth/login") || endpoint.path.contains("/auth/opd/otp") || endpoint.path.contains("/auth/refresh") || endpoint.path.hasSuffix("/auth/change-password")
             if error.isUnauthorized && retryCount > 0 && !isAuthRoute {
                 // Attempt refresh
-                _ = try await SessionManager.shared.refreshToken(apiClient: self)
+                _ = try await sessionManager.refreshToken(apiClient: self)
                 return try await executeWithRetry(endpoint: endpoint, retryCount: retryCount - 1)
             }
             throw error
@@ -62,7 +64,7 @@ public final class APIClient: @unchecked Sendable {
         let correlationId = UUID().uuidString
         request.setValue(correlationId, forHTTPHeaderField: "X-Correlation-ID")
         
-        if let token = await SessionManager.shared.getAccessToken() {
+        if let token = await sessionManager.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
@@ -118,6 +120,7 @@ public final class APIClient: @unchecked Sendable {
         let tempFileURL = tempDir.appendingPathComponent(UUID().uuidString)
         
         guard let outputStream = OutputStream(url: tempFileURL, append: false) else { throw APIError.invalidResponse }
+        guard FileManager.default.createFile(atPath:tempFileURL.path,contents:nil,attributes:[.protectionKey:FileProtectionType.complete,.posixPermissions:0o600]) else { throw APIError.invalidResponse }
         // Always remove the temporary copy of the medical document, even if we throw part-way through.
         defer { try? FileManager.default.removeItem(at: tempFileURL) }
         outputStream.open()
@@ -126,8 +129,14 @@ public final class APIClient: @unchecked Sendable {
         
         func writeString(_ text: String) throws {
             let data = text.data(using: .utf8)!
-            let written = data.withUnsafeBytes { outputStream.write($0.bindMemory(to: UInt8.self).baseAddress!, maxLength: data.count) }
-            if written < 0 { throw APIError.invalidResponse }
+            try data.withUnsafeBytes { bytes in
+                guard let base = bytes.bindMemory(to:UInt8.self).baseAddress else { return }
+                var offset=0
+                while offset < data.count {
+                    let written=outputStream.write(base.advanced(by:offset),maxLength:data.count-offset)
+                    if written <= 0 { throw APIError.invalidResponse };offset += written
+                }
+            }
         }
         
         func field(_ name: String, _ value: String?) throws {
@@ -157,7 +166,7 @@ public final class APIClient: @unchecked Sendable {
             var totalWritten = 0
             while totalWritten < read {
                 let written = outputStream.write(buffer.advanced(by: totalWritten), maxLength: read - totalWritten)
-                if written < 0 { throw APIError.invalidResponse }
+                if written <= 0 { throw APIError.invalidResponse }
                 totalWritten += written
             }
         }
@@ -171,10 +180,15 @@ public final class APIClient: @unchecked Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(await SessionManager.shared.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(await sessionManager.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
         request.setValue(UUID().uuidString, forHTTPHeaderField: "X-Correlation-ID")
         
-        let (data, response) = try await urlSession.upload(for: request, fromFile: tempFileURL)
+        var (data, response) = try await urlSession.upload(for: request, fromFile: tempFileURL)
+        if (response as? HTTPURLResponse)?.statusCode == 401 {
+            _ = try await sessionManager.refreshToken(apiClient:self)
+            request.setValue("Bearer \(await sessionManager.getAccessToken() ?? "")",forHTTPHeaderField:"Authorization")
+            (data,response) = try await urlSession.upload(for:request,fromFile:tempFileURL)
+        }
         
         guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         if !(200...299).contains(http.statusCode) {
@@ -188,15 +202,21 @@ public final class APIClient: @unchecked Sendable {
     }
 
     public func downloadPatientDocument(_ document: PatientDocument) async throws -> URL {
-        guard let url = URL(string: document.content_url, relativeTo: baseURL) else { throw APIError.invalidResponse }
+        guard let url = URL(string:document.content_url,relativeTo:baseURL)?.absoluteURL,
+              url.scheme == baseURL.scheme, url.host == baseURL.host, url.port == baseURL.port,
+              url.path.hasPrefix("/api/v1/opd/patient-documents/"), url.user == nil, url.password == nil else { throw APIError.invalidResponse }
         var request = URLRequest(url: url)
-        request.setValue("Bearer \(await SessionManager.shared.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(await sessionManager.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
         request.setValue(UUID().uuidString, forHTTPHeaderField: "X-Correlation-ID")
-        let (data, response) = try await urlSession.data(for: request)
+        var (data,response) = try await urlSession.data(for:request)
+        if (response as? HTTPURLResponse)?.statusCode == 401 {
+            _ = try await sessionManager.refreshToken(apiClient:self)
+            request.setValue("Bearer \(await sessionManager.getAccessToken() ?? "")",forHTTPHeaderField:"Authorization")
+            (data,response) = try await urlSession.data(for:request)
+        }
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { throw APIError.invalidResponse }
-        let originalExtension = (document.original_filename as NSString).pathExtension
-        let safeExtension = originalExtension.isEmpty ? (document.mime_type == "application/pdf" ? "pdf" : "bin") : originalExtension
-        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("\(document.id).\(safeExtension)")
+        guard let safeExtension = ["application/pdf":"pdf","image/jpeg":"jpg","image/png":"png"][document.mime_type] else { throw APIError.invalidResponse }
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("Medical-document-\(UUID().uuidString).\(safeExtension)")
         // Protected at rest; callers delete the file once the preview is dismissed.
         try data.write(to: destination, options: [.atomic, .completeFileProtection])
         return destination

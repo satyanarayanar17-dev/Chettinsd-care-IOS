@@ -3,6 +3,8 @@ import ChettinadCore
 
 struct PatientCarePlanView: View {
     @StateObject private var viewModel = CarePlanViewModel()
+    @EnvironmentObject private var patientViewModel: PatientViewModel
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showingMeasurementSheet = false
     @State private var selectedTask: CarePlanOccurrenceDTO?
     @State private var measurementValue: String = ""
@@ -67,10 +69,13 @@ struct PatientCarePlanView: View {
                 }
             }
             .navigationTitle("Care Plan")
-            .task {
+            .refreshFromHospital {
                 await viewModel.fetchTodayCarePlan()
                 await viewModel.fetchTimeline()
             }
+            .onReceive(viewModel.$tasks.dropFirst()) { patientViewModel.todayCareTasks = $0 }
+            .onReceive(viewModel.$selfRecords.dropFirst()) { patientViewModel.selfRecords = $0 }
+            .onReceive(viewModel.$timeline.dropFirst()) { patientViewModel.timeline = $0 }
             .sheet(isPresented: $showingMeasurementSheet) {
                 measurementSheet
             }

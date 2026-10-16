@@ -62,8 +62,8 @@ public struct StitchLoginShell<Content: View>: View {
                 StitchCard {
                     VStack(spacing: 12) {
                         Text("INSTITUTIONAL PORTAL").font(Typography.labelSmall).tracking(2)
-                        Text(title).font(Typography.headlineLarge).foregroundStyle(Color.chettinadPrimary)
-                        Text(subtitle).font(Typography.bodyLarge).foregroundStyle(Color.chettinadSecondary).multilineTextAlignment(.center)
+                        Text(LocalizedStringKey(title)).font(Typography.headlineLarge).foregroundStyle(Color.chettinadPrimary)
+                        Text(LocalizedStringKey(subtitle)).font(Typography.bodyLarge).foregroundStyle(Color.chettinadSecondary).multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity).padding(.vertical, 20)
                     content
                 }
@@ -236,7 +236,7 @@ public struct StitchEmptyState: View {
                 .font(.system(size: 48))
                 .foregroundStyle(Color.chettinadOutline)
             VStack(spacing: StitchSpacing.sm) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(Typography.titleMedium)
                     .foregroundStyle(Color.chettinadTextPrimary)
                 Text(message)
@@ -291,5 +291,45 @@ public struct StitchErrorState: View {
         .frame(maxWidth: .infinity)
         .background(Color.surfaceContainerLowest)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+public struct InterfaceLanguagePicker: View {
+    @AppStorage("interface-language") private var language = "en"
+    public init() {}
+    public var body: some View {
+        Picker("Language",selection:$language) {
+            Text("English").tag("en")
+            Text("தமிழ்").tag("ta")
+            Text("తెలుగు").tag("te")
+        }
+    }
+}
+
+public struct DemoEnvironmentBanner: View {
+    public init() {}
+    public var body: some View {
+        Text("Demo · use synthetic patient details").font(.caption).frame(maxWidth:.infinity).padding(8).background(Color.yellow.opacity(0.18))
+    }
+}
+
+private struct HospitalRefreshModifier: ViewModifier {
+    @Environment(\.scenePhase) private var phase
+    let action: @MainActor () async -> Void
+    func body(content: Content) -> some View {
+        content.task(id: phase) {
+            guard phase == .active else { return }
+            while !Task.isCancelled {
+                await action()
+                do { try await Task.sleep(for: .seconds(15)) } catch { return }
+            }
+        }
+    }
+}
+
+public extension View {
+    /// Refresh on foreground entry and while visible; scene changes cancel the task.
+    func refreshFromHospital(_ action: @escaping @MainActor () async -> Void) -> some View {
+        modifier(HospitalRefreshModifier(action: action))
     }
 }

@@ -12,20 +12,25 @@ class PatientViewModel: ObservableObject {
     @Published var todayCareTasks: [CarePlanOccurrenceDTO] = []
     @Published var timeline: [AdherenceResponseDTO] = []
     @Published var trendsError: String? = nil
+    @Published var isSubmitting = false
     @Published var isLoading = false
     @Published var errorMessage: String? = nil
     
-    let apiClient = APIClient()
+    let apiClient: APIClient
+    init(apiClient: APIClient = APIClient()) { self.apiClient = apiClient }
     private var patientId: String?
+    private var recordsRevision = 0
+    private var slotsRevision = 0
     
-    func fetchRecords() async {
-        isLoading = true
-        errorMessage = nil
+    func fetchRecords(silent: Bool = false) async {
+        recordsRevision += 1
+        let revision = recordsRevision
+        if !silent { isLoading = true; errorMessage = nil }
+        defer { if revision == recordsRevision { isLoading = false } }
         do {
             let session: UserSession = try await apiClient.execute(endpoint: OPDSessionEndpoint())
             guard let patientId = session.patient_id else {
                 self.errorMessage = "Patient ID not found in session."
-                self.isLoading = false
                 return
             }
             self.patientId = patientId
@@ -42,23 +47,30 @@ class PatientViewModel: ObservableObject {
                 var method: HTTPMethod { .get }
             }
             
-            let bundle: RecordBundle = try await apiClient.execute(endpoint: PatientRecordEndpoint(patientId: patientId))
-            self.recordBundle = bundle
-            
-            let apts: [Appointment] = try await apiClient.execute(endpoint: PatientAppointmentsEndpoint(patientId: patientId))
-            self.appointments = apts
+            async let recordRequest: RecordBundle = apiClient.execute(endpoint: PatientRecordEndpoint(patientId: patientId))
+            async let appointmentsRequest: [Appointment] = apiClient.execute(endpoint: PatientAppointmentsEndpoint(patientId: patientId))
             async let directoryRequest: OPDDirectory = apiClient.execute(endpoint: DirectoryEndpoint())
             async let selfRecordsRequest: [PatientSelfRecord] = apiClient.execute(endpoint: PatientSelfRecordsEndpoint(patientId: patientId))
             async let documentsRequest: [PatientDocument] = apiClient.execute(endpoint: PatientDocumentsEndpoint(patientId: patientId))
             async let careTasksRequest: [CarePlanOccurrenceDTO] = apiClient.execute(endpoint: GetTodayAdherenceEndpoint(patientId: patientId))
-            self.directory = try await directoryRequest
-            self.selfRecords = try await selfRecordsRequest
-            self.documents = try await documentsRequest
-            self.todayCareTasks = try await careTasksRequest
+            // Publish one complete snapshot so a failed refresh cannot mix old and new care data.
+            let loaded = try await (recordRequest, appointmentsRequest, directoryRequest, selfRecordsRequest, documentsRequest, careTasksRequest)
+            guard !Task.isCancelled, revision == recordsRevision else { return }
+            guard loaded.0.patient.id == patientId,
+                  loaded.1.allSatisfy({ $0.patient_id == nil || $0.patient_id == patientId }),
+                  loaded.4.allSatisfy({ $0.patient_id == patientId }) else { throw APIError.invalidResponse }
+            self.recordBundle = loaded.0
+            self.appointments = loaded.1
+            self.directory = loaded.2
+            self.selfRecords = loaded.3
+            self.documents = loaded.4
+            self.todayCareTasks = loaded.5
+        } catch is CancellationError {
+            return
         } catch {
+            guard !Task.isCancelled, revision == recordsRevision else { return }
             self.errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 
     func fetchTimeline() async {
@@ -84,16 +96,26 @@ class PatientViewModel: ObservableObject {
     }
 
     func fetchSlots(doctorId: String, date: Date) async {
+        slotsRevision += 1
+        let revision = slotsRevision
+        slots = []
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
         formatter.dateFormat = "yyyy-MM-dd"
-        do { slots = try await apiClient.execute(endpoint: AppointmentSlotsEndpoint(doctorId: doctorId, date: formatter.string(from: date))) }
-        catch { slots = []; errorMessage = error.localizedDescription }
+        do {
+            let loaded: [AppointmentSlot] = try await apiClient.execute(endpoint: AppointmentSlotsEndpoint(doctorId: doctorId, date: formatter.string(from: date)))
+            guard !Task.isCancelled, revision == slotsRevision else { return }
+            slots = loaded
+        } catch {
+            guard !Task.isCancelled, revision == slotsRevision else { return }
+            slots = []; errorMessage = error.localizedDescription
+        }
     }
 
     func book(doctorId: String, scheduledAt: String, reason: String) async -> Bool {
+        guard !isSubmitting else { return false };isSubmitting = true;recordsRevision += 1;isLoading = false;defer { isSubmitting = false };errorMessage = nil
         errorMessage = nil
         do {
             let _: Appointment = try await apiClient.execute(endpoint: BookAppointmentEndpoint(doctorId: doctorId, scheduledAt: scheduledAt, reason: reason))
@@ -103,6 +125,7 @@ class PatientViewModel: ObservableObject {
     }
 
     func uploadDocument(fileURL: URL, title: String, documentType: String, clinicalDate: String, appointmentId: String?, note: String?) async -> Bool {
+        guard !isSubmitting else { return false };isSubmitting = true;recordsRevision += 1;isLoading = false;defer { isSubmitting = false };errorMessage = nil
         guard let patientId else {
             errorMessage = "Your records are still loading. Please try again."
             return false
@@ -116,6 +139,7 @@ class PatientViewModel: ObservableObject {
     }
 
     func linkDocument(_ document: PatientDocument, to appointmentId: String?) async -> Bool {
+        guard !isSubmitting else { return false };isSubmitting = true;recordsRevision += 1;isLoading = false;defer { isSubmitting = false };errorMessage = nil
         guard let patientId else {
             errorMessage = "Your records are still loading. Please try again."
             return false
@@ -131,6 +155,7 @@ class PatientViewModel: ObservableObject {
 import Foundation
 extension PatientViewModel {
     func cancelAppointment(_ id: String, version: Int) async -> Bool {
+        guard !isSubmitting else { return false };isSubmitting = true;recordsRevision += 1;isLoading = false;defer { isSubmitting = false };errorMessage = nil
         do {
             let endpoint = CancelAppointmentEndpoint(appointmentId: id, version: version)
             struct AnyResponse: Codable {}
@@ -138,7 +163,7 @@ extension PatientViewModel {
             await fetchRecords()
             return true
         } catch {
-            DispatchQueue.main.async { self.errorMessage = "Failed to cancel appointment." }
+            self.errorMessage = error.localizedDescription
             return false
         }
     }
@@ -148,7 +173,7 @@ struct CancelAppointmentEndpoint: APIEndpoint {
     typealias Response = AnyResponse
     let appointmentId: String
     let version: Int
-    var path: String { "/api/v1/appointments/\(appointmentId)/cancel" }
+    var path: String { "/api/v1/opd/appointments/\(appointmentId)/cancel" }
     var method: HTTPMethod { .post }
     var requiresAuth: Bool { true }
     var body: Data? {
@@ -158,16 +183,17 @@ struct CancelAppointmentEndpoint: APIEndpoint {
 }
 extension PatientViewModel {
     func updateProfile(email: String, address: String, city: String, state: String, pinCode: String, emergencyContact: String, version: Int) async -> Bool {
+        guard !isSubmitting else { return false };isSubmitting = true;recordsRevision += 1;isLoading = false;defer { isSubmitting = false };errorMessage = nil
         guard let id = recordBundle?.patient.id else { return false }
         do {
-            let payload = UpdateProfilePayload(email: email.isEmpty ? nil : email, address: address.isEmpty ? nil : address, city: city.isEmpty ? nil : city, state: state.isEmpty ? nil : state, pin_code: pinCode.isEmpty ? nil : pinCode, emergency_contact: emergencyContact.isEmpty ? nil : emergencyContact, __v: version)
+            let payload = UpdateProfilePayload(email: email, address: address, city: city, state: state, pin_code: pinCode, emergency_contact: emergencyContact, __v: version)
             let endpoint = UpdateProfileEndpoint(patientId: id, payload: payload)
             struct AnyResponse: Codable {}
             let _: AnyResponse = try await apiClient.execute(endpoint: endpoint)
             await fetchRecords()
             return true
         } catch {
-            DispatchQueue.main.async { self.errorMessage = "Failed to update profile." }
+            self.errorMessage = error.localizedDescription
             return false
         }
     }
@@ -186,8 +212,13 @@ struct UpdateProfileEndpoint: APIEndpoint {
     typealias Response = AnyResponse
     let patientId: String
     let payload: UpdateProfilePayload
-    var path: String { "/api/v1/patients/\(patientId)" }
-    var method: HTTPMethod { .put }
+    var path: String { "/api/v1/opd/patients/\(patientId)" }
+    var method: HTTPMethod { .patch }
     var requiresAuth: Bool { true }
-    var body: Data? { try? JSONEncoder().encode(payload) }
+    var body: Data? {
+        guard let encoded = try? JSONEncoder().encode(payload),
+              var data = try? JSONSerialization.jsonObject(with: encoded) as? [String: Any] else { return nil }
+        data.removeValue(forKey: "__v")
+        return try? JSONSerialization.data(withJSONObject: ["data": data, "__v": payload.__v])
+    }
 }

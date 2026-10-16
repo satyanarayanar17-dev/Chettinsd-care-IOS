@@ -56,7 +56,15 @@ public struct LinkPatientDocumentAppointmentEndpoint: APIEndpoint, Sendable {
     public var path: String { "/api/v1/opd/patient-documents/\(patientId)/\(documentId)/appointment" }
     public var method: HTTPMethod { .patch }
     public var body: Data? { try? JSONEncoder().encode(Payload(appointment_id: appointmentId)) }
-    private struct Payload: Encodable { let appointment_id: String? }
+    private struct Payload: Encodable {
+        let appointment_id: String?
+        enum CodingKeys: String, CodingKey { case appointment_id }
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            if let appointment_id { try container.encode(appointment_id, forKey: .appointment_id) }
+            else { try container.encodeNil(forKey: .appointment_id) }
+        }
+    }
     public init(patientId: String, documentId: String, appointmentId: String?) {
         self.patientId = patientId
         self.documentId = documentId

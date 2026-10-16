@@ -16,6 +16,7 @@ struct DirectoryResponse: Codable {
 }
 
 struct PatientSearchResponse: Codable, Identifiable {
+    let dob: String?
     let id: String
     let name: String
     let mrn: String?
@@ -49,55 +50,73 @@ struct AdminAppointmentsEndpoint: APIEndpoint {
 
 struct AdminCheckInEndpoint: APIEndpoint {
     let appointmentId: String
+    var version: Int? = nil
     var path: String { "/api/v1/opd/appointments/\(appointmentId)/check-in" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["identity_verified": true]) }
+    var body: Data? {
+        var payload: [String: Any] = ["identity_verified": true]
+        if let version { payload["__v"] = version }
+        return try? JSONSerialization.data(withJSONObject: payload)
+    }
 }
 
 @MainActor
 class AdminDashboardViewModel: ObservableObject {
     @Published var appointments: [Appointment] = []
-    @Published var isLoading = true
-    @Published var errorMessage: String? = nil
-    
-    let apiClient = APIClient()
-    
-    func fetchAppointments(for date: Date = Date()) async {
+    @Published var isLoading = false
+    @Published var errorMessage: String?
+    @Published var mutationsInFlight: Set<String> = []
+    private var currentLoad: UUID?
+    let apiClient: APIClient
+
+    init(apiClient: APIClient = APIClient()) { self.apiClient = apiClient }
+
+    func fetchAppointments(for date: Date = Date(), requestsOnly: Bool = false) async {
+        let load = UUID()
+        currentLoad = load
         isLoading = true
+        defer { if currentLoad == load { isLoading = false } }
         errorMessage = nil
         do {
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
             formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-            let dateString = formatter.string(from: date)
-            
-            let fetched: [Appointment] = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: dateString))
-            self.appointments = fetched
+            let fetched: [Appointment]
+            if requestsOnly { fetched = try await apiClient.execute(endpoint: AdminAllAppointmentsEndpoint()) }
+            else { fetched = try await apiClient.execute(endpoint: AdminAppointmentsEndpoint(date: formatter.string(from: date))) }
+            guard !Task.isCancelled, currentLoad == load else { return }
+            appointments = requestsOnly ? fetched.filter { $0.status == "PENDING_CONFIRMATION" } : fetched
         } catch {
-            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
-            self.errorMessage = error.localizedDescription
-        }
-        isLoading = false
-    }
-    
-    
-    func confirmAppointment(appointmentId: String, date: Date) async {
-        do {
-            struct AnyResponse: Codable {}
-            let _: AnyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId))
-            await fetchAppointments(for: date)
-        } catch {
-            self.errorMessage = "Confirm failed: \(error.localizedDescription)"
+            guard !Task.isCancelled, currentLoad == load, (error as NSError).code != NSURLErrorCancelled else { return }
+            errorMessage = "We couldn't load the appointments. Please retry."
         }
     }
 
-    func checkIn(appointmentId: String) async {
+    private func appointmentVersion(_ id: String) throws -> Int {
+        guard let version = appointments.first(where: { $0.id == id })?.__v else { throw APIError.invalidResponse }
+        return version
+    }
+
+    func confirmAppointment(appointmentId: String) async -> Bool {
+        guard !mutationsInFlight.contains(appointmentId) else { return false }
+        mutationsInFlight.insert(appointmentId)
+        defer { mutationsInFlight.remove(appointmentId) }
+        errorMessage = nil
         do {
-            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId))
-            await fetchAppointments()
-        } catch {
-            self.errorMessage = "Check-in failed: \(error.localizedDescription)"
-        }
+            let _: EmptyResponse = try await apiClient.execute(endpoint: AdminConfirmEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
+            return true
+        } catch { errorMessage = "Confirm failed: \(error.localizedDescription)"; return false }
+    }
+
+    func checkIn(appointmentId: String) async -> Bool {
+        guard !mutationsInFlight.contains(appointmentId) else { return false }
+        mutationsInFlight.insert(appointmentId)
+        defer { mutationsInFlight.remove(appointmentId) }
+        errorMessage = nil
+        do {
+            let _: EncounterMutationResponse = try await apiClient.execute(endpoint: AdminCheckInEndpoint(appointmentId: appointmentId, version: try appointmentVersion(appointmentId)))
+            return true
+        } catch { errorMessage = "Check-in failed: \(error.localizedDescription)"; return false }
     }
 }
 
@@ -123,15 +142,21 @@ struct SlotsEndpoint: APIEndpoint {
 
 @MainActor
 class BookAppointmentViewModel: ObservableObject {
-    @Published var searchQuery = ""
+    @Published var searchQuery = "" {
+        didSet {
+            if searchQuery != oldValue {
+                searchRevision += 1; searchResults = []; selectedPatientId = nil; isSearching = false
+            }
+        }
+    }
     @Published var searchResults: [PatientSearchResponse] = []
     @Published var selectedPatientId: String? = nil
     
     @Published var doctors: [DirectoryResponse.Doctor] = []
     @Published var departments: [DirectoryResponse.Department] = []
-    @Published var selectedDoctorId: String? = nil
+    @Published var selectedDoctorId: String? = nil { didSet { if selectedDoctorId != oldValue { invalidateSlots() } } }
     
-    @Published var selectedDate = Date()
+    @Published var selectedDate = Date() { didSet { if selectedDate != oldValue { invalidateSlots() } } }
     @Published var availableSlots: [Slot] = []
     @Published var selectedSlot: String? = nil
     
@@ -141,20 +166,42 @@ class BookAppointmentViewModel: ObservableObject {
     @Published var isSubmitting = false
     @Published var errorMessage: String? = nil
     
-    let apiClient = APIClient()
+    let apiClient: APIClient
+    init(apiClient: APIClient = APIClient()) { self.apiClient = apiClient }
     
-    func searchPatients() async {
-        guard searchQuery.count > 2 else { return }
-        isSearching = true
-        do {
-            let results: [PatientSearchResponse] = try await apiClient.execute(endpoint: PatientSearchEndpoint(query: searchQuery))
-            self.searchResults = results
-        } catch {
-            self.errorMessage = "Search failed: \(error.localizedDescription)"
-        }
-        isSearching = false
+    private var searchRevision = 0
+    private var slotsRevision = 0
+    private var loadedSlotsDoctor: String?
+    private var loadedSlotsDay: String?
+
+    private func invalidateSlots() {
+        slotsRevision += 1; selectedSlot = nil; availableSlots = []
+        loadedSlotsDoctor = nil; loadedSlotsDay = nil
     }
-    
+    private func hospitalDay(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian); formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "Asia/Kolkata"); formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+    func searchPatients() async {
+        searchRevision += 1
+        let revision = searchRevision
+        let query = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        searchResults = []; selectedPatientId = nil
+        guard query.count > 2 else { isSearching = false; return }
+        isSearching = true
+        defer { if revision == searchRevision { isSearching = false } }
+        do {
+            let results: [PatientSearchResponse] = try await apiClient.execute(endpoint: PatientSearchEndpoint(query: query))
+            guard !Task.isCancelled, revision == searchRevision else { return }
+            searchResults = results
+        } catch {
+            guard !Task.isCancelled, revision == searchRevision else { return }
+            errorMessage = "Search failed: \(error.localizedDescription)"
+        }
+    }
+
     func fetchDoctors() async {
         do {
             let directory: DirectoryResponse = try await apiClient.execute(endpoint: DirectoryEndpoint())
@@ -166,26 +213,26 @@ class BookAppointmentViewModel: ObservableObject {
     }
     
     func fetchSlots() async {
-        selectedSlot = nil
-        availableSlots = []
+        invalidateSlots()
+        let revision = slotsRevision
         guard let doctorId = selectedDoctorId else { return }
-        
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
-            formatter.timeZone = TimeZone(identifier: "Asia/Kolkata")
-        let dateString = formatter.string(from: selectedDate)
-        
+        let day = hospitalDay(selectedDate)
         do {
-            let slots: [Slot] = try await apiClient.execute(endpoint: SlotsEndpoint(doctorId: doctorId, date: dateString))
-            self.availableSlots = slots
+            let slots: [Slot] = try await apiClient.execute(endpoint: SlotsEndpoint(doctorId: doctorId, date: day))
+            guard !Task.isCancelled, revision == slotsRevision, selectedDoctorId == doctorId,
+                  hospitalDay(selectedDate) == day else { return }
+            availableSlots = slots; loadedSlotsDoctor = doctorId; loadedSlotsDay = day
         } catch {
-            self.errorMessage = "Failed to fetch slots: \(error.localizedDescription)"
-            self.availableSlots = []
+            guard !Task.isCancelled, revision == slotsRevision else { return }
+            errorMessage = "Failed to fetch slots: \(error.localizedDescription)"
         }
     }
-    
+
     func bookAppointment() async -> Bool {
-        guard let pId = selectedPatientId, let dId = selectedDoctorId, let slot = selectedSlot else { return false }
+        guard let pId = selectedPatientId, searchResults.contains(where: { $0.id == pId }),
+              let dId = selectedDoctorId, let slot = selectedSlot,
+              loadedSlotsDoctor == dId, loadedSlotsDay == hospitalDay(selectedDate),
+              availableSlots.contains(where: { $0.scheduled_at == slot }) else { return false }
         guard !isSubmitting else { return false }
         isSubmitting = true
         errorMessage = nil
@@ -355,26 +402,33 @@ struct AdminMetricsResponse: Codable {
 @MainActor
 class AdminMetricsViewModel: ObservableObject {
     @Published var metrics: AdminMetricsResponse?
-    @Published var errorMessage: String? = nil
-    let apiClient = APIClient()
-    
+    @Published var errorMessage: String?
+    @Published var isLoading = false
+    let apiClient: APIClient
+
+    init(apiClient: APIClient = APIClient()) { self.apiClient = apiClient }
+
     func fetchMetrics() async {
+        isLoading = true
+        defer { isLoading = false }
+        errorMessage = nil
         do {
-            let res: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
-            self.metrics = res
+            let result: AdminMetricsResponse = try await apiClient.execute(endpoint: AdminMetricsEndpoint())
+            guard !Task.isCancelled else { return }
+            metrics = result
         } catch {
-            if (error as NSError).domain == NSURLErrorDomain && (error as NSError).code == NSURLErrorCancelled { return }
-            self.errorMessage = error.localizedDescription
+            guard !Task.isCancelled, (error as NSError).code != NSURLErrorCancelled else { return }
+            errorMessage = "We couldn't load the overview. Please try again."
         }
     }
 }
 
-
 struct AdminConfirmEndpoint: APIEndpoint {
     let appointmentId: String
+    var version: Int? = nil
     var path: String { "/api/v1/opd/appointments/\(appointmentId)/confirm" }
     var method: HTTPMethod { .post }
-    var body: Data? { try? JSONSerialization.data(withJSONObject: ["__v": 1]) }
+    var body: Data? { try? JSONSerialization.data(withJSONObject: version.map { ["__v": $0] } ?? [:]) }
 }
 
 struct AdminAllAppointmentsEndpoint: APIEndpoint {
@@ -432,12 +486,15 @@ class DoctorScheduleViewModel: ObservableObject {
     
     func fetchData() async {
         isLoading = true
+        defer { isLoading = false }
         errorMessage = nil
         do {
             async let d: OPDDirectory = apiClient.execute(endpoint: DirectoryEndpoint())
             async let u: [OPDUnavailability] = apiClient.execute(endpoint: UnavailabilityEndpoint())
-            self.directory = try await d
-            self.unavailability = try await u
+            let loaded = try await (d, u)
+            guard !Task.isCancelled else { return }
+            self.directory = loaded.0
+            self.unavailability = loaded.1
         } catch {
             errorMessage = error.localizedDescription
         }

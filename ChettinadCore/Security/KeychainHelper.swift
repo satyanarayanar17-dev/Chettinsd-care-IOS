@@ -1,7 +1,13 @@
 import Foundation
 import Security
 
-public final class KeychainHelper: @unchecked Sendable {
+public protocol SessionPersistence: Sendable {
+    func save(_ data: Data, service: String, account: String) -> Bool
+    func read(service: String, account: String) -> Data?
+    func delete(service: String, account: String)
+}
+
+public final class KeychainHelper: SessionPersistence, @unchecked Sendable {
     public static let shared = KeychainHelper()
     private init() {}
     

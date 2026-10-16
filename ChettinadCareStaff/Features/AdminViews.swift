@@ -7,12 +7,22 @@ struct AdminDashboardView: View {
     @State private var showBooking = false
     @State private var pendingCheckIn: Appointment?
     @State private var selectedDate = Date()
+    @State private var requestsOnly = false
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
-                AppHeader(title: "Admin Dashboard")
+                AppHeader(title: "Appointments")
                 
+                Picker("Appointment list", selection: $requestsOnly) {
+                    Text("By date").tag(false)
+                    Text("Requests").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, StitchSpacing.lg)
+                .padding(.vertical, StitchSpacing.sm)
+                if !requestsOnly {
                 HStack {
                     DatePicker("Date", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
@@ -23,53 +33,59 @@ struct AdminDashboardView: View {
                 }
                 .padding(.vertical, 8)
                 .background(Color(.systemGroupedBackground))
-                .onChange(of: selectedDate) { _ in
-                    Task { await viewModel.fetchAppointments(for: selectedDate) }
                 }
-                
+
                 List {
                     if let error = viewModel.errorMessage {
-                        StitchErrorState(message: error)
+                        StitchErrorState(message: error) { Task { await refreshAppointments() } }
                     }
                     
                     if viewModel.isLoading {
                         ProgressView().frame(maxWidth: .infinity)
-                    } else if viewModel.appointments.isEmpty {
-                        Text("No appointments for today.")
+                    } else if viewModel.appointments.isEmpty && viewModel.errorMessage == nil {
+                        Text(requestsOnly ? "No appointment requests awaiting confirmation." : "No appointments for this date.")
                             .foregroundColor(.secondary)
                     } else {
                         ForEach(viewModel.appointments.sorted(by: { $0.scheduled_at < $1.scheduled_at })) { apt in
                             AppointmentAdminCard(appointment: apt, onCheckIn: {
                                 pendingCheckIn = apt
                             }, onConfirm: {
-                                Task { await viewModel.confirmAppointment(appointmentId: apt.id, date: selectedDate) }
-                            }, role: appState.role)
+                                Task { if await viewModel.confirmAppointment(appointmentId: apt.id) { await refreshAppointments() } }
+                            }, role: appState.role, onChanged: { Task { await refreshAppointments() } })
+                            .disabled(viewModel.mutationsInFlight.contains(apt.id))
                         }
                     }
                 }
                 .refreshable {
-                    await viewModel.fetchAppointments()
+                    await refreshAppointments()
                 }
             }
             .navigationBarHidden(true)
-            .task {
-                await viewModel.fetchAppointments()
+            .task(id: "\(selectedDate.timeIntervalSince1970)-\(requestsOnly)-\(scenePhase)") {
+                guard scenePhase == .active else { return }
+                await refreshAppointments()
+                while !Task.isCancelled {
+                    do { try await Task.sleep(for: .seconds(30)) } catch { return }
+                    await refreshAppointments()
+                }
             }
             .overlay(alignment: .bottomTrailing) {
+                if StaffPermissions.canBook(role: appState.role) {
                 Button(action: { showBooking = true }) {
                     Image(systemName: "plus")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.chettinadPrimary)
                         .clipShape(Circle())
                         .shadow(radius: 4)
                 }
                 .padding()
+                }
             }
             .sheet(isPresented: $showBooking, onDismiss: {
-                Task { await viewModel.fetchAppointments() }
+                Task { await refreshAppointments() }
             }) {
                 BookAppointmentView()
             }
@@ -80,13 +96,16 @@ struct AdminDashboardView: View {
                 presenting: pendingCheckIn
             ) { apt in
                 Button("Identity verified — Check In") {
-                    Task { await viewModel.checkIn(appointmentId: apt.id) }
+                    Task { if await viewModel.checkIn(appointmentId: apt.id) { await refreshAppointments() } }
                 }
                 Button("Cancel", role: .cancel) {}
-            } message: { _ in
-                Text("Check the patient's photo ID or MRN before checking them in.")
+            } message: { apt in
+                Text("\(apt.patient_name ?? "Patient") · MRN \(apt.mrn ?? "Unavailable") · DOB \(apt.dob ?? "Unavailable")\nCheck these identifiers against the patient before checking in.")
             }
         }
+    }
+    private func refreshAppointments() async {
+        await viewModel.fetchAppointments(for: selectedDate, requestsOnly: requestsOnly)
     }
 }
 
@@ -95,7 +114,7 @@ struct AppointmentAdminCard: View {
     let onCheckIn: () -> Void
     let onConfirm: () -> Void
     let role: String
-    
+    var onChanged: () -> Void = {}
     var body: some View {
         VStack(alignment: .leading, spacing: StitchSpacing.sm) {
             HStack {
@@ -112,9 +131,11 @@ struct AppointmentAdminCard: View {
                     .cornerRadius(8)
             }
             
-            Text("Doctor: \(appointment.doctor_id)")
+            Text("MRN \(appointment.mrn ?? "Unavailable") · DOB \(appointment.dob ?? "Unavailable")").font(.caption)
+            Text("Doctor: \(appointment.doctor_name ?? appointment.doctor_id ?? "Unassigned")")
                 .font(Typography.bodyLarge)
             
+            if role == "ADMIN" { StaffAppointmentActions(appointment:appointment,onChanged:onChanged) }
             Text(formatDate(appointment.scheduled_at))
                 .font(Typography.bodyLarge)
                 .foregroundColor(.secondary)
@@ -125,7 +146,7 @@ struct AppointmentAdminCard: View {
                     .foregroundColor(.secondary)
             }
             
-            if appointment.status == "PENDING_CONFIRMATION" && ["ADMIN", "DOCTOR", "NURSE"].contains(role) {
+            if appointment.status == "PENDING_CONFIRMATION" && StaffPermissions.canConfirm(role: role) {
                 Button(action: onConfirm) {
                     Text("Confirm Appointment")
                         .fontWeight(.bold)
@@ -136,7 +157,7 @@ struct AppointmentAdminCard: View {
                         .cornerRadius(8)
                 }
                 .padding(.top, 4)
-            } else if appointment.status == "CONFIRMED" && ["ADMIN", "NURSE"].contains(role) {
+            } else if appointment.status == "CONFIRMED" && StaffPermissions.canCheckIn(role: role) {
                 Button(action: onCheckIn) {
                     Text("Check In")
                         .fontWeight(.bold)
@@ -197,7 +218,7 @@ struct BookAppointmentView: View {
                         Picker("Select Patient", selection: $viewModel.selectedPatientId) {
                             Text("None").tag(String?.none)
                             ForEach(viewModel.searchResults) { p in
-                                Text("\(p.name) (\(p.phone))").tag(String?.some(p.id))
+                                Text("\(p.name) · \(p.mrn ?? "Unavailable") · DOB \(p.dob ?? "Unavailable") · \(p.phone)").tag(String?.some(p.id))
                             }
                         }
                     }
@@ -375,12 +396,13 @@ struct StaffManagementView: View {
 
 struct AdminMetricsView: View {
     @StateObject private var viewModel = AdminMetricsViewModel()
+    @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
                 AppHeader(title: "Dashboard")
                 if let error = viewModel.errorMessage {
-                    StitchErrorState(message: error).padding()
+                    StitchErrorState(message: error) { Task { await viewModel.fetchMetrics() } }.padding()
                 }
                 if let metrics = viewModel.metrics {
                     List {
@@ -407,12 +429,12 @@ struct AdminMetricsView: View {
                         }
                     }
                     .refreshable { await viewModel.fetchMetrics() }
-                } else {
+                } else if viewModel.isLoading {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             .navigationBarHidden(true)
-            .task { await viewModel.fetchMetrics() }
+            .task(id: scenePhase) { if scenePhase == .active { await viewModel.fetchMetrics() } }
         }
     }
 }

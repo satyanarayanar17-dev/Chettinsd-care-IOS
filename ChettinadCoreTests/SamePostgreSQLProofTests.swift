@@ -7,14 +7,18 @@ struct AnyEndpoint: APIEndpoint {
     var body: Data?
 }
 
-final class SamePostgreSQLProofTests: XCTestCase {
+final class SharedBackendProofTests: XCTestCase {
     func unwrap<T>(_ value: T?) throws -> T { try XCTUnwrap(value) }
     var base: String = ""
     override func setUpWithError() throws {
+        #if CC_SHARED_FIXTURE
+        base = "http://127.0.0.1:3005"
+        #else
         guard let value = ProcessInfo.processInfo.environment["CC_INTEGRATION_BASE_URL"], value == "http://127.0.0.1:3011" else {
             throw XCTSkip("Requires disposable PostgreSQL fixture: tests/start-native.cjs on port 3011")
         }
         base = value
+        #endif
     }
     func request(_ path: String, _ method: String = "GET", _ body: [String: Any]? = nil, _ token: String? = nil, status: Int = 200) async throws -> Any {
         var req = URLRequest(url: URL(string: base + path)!)
@@ -33,7 +37,7 @@ final class SamePostgreSQLProofTests: XCTestCase {
     func queue(_ token: String) async throws -> [[String: Any]] {
         return try unwrap(try await request("/api/v1/opd/queue", "GET", nil, token) as? [[String: Any]])
     }
-    func testSamePostgreSQLProof() async throws {
+    func testSharedPatientNurseDoctorRecordsAndPermissions() async throws {
         let doctor = try await login("demo_doctor")
         let nurse = try await login("demo_nurse")
         let admin = try await login("demo_admin")
@@ -47,7 +51,8 @@ final class SamePostgreSQLProofTests: XCTestCase {
         let activeRecord = try unwrap(try await request("/api/v1/opd/patients/\(activePatient)/record", "GET", nil, doctor) as? [String: Any])
         let noteVersion = (activeRecord["notes"] as? [[String: Any]])?.first { $0["encounter_id"] as? String == activeId }?["__v"] as? Int ?? 0
         let clinical: [String: Any] = ["history":"Synthetic validation history", "examination":"Synthetic examination", "assessment":"Synthetic assessment", "diagnosis_ids":[diagnosis], "advice":"Synthetic advice", "medications":[["drug_id":drug,"dose":"1 tablet","frequency":"Daily","duration":"3 days"]]]
-        _ = try await request("/api/v1/opd/encounters/\(activeId)/complete", "POST", ["data":clinical,"__v":noteVersion], doctor)
+        let activeProfile = try unwrap(activeRecord["patient"] as? [String: Any])
+        _ = try await request("/api/v1/opd/encounters/\(activeId)/complete", "POST", ["data":clinical,"__v":noteVersion,"patient__v":try unwrap(activeProfile["__v"] as? Int)], doctor)
         let entry = try unwrap(try await queue(nurse).first { $0["patient_name"] as? String == "Ananya Raman (Demo)" })
         let encounter = try unwrap(entry["encounter_id"] as? String)
         let patient = try unwrap(entry["patient_id"] as? String)
@@ -65,12 +70,17 @@ final class SamePostgreSQLProofTests: XCTestCase {
         XCTAssertEqual((duplicate?["error"] as? [String:Any])?["code"] as? String,"TEST_ALREADY_ORDERED")
         _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0], nurse, status:403)
         _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0], admin, status:403)
-        _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0], doctor)
+        let reviewedRecord = try unwrap(try await request("/api/v1/opd/patients/\(patient)/record", "GET", nil, doctor) as? [String: Any])
+        let reviewedPatient = try unwrap(reviewedRecord["patient"] as? [String: Any])
+        _ = try await request("/api/v1/opd/encounters/\(encounter)/complete", "POST", ["data":clinical,"__v":0,"patient__v":try unwrap(reviewedPatient["__v"] as? Int)], doctor)
         let otp = try unwrap(try await request("/api/v1/auth/opd/otp/request", "POST", ["phone":"+919000000001"]) as? [String:Any])
         _ = try await request("/api/v1/auth/opd/otp/verify", "POST", ["phone":"+919000000001","code":"000000"], status:401)
-        let authenticated = try unwrap(try await request("/api/v1/auth/opd/otp/verify", "POST", ["phone":"+919000000001","code":try unwrap(otp["development_code"] as? String)]) as? [String:Any])
+        let authenticated = try unwrap(try await request("/api/v1/auth/opd/otp/verify", "POST", ["phone":"+919000000001","code":try unwrap(otp["development_code"] as? String),"challenge_id":try unwrap(otp["challenge_id"] as? String)]) as? [String:Any])
         let token = try unwrap(authenticated["access_token"] as? String)
         let record = try unwrap(try await request("/api/v1/opd/patients/\(patient)/record", "GET", nil, token) as? [String:Any])
+        let decoded = try JSONDecoder().decode(RecordBundle.self, from: JSONSerialization.data(withJSONObject: record))
+        XCTAssertEqual(decoded.patient.id, patient)
+        XCTAssertFalse(decoded.prescriptions.isEmpty)
         let triage = try unwrap((record["triage"] as? [[String:Any]])?.first?["data"] as? [String:Any])
         XCTAssertEqual(triage["notes"] as? String,"Exact nurse handoff note")
         XCTAssertEqual(triage["pulse"] as? Int,74)

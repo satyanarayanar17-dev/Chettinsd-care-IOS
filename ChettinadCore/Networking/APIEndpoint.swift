@@ -1,6 +1,6 @@
 import Foundation
 
-public enum HTTPMethod: String {
+public enum HTTPMethod: String, Sendable {
     case get = "GET"
     case post = "POST"
     case put = "PUT"
@@ -8,7 +8,7 @@ public enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-public protocol APIEndpoint {
+public protocol APIEndpoint: Sendable {
     var path: String { get }
     var method: HTTPMethod { get }
     var headers: [String: String]? { get }

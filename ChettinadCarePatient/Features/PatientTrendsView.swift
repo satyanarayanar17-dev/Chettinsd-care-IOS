@@ -3,6 +3,8 @@ import Charts
 import ChettinadCore
 
 struct PatientTrendsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject var viewModel: PatientViewModel
     @State private var timeRange: Int = 30 // Days
     
@@ -38,11 +40,14 @@ struct PatientTrendsView: View {
                 .padding(.vertical)
             }
             .navigationTitle("History & Trends")
-            .background(Color(UIColor.systemGroupedBackground))
-            .task {
-                if viewModel.timeline.isEmpty {
-                    await viewModel.fetchTimeline()
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
+            }
+            .background(Color(UIColor.systemGroupedBackground))
+            .task(id: scenePhase) {
+                if scenePhase == .active { await viewModel.fetchTimeline() }
             }
             .refreshable {
                 await viewModel.fetchTimeline()

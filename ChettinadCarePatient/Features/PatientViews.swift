@@ -2,6 +2,24 @@ import SwiftUI
 import ChettinadCore
 import UniformTypeIdentifiers
 import QuickLook
+
+struct CareTaskProgress {
+    let total: Int
+    let completed: Int
+    let skipped: Int
+    let missed: Int
+
+    init(statuses: [CarePlanOccurrenceStatus]) {
+        total = statuses.count
+        completed = statuses.filter { $0 == .COMPLETED }.count
+        skipped = statuses.filter { $0 == .SKIPPED }.count
+        missed = statuses.filter { $0 == .MISSED }.count
+    }
+
+    var completionDescription: String { "\(completed) of \(total) tasks completed" }
+    var allCompleted: Bool { total > 0 && completed == total }
+}
+
 struct PatientDashboardView: View {
     @EnvironmentObject var viewModel: PatientViewModel
     let onAppointments: () -> Void
@@ -13,7 +31,7 @@ struct PatientDashboardView: View {
             AppHeader(title: "Chettinad Care")
             
             ScrollView {
-                if viewModel.isLoading {
+                if viewModel.isLoading && viewModel.recordBundle == nil {
                     ProgressView("Loading Dashboard...")
                         .padding(StitchSpacing.xxl)
                 } else if let error = viewModel.errorMessage, viewModel.recordBundle == nil {
@@ -23,6 +41,12 @@ struct PatientDashboardView: View {
                     .padding(StitchSpacing.lg)
                 } else if let bundle = viewModel.recordBundle {
                     VStack(alignment: .leading, spacing: StitchSpacing.xl) {
+                        if let error = viewModel.errorMessage {
+                            StitchErrorState(message: "We couldn't refresh your care information. Previously loaded details are shown. \(error)") {
+                                Task { await viewModel.fetchRecords() }
+                            }
+                            .padding(.horizontal, StitchSpacing.lg)
+                        }
                         
                         // Greeting
                         VStack(alignment: .leading, spacing: StitchSpacing.xs) {
@@ -69,14 +93,21 @@ struct PatientDashboardView: View {
                                     if viewModel.todayCareTasks.isEmpty {
                                         Text("No tasks scheduled for today.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary)
                                     } else {
-                                        let completed = viewModel.todayCareTasks.filter { $0.status == .COMPLETED || $0.status == .SKIPPED || $0.status == .MISSED }.count
-                                        Text("(completed) of (viewModel.todayCareTasks.count) tasks completed").font(Typography.titleMedium).foregroundStyle(Color.chettinadPrimary)
-                                        ProgressView(value: Double(completed), total: Double(max(viewModel.todayCareTasks.count, 1)))
+                                        let progress = CareTaskProgress(statuses: viewModel.todayCareTasks.map(\.status))
+                                        Text(progress.completionDescription).font(Typography.titleMedium).foregroundStyle(Color.chettinadPrimary)
+                                        ProgressView(value: Double(progress.completed), total: Double(max(progress.total, 1)))
                                             .tint(.chettinadPrimary)
+                                            .accessibilityLabel("Today's care progress")
+                                            .accessibilityValue(progress.completionDescription)
+                                        if progress.skipped > 0 || progress.missed > 0 {
+                                            Text("\(progress.skipped) skipped · \(progress.missed) missed")
+                                                .font(Typography.bodyMedium)
+                                                .foregroundStyle(Color.chettinadTextSecondary)
+                                        }
                                         
                                         if let nextDue = viewModel.todayCareTasks.first(where: { $0.status == .DUE || $0.status == .UPCOMING }) {
-                                            Text("Next due: (nextDue.title) at (nextDue.scheduled_time)").font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
-                                        } else if completed == viewModel.todayCareTasks.count {
+                                            Text("Next due: \(nextDue.title) at \(nextDue.due_time)").font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary)
+                                        } else if progress.allCompleted {
                                             Text("All caught up for today!").font(Typography.bodyMedium).foregroundStyle(Color.chettinadSuccess)
                                         }
                                     }
@@ -92,7 +123,7 @@ struct PatientDashboardView: View {
                                 Button(action: onAppointments) {
                                     VStack(spacing: StitchSpacing.sm) {
                                         Image(systemName: "calendar.badge.plus").font(.system(size: 24, weight: .medium))
-                                        Text("Book").font(Typography.labelLarge)
+                                        Text("Appointments").font(Typography.labelLarge)
                                     }
                                     .frame(maxWidth: .infinity).padding(StitchSpacing.lg)
                                     .background(Color.chettinadPrimary.opacity(0.1))
@@ -103,7 +134,7 @@ struct PatientDashboardView: View {
                                 Button(action: onRecords) {
                                     VStack(spacing: StitchSpacing.sm) {
                                         Image(systemName: "doc.badge.plus").font(.system(size: 24, weight: .medium))
-                                        Text("Upload").font(Typography.labelLarge)
+                                        Text("Medical records").font(Typography.labelLarge)
                                     }
                                     .frame(maxWidth: .infinity).padding(StitchSpacing.lg)
                                     .background(Color.chettinadPrimary.opacity(0.1))
@@ -159,16 +190,28 @@ struct PatientRecordsView: View {
     @State private var previewURL: URL?
     @State private var uploadURL: URL?
     @State private var lastPreviewURL: URL?
+    @State private var showingTrends = false
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 AppHeader(title: "Medical Records")
+                Button { showingTrends = true } label: {
+                    Label("View health trends", systemImage: "chart.xyaxis.line")
+                }
+                .buttonStyle(StitchSecondaryButtonStyle())
+                .padding(.horizontal, StitchSpacing.lg)
+                .padding(.vertical, StitchSpacing.sm)
             
                 ScrollView {
-                    if viewModel.isLoading {
+                    if viewModel.isLoading && viewModel.recordBundle == nil {
                         ProgressView()
                             .padding(StitchSpacing.xxl)
+                    } else if let error = viewModel.errorMessage, viewModel.recordBundle == nil {
+                        StitchErrorState(message: error) {
+                            Task { await viewModel.fetchRecords() }
+                        }
+                        .padding(StitchSpacing.lg)
                     } else if let bundle = viewModel.recordBundle {
                         VStack(alignment: .leading, spacing: StitchSpacing.xl) {
                         
@@ -215,7 +258,7 @@ struct PatientRecordsView: View {
                                         ForEach(viewModel.documents) { document in
                                             StitchCard {
                                                 VStack(alignment: .leading, spacing: 10) {
-                                                    Button { Task { previewURL = try? await viewModel.apiClient.downloadPatientDocument(document) } } label: {
+                                                    Button { Task { do { previewURL = try await viewModel.apiClient.downloadPatientDocument(document) } catch { viewModel.errorMessage = error.localizedDescription } } } label: {
                                                         HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(Typography.titleMedium); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(Typography.bodyMedium).foregroundStyle(Color.chettinadTextSecondary) }; Spacer(); Image(systemName: "eye") }
                                                     }.buttonStyle(.plain)
                                                     Menu {
@@ -253,7 +296,7 @@ struct PatientRecordsView: View {
                                 if !bundle.prescriptions.isEmpty {
                                     SectionView(title: "Prescriptions") {
                                         ForEach(bundle.prescriptions) { rx in
-                                            NavigationLink(destination: PrescriptionDetailView(prescription: rx)) {
+                                            NavigationLink(destination: SignedPrescriptionView(prescription: rx, patient: bundle.patient)) {
                                                 StitchCard {
                                                     VStack(alignment: .leading, spacing: StitchSpacing.xs) {
                                                         Text(rx.doctor_name ?? "Prescription")
@@ -279,7 +322,7 @@ struct PatientRecordsView: View {
                                                         StitchStatusChip(status: lab.status)
                                                     }
                                                     if let result = lab.result {
-                                                        Text("Result: \(result)")
+                                                        Text("Result: \(result.value) \(result.unit) · \(result.flag)")
                                                             .textStyle(Typography.bodyMedium, color: .chettinadPrimary)
                                                     }
                                                 }
@@ -331,6 +374,10 @@ struct PatientRecordsView: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showingTrends) {
+                PatientTrendsView()
+                    .environmentObject(viewModel)
+            }
         }
     }
 }
@@ -472,6 +519,7 @@ struct PatientProfileView: View {
     var body: some View {
         NavigationView {
             List {
+                Section { InterfaceLanguagePicker() }
                 if let bundle = viewModel.recordBundle {
                     Section(header: Text("Personal Info")) {
                         InfoRow(title: "Name", value: bundle.patient.name)
@@ -549,13 +597,23 @@ struct PatientProfileView: View {
 struct PatientAppointmentsView: View {
     @EnvironmentObject var viewModel: PatientViewModel
     @State private var showingBooking = false
+    @State private var showingQueue = false
     let onRecords: () -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
-                if viewModel.isLoading {
+                Section {
+                    Button { showingQueue = true } label: {
+                        Label("Track your live queue", systemImage: "person.3.sequence")
+                    }
+                }
+                if viewModel.isLoading && viewModel.recordBundle == nil {
                     ProgressView()
+                } else if let error = viewModel.errorMessage, viewModel.recordBundle == nil {
+                    StitchErrorState(message: error) {
+                        Task { await viewModel.fetchRecords() }
+                    }
                 } else if viewModel.appointments.isEmpty {
                     VStack(spacing: StitchSpacing.lg) { Image(systemName: "calendar").font(.system(size: 48)).foregroundStyle(Color.chettinadTextSecondary); Text("No upcoming appointments").font(Typography.titleMedium); Text("Book an appointment with the\nObstetrics & Gynaecology care team.").font(Typography.bodyLarge).foregroundStyle(Color.chettinadTextSecondary).multilineTextAlignment(.center); Button("Request Appointment") { showingBooking = true }.buttonStyle(StitchPrimaryButtonStyle()) }.frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 40).listRowBackground(Color.clear)
                 } else {
@@ -579,6 +637,9 @@ struct PatientAppointmentsView: View {
             .navigationTitle("Appointments")
             .toolbar { Button { showingBooking = true } label: { Label("Book", systemImage: "plus") } }
             .sheet(isPresented: $showingBooking) { AppointmentBookingSheet().environmentObject(viewModel) }
+            .sheet(isPresented: $showingQueue) {
+                PatientQueueView()
+            }
             .refreshable {
                 await viewModel.fetchRecords()
             }
@@ -710,8 +771,11 @@ import SwiftUI
 import ChettinadCore
 
 struct PatientQueueView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var queueEntries: [QueueEntry] = []
     @State private var isLoading = false
+    @State private var errorMessage: String?
     private let apiClient = APIClient()
     
     var body: some View {
@@ -722,11 +786,21 @@ struct PatientQueueView: View {
                 ScrollView {
                     if isLoading && queueEntries.isEmpty {
                         ProgressView().padding()
+                    } else if let errorMessage, queueEntries.isEmpty {
+                        StitchErrorState(message: errorMessage) {
+                            Task { await fetchQueue() }
+                        }
+                        .padding(StitchSpacing.lg)
                     } else if queueEntries.isEmpty {
                         StitchEmptyState(icon: "checkmark.circle.fill", title: "You're not currently in the queue.", message: "Check-in to your appointment at the hospital desk to track your wait time here.")
                             .padding(.top, 60)
                     } else {
                         VStack(spacing: StitchSpacing.lg) {
+                            if let errorMessage {
+                                StitchErrorState(message: errorMessage) {
+                                    Task { await fetchQueue() }
+                                }
+                            }
                             ForEach(queueEntries) { entry in
                                 StitchCard {
                                     VStack(alignment: .leading, spacing: StitchSpacing.md) {
@@ -748,7 +822,7 @@ struct PatientQueueView: View {
                                                 Text("Patients Ahead")
                                                     .font(Typography.bodyMedium)
                                                     .foregroundStyle(Color.chettinadTextSecondary)
-                                                Text("\(entry.patients_ahead ?? 0)")
+                                                Text(entry.patients_ahead.map { String($0) } ?? "Unavailable")
                                                     .font(Typography.titleMedium)
                                                     .fontWeight(.semibold)
                                             }
@@ -757,7 +831,7 @@ struct PatientQueueView: View {
                                                 Text("Est. Wait Time")
                                                     .font(Typography.bodyMedium)
                                                     .foregroundStyle(Color.chettinadTextSecondary)
-                                                Text("\(entry.estimated_wait ?? 0) mins")
+                                                Text(entry.estimated_wait.map { "\($0) mins" } ?? "Unavailable")
                                                     .font(Typography.titleMedium)
                                                     .fontWeight(.semibold)
                                             }
@@ -773,20 +847,37 @@ struct PatientQueueView: View {
                     await fetchQueue()
                 }
             }
-            .task {
+            .task(id: scenePhase) {
+                guard scenePhase == .active else { return }
                 await fetchQueue()
+                while !Task.isCancelled {
+                    do { try await Task.sleep(for: .seconds(30)) } catch { return }
+                    await fetchQueue()
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
             }
         }
     }
     
     @MainActor
     private func fetchQueue() async {
+        guard !isLoading else { return }
         isLoading = true
+        defer { isLoading = false }
+        errorMessage = nil
         do {
             queueEntries = try await apiClient.execute(endpoint: QueueEndpoint())
+        } catch is CancellationError {
+            return
         } catch {
-            print("Failed to fetch queue: \(error)")
+            guard !Task.isCancelled else { return }
+            errorMessage = queueEntries.isEmpty
+                ? "We couldn't load your queue. Please try again."
+                : "We couldn't update your queue. These details may be out of date."
         }
-        isLoading = false
     }
 }

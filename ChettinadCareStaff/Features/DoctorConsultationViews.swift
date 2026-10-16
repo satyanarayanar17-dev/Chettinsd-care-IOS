@@ -4,6 +4,8 @@ import ChettinadCore
 struct PatientDossierView: View {
     @StateObject var viewModel: DoctorConsultationViewModel
     @State private var showConsultation = false
+    @State private var careRefreshVersion = 0
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) var dismiss
     let patientName: String
     
@@ -13,20 +15,10 @@ struct PatientDossierView: View {
                 ProgressView("Loading Dossier...")
                     .padding(.top, 40)
             } else if let error = viewModel.errorMessage {
-                VStack(spacing: StitchSpacing.md) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text(error)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
+                StitchErrorState(message: error) { Task { await viewModel.fetchPatientDossier() } }
+                    .padding()
             } else if let bundle = viewModel.recordBundle {
                 VStack(alignment: .leading, spacing: 20) {
-                    PatientCarePlanMonitoringView(patientId: bundle.patient.id, role: "DOCTOR")
-                        .padding(.vertical)
-                    
                     // Patient Header
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
@@ -59,7 +51,7 @@ struct PatientDossierView: View {
                     .cornerRadius(12)
                     
                     // Current Encounter Triage
-                    if let triage = bundle.triage.last(where: { $0.encounter_id == viewModel.encounterId }) {
+                    if let triage = bundle.triage.first(where: { $0.encounter_id == viewModel.encounterId }) {
                         StitchCard {
                         VStack(alignment: .leading, spacing: StitchSpacing.sm) {
                             Text("Current Triage")
@@ -67,7 +59,7 @@ struct PatientDossierView: View {
                             if let d = triage.data {
                                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: StitchSpacing.sm) {
                                     VitalCell(label: "Temp", value: d.temperature.map { String(format: "%.1f °C", $0) } ?? "—")
-                                    VitalCell(label: "BP", value: "\(d.systolic ?? 0)/\(d.diastolic ?? 0)")
+                                    VitalCell(label: "BP", value: "\(d.systolic.map(String.init) ?? "—")/\(d.diastolic.map(String.init) ?? "—")")
                                     VitalCell(label: "Pulse", value: d.pulse.map { "\($0) bpm" } ?? "—")
                                     VitalCell(label: "SpO2", value: d.spo2.map { "\($0)%" } ?? "—")
                                     VitalCell(label: "Weight", value: d.weight.map { "\($0) kg" } ?? "—")
@@ -86,7 +78,9 @@ struct PatientDossierView: View {
                     // Start Consultation Button
                     Button(action: {
                         Task {
-                            if await viewModel.startConsultation() {
+                            let opened: Bool
+                            if viewModel.isFinalized { opened = true } else { opened = await viewModel.startConsultation() }
+                            if opened {
                                 showConsultation = true
                             }
                         }
@@ -97,7 +91,7 @@ struct PatientDossierView: View {
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
                                 Image(systemName: "stethoscope")
-                                Text("Start Consultation")
+                                Text(viewModel.isFinalized ? "Review signed consultation" : "Start or resume consultation")
                                     .fontWeight(.bold)
                             }
                         }
@@ -105,14 +99,25 @@ struct PatientDossierView: View {
                     }
                     .disabled(viewModel.isSubmitting)
                     
-                    // Historical Summary
+                    PatientCarePlanMonitoringView(patientId: bundle.patient.id, role: "DOCTOR", refreshVersion: careRefreshVersion)
+                        .padding(.vertical)
+
+                    // Historical clinical records
                     if !bundle.encounters.isEmpty {
                         VStack(alignment: .leading, spacing: StitchSpacing.sm) {
                             Text("History")
                                 .font(Typography.titleMedium)
-                            Text("\(bundle.encounters.count) encounters • \(bundle.notes.count) notes • \(bundle.prescriptions.count) prescriptions • \(bundle.labs.count) labs")
-                                .font(Typography.bodyLarge)
-                                .foregroundColor(.secondary)
+                            ForEach(bundle.notes) { note in
+                                DisclosureGroup("\(note.status) · \(note.author_name ?? note.author_id) · \(ISODate.display(note.updated_at ?? note.created_at)) · v\(note.__v)") {
+                                    if let data = note.draft_content {
+                                        Text(data.complaint ?? ""); Text(data.history ?? ""); Text(data.previous_history ?? ""); Text(data.examination ?? ""); Text(data.assessment ?? ""); Text(data.treatment ?? ""); Text(data.advice ?? "")
+                                    }
+                                }
+                            }
+                            ForEach(bundle.labs) { LabResultSummary(order: $0) }
+                            ForEach(bundle.prescriptions) { prescription in
+                                SignedPrescriptionView(prescription: prescription, patient: bundle.patient)
+                            }
                         }
                     }
                 }
@@ -121,8 +126,12 @@ struct PatientDossierView: View {
         }
         .navigationTitle("Dossier")
         .navigationBarTitleDisplayMode(.inline)
-        .task {
+        .refreshFromHospital {
+            if !viewModel.isSubmitting { await viewModel.fetchPatientDossier(silent: viewModel.recordBundle != nil) }
+        }
+        .refreshable {
             await viewModel.fetchPatientDossier()
+            careRefreshVersion += 1
         }
         .sheet(isPresented: $showConsultation, onDismiss: {
             // Only leave the dossier after a successful "Complete & Sign", not on Cancel.
@@ -163,10 +172,39 @@ struct ConsultationWorkspaceView: View {
     @State private var newMedDuration = ""
     @State private var newMedInstr = ""
     @State private var pendingLabTest: CataloguesResponse.Test?
+    @State private var confirmingSign = false
+    @State private var confirmingClose = false
+    @State private var reviewingConflict = false
     
     var body: some View {
         NavigationView {
             Form {
+                if let patient = viewModel.recordBundle?.patient {
+                    Section("Patient and visit") {
+                        Text(patient.name).font(.headline)
+                        Text("MRN \(patient.mrn) · \(patient.dob) · \(patient.gender)")
+                        Text("Visit \(viewModel.encounterId ?? "Unavailable")").font(.caption)
+                        Text(patient.allergies?.isEmpty == false ? "Allergies: \(patient.allergies!)" : (patient.allergy_review_status == "NONE_REPORTED" ? "No allergies reported" : "Allergies not recorded"))
+                            .foregroundStyle(patient.allergies?.isEmpty == false ? Color.chettinadError : Color.secondary)
+                        if patient.allergy_reviewed_at == nil { Text("Allergy review is not recorded.").font(.caption) }
+                    }
+                }
+                Section("Saved record") {
+                    Text(viewModel.isFinalized ? "Signed consultation · version \(viewModel.noteVersion)" : "Draft · version \(viewModel.noteVersion)")
+                    if let at = viewModel.lastSavedAt { Text("Last saved \(ISODate.display(at))").font(.caption) }
+                    Text(viewModel.hasUnsavedChanges ? "Changes waiting to be saved" : "Saved changes are up to date")
+                        .foregroundStyle(viewModel.hasUnsavedChanges ? Color.chettinadError : Color.secondary)
+                    if let message = viewModel.recoveryMessage { Text(message).font(.caption) }
+                    if viewModel.conflictingSavedDraft != nil {
+                        Button("Review conflicting saved note") { reviewingConflict = true }
+                    }
+                    if !viewModel.isFinalized {
+                        Button("Save draft") { Task { _ = await viewModel.saveDraft() } }
+                            .disabled(viewModel.isSubmitting || viewModel.conflictingSavedDraft != nil)
+                    } else {
+                        TextField("Reason for amendment", text:$viewModel.amendReason,axis:.vertical)
+                    }
+                }
                 if let error = viewModel.errorMessage {
                     Section {
                         Text(error)
@@ -189,18 +227,25 @@ struct ConsultationWorkspaceView: View {
                         TextEditor(text: $viewModel.noteExamination)
                             .frame(height: 80)
                     }
+                    VStack(alignment:.leading,spacing:4) {
+                        Text("Previous history").font(.caption).foregroundStyle(.secondary)
+                        TextEditor(text:$viewModel.notePreviousHistory).frame(minHeight:80)
+                    }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Assessment / Diagnosis").font(.caption).foregroundColor(.secondary)
                         TextEditor(text: $viewModel.noteAssessment)
                             .frame(height: 80)
                     }
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Advice / Follow-up").font(.caption).foregroundColor(.secondary)
+                        Text("Advice").font(.caption).foregroundColor(.secondary)
+                        Text("Treatment").font(.caption).foregroundStyle(.secondary)
+                        TextEditor(text: $viewModel.noteTreatment).frame(minHeight: 80)
                         TextEditor(text: $viewModel.noteAdvice)
                             .frame(height: 80)
                     }
                 }
                 
+                ConsultationFollowUpSection(model: viewModel)
                 if let cat = viewModel.catalogues {
                     Section(header: Text("Diagnoses (ICD-10)")) {
                         ForEach(cat.diagnoses) { dx in
@@ -215,7 +260,7 @@ struct ConsultationWorkspaceView: View {
                     }
                     
                     Section(header: Text("Prescription")) {
-                        ForEach(Array(viewModel.medications.enumerated()), id: \.offset) { _, med in
+                        ForEach(Array(viewModel.medications.enumerated()), id: \.offset) { index, med in
                             VStack(alignment: .leading) {
                                 Text(cat.drugs.first(where: { $0.id == med.drug_id })?.name ?? med.drug_id)
                                     .font(Typography.titleMedium)
@@ -224,13 +269,14 @@ struct ConsultationWorkspaceView: View {
                                 if let inst = med.instructions, !inst.isEmpty {
                                     Text(inst).font(.caption).foregroundColor(.secondary)
                                 }
+                                Button("Remove medication",role:.destructive) { viewModel.medications.remove(at:index) }
                             }
                         }
                         
                         Button("Add Medication") { showingAddMedication = true }
                     }
                     
-                    Section(header: Text("Order Labs")) {
+                    if !viewModel.isFinalized { Section(header: Text("Order Labs")) {
                         ForEach(cat.tests) { test in
                             let alreadyOrdered = viewModel.orderedTestIds.contains(test.id)
                             let inFlight = viewModel.labOrdersInFlight.contains(test.id)
@@ -252,7 +298,7 @@ struct ConsultationWorkspaceView: View {
                             .foregroundColor(.primary)
                             .disabled(alreadyOrdered || inFlight)
                         }
-                    }
+                    } }
                 } else {
                     Section {
                         ProgressView("Loading Catalogues...")
@@ -263,21 +309,54 @@ struct ConsultationWorkspaceView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Close") {
+                        if viewModel.hasUnsavedChanges { confirmingClose = true } else { dismiss() }
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Complete & Sign") {
-                        Task {
-                            if await viewModel.completeConsultation() {
-                                dismiss()
-                            }
-                        }
-                    }
-                    .disabled(viewModel.isSubmitting || viewModel.noteHistory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteExamination.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAssessment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.noteAdvice.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.selectedDiagnoses.isEmpty)
+                    Button(viewModel.isFinalized ? "Sign amendment" : "Complete & Sign") { confirmingSign = true }
+                        .disabled(!viewModel.canFinalize || (viewModel.isFinalized && viewModel.amendReason.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty))
                 }
             }
             .task {
+                viewModel.beginEditing()
                 await viewModel.fetchCatalogues()
+            }
+            .onChange(of:viewModel.draftPayload) { _ in viewModel.draftChanged() }
+            .onDisappear { viewModel.stopEditing() }
+            .interactiveDismissDisabled(viewModel.hasUnsavedChanges || viewModel.isSubmitting)
+            .confirmationDialog("Review and sign",isPresented:$confirmingSign,titleVisibility:.visible) {
+                Button(viewModel.isFinalized ? "Sign amendment" : "Issue prescription and complete visit") {
+                    Task {
+                        let done = viewModel.isFinalized ? await viewModel.amendConsultation() : await viewModel.completeConsultation()
+                        if done { dismiss() }
+                    }
+                }
+                Button("Keep editing",role:.cancel) {}
+            } message: {
+                Text("\(viewModel.recordBundle?.patient.name ?? "Patient") · MRN \(viewModel.recordBundle?.patient.mrn ?? "Unavailable")\n\(viewModel.medications.count) medication(s). Confirm the patient, instructions and follow-up before signing.")
+            }
+            .confirmationDialog("Save your changes before closing",isPresented:$confirmingClose,titleVisibility:.visible) {
+                if !viewModel.isFinalized { Button("Save draft and close") { Task { if await viewModel.saveDraft() { dismiss() } } } }
+                Button("Keep unfinished draft on this device and close") { Task { if await viewModel.persistLocalDraft() { dismiss() } } }
+                Button("Keep editing",role:.cancel) {}
+            } message: { Text("An unfinished note must be saved before leaving this workspace.") }
+            .sheet(isPresented:$reviewingConflict) {
+                NavigationStack {
+                    ScrollView {
+                        VStack(alignment:.leading,spacing:16) {
+                            Text("Your entered note").font(.headline)
+                            ConsultationComparison(data: viewModel.draftPayload)
+                            Divider()
+                            Text("Latest saved note · version \(viewModel.conflictingNoteVersion ?? 0)").font(.headline)
+                            if let data = viewModel.conflictingSavedDraft { ConsultationComparison(data: data) }
+                            Button("Use latest saved note") { viewModel.useLatestSavedDraft(); reviewingConflict = false }
+                            Button("Keep my note as a new version") { viewModel.keepMyDraftAfterReview(); reviewingConflict = false }
+                            Text("Previous saved versions remain in the clinical history.").font(.caption)
+                        }.padding()
+                    }.navigationTitle("Review note conflict")
+                    .toolbar { Button("Close") { reviewingConflict = false } }
+                }
             }
             .confirmationDialog(
                 "Order lab test?",
@@ -299,7 +378,7 @@ struct ConsultationWorkspaceView: View {
                             Picker("Drug", selection: $newMedDrugId) {
                                 Text("Select Drug").tag(String?.none)
                                 ForEach(cat.drugs) { drug in
-                                    Text("\(drug.name) (\(drug.strength))").tag(String?.some(drug.id))
+                                    Text("\(drug.name) · \(drug.strength) · \(drug.form) · \(drug.route)").tag(String?.some(drug.id))
                                 }
                             }
                             TextField("Dose (e.g. 1 tab)", text: $newMedDose)

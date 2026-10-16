@@ -42,7 +42,14 @@ extension APIError: LocalizedError {
             return "Received an unexpected response from the server."
         case .httpError(let statusCode, _): 
             return statusCode >= 500 ? "Server is temporarily unavailable. Please try again later." : "Something went wrong (Error \(statusCode))."
-        case .apiError(_, let response): 
+        case .apiError(_, let response):
+            switch response.error.code {
+            case "VISIT_HANDOVER_REQUIRED": return "Clinical work has started. Follow the hospital's clinician handover procedure."
+            case "PATIENT_RECORD_CHANGED": return "Patient details changed. Review the updated identity and allergies before signing."
+            case "PATIENT_REVIEW_REQUIRED": return "Load and review the patient record before signing."
+            case "STALE_STATE": return "This record changed elsewhere. Refresh and review the latest version before retrying."
+            default: break
+            }
             return response.error.message.isEmpty ? "An unexpected error occurred." : response.error.message
         case .decodingError: 
             return "There was a problem loading the data."

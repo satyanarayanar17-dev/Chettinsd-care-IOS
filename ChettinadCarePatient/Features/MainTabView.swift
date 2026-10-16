@@ -4,57 +4,48 @@ import ChettinadCore
 struct MainTabView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = PatientViewModel()
-    @State private var selectedTab = 1
+    @State private var selectedTab = PatientTab.home
+    @Environment(\.scenePhase) private var scenePhase
+
+    private enum PatientTab: Hashable {
+        case home, carePlan, appointments, records, profile
+    }
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            PatientCarePlanView()
-                .tag(0)
-                .tabItem {
-                    Label("Care Plan", systemImage: "checklist")
-                }
-            
-            PatientDashboardView(onAppointments: { selectedTab = 2 }, onRecords: { selectedTab = 3 }, onCarePlan: { selectedTab = 0 })
-                .tag(1)
+            PatientDashboardView(onAppointments: { selectedTab = .appointments }, onRecords: { selectedTab = .records }, onCarePlan: { selectedTab = .carePlan })
+                .tag(PatientTab.home)
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
             
-            PatientQueueView()
-                .tag(6)
+            PatientCarePlanView()
+                .tag(PatientTab.carePlan)
                 .tabItem {
-                    Label("Queue", systemImage: "person.3.sequence")
+                    Label("Care Plan", systemImage: "checklist")
                 }
             
-            PatientAppointmentsView(onRecords: { selectedTab = 3 })
-                .tag(2)
+            PatientAppointmentsView(onRecords: { selectedTab = .records })
+                .tag(PatientTab.appointments)
                 .tabItem {
                     Label("Appointments", systemImage: "calendar")
                 }
             
             PatientRecordsView()
-                .tag(3)
+                .tag(PatientTab.records)
                 .tabItem {
                     Label("Records", systemImage: "folder.fill")
                 }
             
-            PatientTrendsView()
-                .tag(5)
-                .tabItem {
-                    Label("Trends", systemImage: "chart.xyaxis.line")
-                }
-            
             PatientProfileView()
-                .tag(4)
+                .tag(PatientTab.profile)
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
                 }
         }
         .environmentObject(viewModel)
-        .task {
-            if viewModel.recordBundle == nil {
-                await viewModel.fetchRecords()
-            }
+        .refreshFromHospital {
+            if !viewModel.isSubmitting { await viewModel.fetchRecords(silent: viewModel.recordBundle != nil) }
         }
     }
 }
