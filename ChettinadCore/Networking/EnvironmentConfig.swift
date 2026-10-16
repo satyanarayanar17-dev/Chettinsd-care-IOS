@@ -7,36 +7,24 @@ public enum AppEnvironment: String, Sendable {
     
     public var baseURL: URL {
         let configured = Bundle.main.object(forInfoDictionaryKey: "CC_API_BASE_URL") as? String
-        do { return try EnvironmentConfig.resolveAPIBaseURL(environment: self, configuredValue: configured) }
-        catch { preconditionFailure("Configure a valid HTTPS CC_API_BASE_URL for this app environment.") }
+        if let url = EnvironmentConfig.resolveBaseURL(configured, environment: self) { return url }
+        preconditionFailure("The app must be built with a valid CC_API_BASE_URL for its environment.")
     }
 }
 
 public struct EnvironmentConfig {
     public static var current: AppEnvironment {
-        if let value = Bundle.main.object(forInfoDictionaryKey: "APP_ENV") as? String,
-           let environment = AppEnvironment(rawValue: value) { return environment }
-        #if DEBUG
-        return .local
-        #else
-        return .production
-        #endif
+        AppEnvironment(rawValue: Bundle.main.object(forInfoDictionaryKey: "APP_ENV") as? String ?? "local") ?? .production
     }
-    public enum ConfigurationError: Error { case invalidAPIURL }
-    public static func resolveAPIBaseURL(environment: AppEnvironment, configuredValue: String?) throws -> URL {
-        let fallback: String
-        switch environment {
-        case .local: fallback = "https://chettinad-care-api.onrender.com"
-        case .staging: fallback = "https://staging-api.chettinad.care"
-        case .production: fallback = "https://api.chettinad.care"
-        }
-        let value = configuredValue?.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard var parts = URLComponents(string: value?.isEmpty == false ? value! : fallback),
-              let host = parts.host, parts.user == nil, parts.password == nil, parts.query == nil, parts.fragment == nil,
-              parts.scheme == "https" || (environment == .local && parts.scheme == "http" && ["127.0.0.1", "localhost", "::1"].contains(host))
-        else { throw ConfigurationError.invalidAPIURL }
-        if parts.path == "/api/v1" || parts.path == "/api/v1/" { parts.path = "" }
-        guard let url = parts.url else { throw ConfigurationError.invalidAPIURL }
+
+    public static func resolveBaseURL(_ configured: String?, environment: AppEnvironment) -> URL? {
+        let value = configured?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if value.isEmpty { return environment == .local ? URL(string: "http://127.0.0.1:3001") : nil }
+        guard let url = URL(string: value), let host = url.host, !host.isEmpty,
+              url.user == nil, url.password == nil, url.query == nil, url.fragment == nil,
+              url.path.isEmpty || url.path == "/" else { return nil }
+        let local = ["localhost", "127.0.0.1", "::1"].contains(host)
+        guard url.scheme == "https" || (environment == .local && local && url.scheme == "http") else { return nil }
         return url
     }
 }

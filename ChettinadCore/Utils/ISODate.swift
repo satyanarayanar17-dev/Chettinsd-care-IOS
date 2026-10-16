@@ -14,11 +14,12 @@ public enum ISODate {
         return formatter.date(from: trimmed)
     }
 
-    /// Formats a backend timestamp in the user's locale and time zone.
+    /// Formats a backend timestamp in the user's locale and the hospital's Asia/Kolkata time zone.
     /// Falls back to the raw string if it cannot be parsed.
     public static func display(_ string: String, dateStyle: DateFormatter.Style = .medium, timeStyle: DateFormatter.Style = .short) -> String {
         guard let date = parse(string) else { return string }
         let formatter = DateFormatter()
+        formatter.timeZone = TimeZone(identifier:"Asia/Kolkata")
         formatter.dateStyle = dateStyle
         formatter.timeStyle = timeStyle
         return formatter.string(from: date)

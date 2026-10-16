@@ -31,18 +31,22 @@ public struct OTPVerifyEndpoint: APIEndpoint {
         return try? JSONEncoder().encode(OTPVerifyPayload(
             phone: phone,
             code: code,
-            profile: profile
+            profile: profile,
+            challenge_id: challengeId,
+            purpose: "PATIENT_LOGIN"
         ))
     }
     
     private let phone: String
     private let code: String
     private let profile: PatientProfilePayload?
+    private let challengeId: String?
     
-    public init(phone: String, code: String, profile: PatientProfilePayload? = nil) {
+    public init(phone: String, code: String, profile: PatientProfilePayload? = nil, challengeId: String? = nil) {
         self.phone = phone
         self.code = code
         self.profile = profile
+        self.challengeId = challengeId
     }
 }
 
@@ -50,6 +54,8 @@ private struct OTPVerifyPayload: Codable {
     let phone: String
     let code: String
     let profile: PatientProfilePayload?
+    let challenge_id: String?
+    let purpose: String
 }
 
 public struct OTPVerifyResponse: Codable, Sendable {

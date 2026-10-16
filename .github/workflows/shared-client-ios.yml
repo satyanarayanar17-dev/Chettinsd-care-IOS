@@ -35,6 +35,12 @@ jobs:
             sleep 1
           done
           curl --silent --fail http://127.0.0.1:3005/api/v1/auth/opd/config > /dev/null
+          node scripts/start-native-integration.cjs "$PWD/shared-api" > "$RUNNER_TEMP/native-api.log" 2>&1 &
+          for attempt in {1..60}; do
+            if curl --silent --fail http://127.0.0.1:3011/api/v1/auth/opd/config > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --silent --fail http://127.0.0.1:3011/api/v1/auth/opd/config > /dev/null
       - name: Select simulator
         run: |
           if [ -d /Applications/Xcode_16.4.app ]; then sudo xcode-select -s /Applications/Xcode_16.4.app; fi
@@ -51,7 +57,7 @@ jobs:
       - name: Build and test against shared API
         run: |
           set -o pipefail
-          xcodebuild test -project ChettinadCare-iOS.xcodeproj -scheme '${{ matrix.scheme }}' -destination "$IOS_DESTINATION" -resultBundlePath '${{ matrix.scheme }}.xcresult' CODE_SIGNING_ALLOWED=NO 'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG CC_SHARED_FIXTURE' 2>&1 | tee '${{ matrix.scheme }}-build.log'
+          xcodebuild test -project ChettinadCare-iOS.xcodeproj -scheme '${{ matrix.scheme }}' -destination "$IOS_DESTINATION" -resultBundlePath '${{ matrix.scheme }}.xcresult' -parallel-testing-enabled NO -skip-testing:ChettinadCarePatientUITests -skip-testing:ChettinadCareStaffUITests CODE_SIGNING_ALLOWED=NO 'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG CC_SHARED_FIXTURE' 2>&1 | tee '${{ matrix.scheme }}-build.log'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

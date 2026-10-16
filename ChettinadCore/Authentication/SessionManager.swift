@@ -21,19 +21,30 @@ public struct AuthSession: Codable, Sendable {
     }
 }
 
+public protocol AuthSessionStorage: Sendable {
+    func read() -> Data?
+    func save(_ data: Data) -> Bool
+    func delete()
+}
+public struct KeychainSessionStorage: AuthSessionStorage {
+    public init() {}
+    public func read() -> Data? { KeychainHelper.shared.read(service: "com.chettinadcare.auth", account: "session") }
+    public func save(_ data: Data) -> Bool { KeychainHelper.shared.save(data, service: "com.chettinadcare.auth", account: "session") }
+    public func delete() { KeychainHelper.shared.delete(service: "com.chettinadcare.auth", account: "session") }
+}
 public actor SessionManager {
     public static let shared = SessionManager()
     
-    private let service = "com.chettinadcare.auth"
-    private let account = "session"
-    private let persistence: any SessionPersistence
+    private let storage: any AuthSessionStorage
+    private var generation = 0
+    private var refreshGeneration: Int?
     
     private var currentSession: AuthSession?
     private var refreshTask: Task<AuthSession, Error>?
     
-    public init(persistence: any SessionPersistence = KeychainHelper.shared) {
-        self.persistence = persistence
-        if let data = persistence.read(service: service, account: account),
+    public init(storage: any AuthSessionStorage = KeychainSessionStorage()) {
+        self.storage = storage
+        if let data = storage.read(),
            let session = try? JSONDecoder().decode(AuthSession.self, from: data) {
             self.currentSession = session
         }
@@ -45,9 +56,11 @@ public actor SessionManager {
     
     public func saveSession(_ session: AuthSession) throws {
         guard let data = try? JSONEncoder().encode(session),
-              persistence.save(data, service: service, account: account) else {
+              storage.save(data) else {
             throw SessionError.persistenceFailed
         }
+        generation += 1
+        refreshTask?.cancel(); refreshTask = nil; refreshGeneration = nil
         self.currentSession = session
     }
     
@@ -64,8 +77,9 @@ public actor SessionManager {
     public func clearSession() {
         refreshTask?.cancel()
         refreshTask = nil
+        generation += 1; refreshGeneration = nil
         self.currentSession = nil
-        persistence.delete(service: service, account: account)
+        storage.delete()
         if let cookies = HTTPCookieStorage.shared.cookies {
             for cookie in cookies {
                 HTTPCookieStorage.shared.deleteCookie(cookie)
@@ -90,14 +104,21 @@ public actor SessionManager {
             return try await refreshTask.value
         }
         
+        guard let original = currentSession else { throw APIError.unauthenticated }
+        let expectedGeneration = generation
+        refreshGeneration = expectedGeneration
         let task = Task { () -> AuthSession in
-            defer { self.refreshTask = nil }
+            defer { if self.refreshGeneration == expectedGeneration { self.refreshTask = nil; self.refreshGeneration = nil } }
             do {
                 let response: RefreshResponse = try await apiClient.executeRaw(
                     endpoint: RefreshEndpoint()
                 )
                 
-                guard let current = self.currentSession else {
+                guard let current = self.currentSession, self.generation == expectedGeneration,
+                      current.userId == original.userId, current.accessToken == original.accessToken,
+                      response.userId == original.userId,
+                      response.role.uppercased() == original.role.uppercased(),
+                      response.account_type.uppercased() == original.accountType.uppercased() else {
                     throw APIError.unauthenticated
                 }
                 
@@ -108,11 +129,12 @@ public actor SessionManager {
                     userId: current.userId,
                     name: current.name
                 )
-                try self.saveSession(newSession)
+                guard let data = try? JSONEncoder().encode(newSession), self.storage.save(data) else { throw SessionError.persistenceFailed }
+                self.currentSession = newSession
                 return newSession
             } catch {
                 // Only a rejected refresh ends the session; offline/timeouts keep the user signed in.
-                if Self.shouldEndSession(after: error) {
+                if self.generation == expectedGeneration && Self.shouldEndSession(after: error) {
                     self.clearSession()
                 }
                 throw error
@@ -136,6 +158,7 @@ struct RefreshEndpoint: APIEndpoint {
 }
 
 struct RefreshResponse: Codable {
+    let userId: String
     let access_token: String
     let role: String
     let account_type: String

@@ -5,6 +5,8 @@ import QuickLook
 struct PatientCarePlanMonitoringView: View {
     let patientId: String
     let role: String // "DOCTOR" or "NURSE"
+    var refreshVersion: Int = 0
+    @Environment(\.scenePhase) private var scenePhase
     
     @State private var tasks: [CarePlanOccurrenceDTO] = []
     @State private var timeline: [AdherenceResponseDTO] = []
@@ -19,9 +21,12 @@ struct PatientCarePlanMonitoringView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: StitchSpacing.lg) {
-            Text("Active Care Plan")
-                .font(.title2).bold()
-                .padding(.horizontal)
+            HStack {
+                Text("Patient care updates").font(Typography.titleLarge)
+                Spacer()
+                Button { Task { await fetchCarePlan() } } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+                    .buttonStyle(StitchCompactButtonStyle()).disabled(isLoading)
+            }.padding(.horizontal)
             
             if isLoading {
                 ProgressView()
@@ -32,11 +37,10 @@ struct PatientCarePlanMonitoringView: View {
                     StitchErrorState(message: error)
                     Button("Try Again") { Task { await fetchCarePlan() } }
                 }.frame(maxWidth: .infinity).padding()
-            } else if tasks.isEmpty {
-                Text("No active care plan tasks found for today.")
-                    .foregroundColor(.secondary)
-                    .padding()
             } else {
+                if tasks.isEmpty {
+                    Text("No care tasks scheduled for today.").foregroundStyle(.secondary).padding()
+                } else {
                 let completed = tasks.filter { $0.status == .COMPLETED }.count
                 let total = tasks.count
                 let progress = total > 0 ? Double(completed)/Double(total) : 0
@@ -85,6 +89,15 @@ struct PatientCarePlanMonitoringView: View {
                 }
                 .padding(.horizontal)
                 
+                }
+
+                NavigationLink {
+                    StaffPatientTrendsView(patientId: patientId)
+                } label: {
+                    Label("View patient history & trends", systemImage: "chart.xyaxis.line")
+                }
+                .padding(.horizontal)
+
                 // Timeline snippet
                 if !timeline.isEmpty {
                     Text("Recent Activity")
@@ -131,12 +144,12 @@ struct PatientCarePlanMonitoringView: View {
 
                 if !documents.isEmpty {
                     Text("Patient documents").font(Typography.titleMedium).padding(.horizontal).padding(.top)
-                    VStack(spacing: StitchSpacing.sm) { ForEach(documents) { document in Button { Task { previewURL = try? await apiClient.downloadPatientDocument(document) } } label: { HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(Typography.bodyLarge).bold(); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }.padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8) }.buttonStyle(.plain) } }.padding(.horizontal)
+                    VStack(spacing: StitchSpacing.sm) { ForEach(documents) { document in Button { Task { await preview(document) } } label: { HStack { Image(systemName: document.mime_type == "application/pdf" ? "doc.richtext" : "photo"); VStack(alignment: .leading) { Text(document.title).font(Typography.bodyLarge).bold(); Text("\(document.document_type.replacingOccurrences(of: "_", with: " ").capitalized) · \(document.clinical_date) · Patient uploaded").font(.caption2).foregroundColor(.secondary) }; Spacer(); Image(systemName: "eye") }.padding().background(Color(UIColor.secondarySystemGroupedBackground)).cornerRadius(8) }.buttonStyle(.plain) } }.padding(.horizontal)
                 }
             }
         }
-        .task {
-            await fetchCarePlan()
+        .task(id: "\(patientId)-\(refreshVersion)-\(scenePhase)") {
+            if scenePhase == .active { await fetchCarePlan() }
         }
         .quickLookPreview($previewURL)
         .onChange(of: previewURL) { newValue in
@@ -148,6 +161,7 @@ struct PatientCarePlanMonitoringView: View {
     
     private func fetchCarePlan() async {
         isLoading = true
+        defer { isLoading = false }
         errorMessage = nil
         do {
             async let fetchedTasks: [CarePlanOccurrenceDTO] = apiClient.execute(endpoint: GetTodayAdherenceEndpoint(patientId: patientId))
@@ -155,16 +169,24 @@ struct PatientCarePlanMonitoringView: View {
             async let fetchedSelfRecords: [PatientSelfRecord] = apiClient.execute(endpoint: PatientSelfRecordsEndpoint(patientId: patientId))
             async let fetchedDocuments: [PatientDocument] = apiClient.execute(endpoint: PatientDocumentsEndpoint(patientId: patientId))
             
-            self.tasks = try await fetchedTasks
-            self.timeline = try await fetchedTimeline
-            self.selfRecords = try await fetchedSelfRecords
-            self.documents = try await fetchedDocuments
+            let loaded = try await (fetchedTasks, fetchedTimeline, fetchedSelfRecords, fetchedDocuments)
+            guard !Task.isCancelled else { return }
+            self.tasks = loaded.0
+            self.timeline = loaded.1
+            self.selfRecords = loaded.2
+            self.documents = loaded.3
         } catch {
-            self.errorMessage = "The Care Plan could not be loaded. Please try again."
+            guard !Task.isCancelled else { return }
+            self.errorMessage = "The patient care information could not be loaded. Please try again."
         }
         isLoading = false
     }
     
+    private func preview(_ document: PatientDocument) async {
+        do { previewURL = try await apiClient.downloadPatientDocument(document) }
+        catch { errorMessage = "We couldn't open this document. Please retry." }
+    }
+
     private func statusColor(_ status: CarePlanOccurrenceStatus) -> Color {
         switch status {
         case .COMPLETED: return .green

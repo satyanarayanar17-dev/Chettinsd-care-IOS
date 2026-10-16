@@ -62,8 +62,8 @@ public struct StitchLoginShell<Content: View>: View {
                 StitchCard {
                     VStack(spacing: 12) {
                         Text("INSTITUTIONAL PORTAL").font(Typography.labelSmall).tracking(2)
-                        Text(title).font(Typography.headlineLarge).foregroundStyle(Color.chettinadPrimary)
-                        Text(subtitle).font(Typography.bodyLarge).foregroundStyle(Color.chettinadSecondary).multilineTextAlignment(.center)
+                        Text(LocalizedStringKey(title)).font(Typography.headlineLarge).foregroundStyle(Color.chettinadPrimary)
+                        Text(LocalizedStringKey(subtitle)).font(Typography.bodyLarge).foregroundStyle(Color.chettinadSecondary).multilineTextAlignment(.center)
                     }.frame(maxWidth: .infinity).padding(.vertical, 20)
                     content
                 }
@@ -236,7 +236,7 @@ public struct StitchEmptyState: View {
                 .font(.system(size: 48))
                 .foregroundStyle(Color.chettinadOutline)
             VStack(spacing: StitchSpacing.sm) {
-                Text(title)
+                Text(LocalizedStringKey(title))
                     .font(Typography.titleMedium)
                     .foregroundStyle(Color.chettinadTextPrimary)
                 Text(message)
@@ -291,6 +291,25 @@ public struct StitchErrorState: View {
         .frame(maxWidth: .infinity)
         .background(Color.surfaceContainerLowest)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+public struct InterfaceLanguagePicker: View {
+    @AppStorage("interface-language") private var language = "en"
+    public init() {}
+    public var body: some View {
+        Picker("Language",selection:$language) {
+            Text("English").tag("en")
+            Text("தமிழ்").tag("ta")
+            Text("తెలుగు").tag("te")
+        }
+    }
+}
+
+public struct DemoEnvironmentBanner: View {
+    public init() {}
+    public var body: some View {
+        Text("Demo · use synthetic patient details").font(.caption).frame(maxWidth:.infinity).padding(8).background(Color.yellow.opacity(0.18))
     }
 }
 

@@ -4,6 +4,7 @@ import ChettinadCore
 
 @main
 struct ChettinadCarePatientApp: App {
+    @AppStorage("interface-language") private var language = "en"
     @StateObject private var appState = AppState()
     
     init() { StitchTheme.registerFonts() }
@@ -21,7 +22,10 @@ struct ChettinadCarePatientApp: App {
                     LoginView()
                 }
             }
+            .safeAreaInset(edge:.top) { if EnvironmentConfig.current == .local { DemoEnvironmentBanner() } }
             .environmentObject(appState)
+            .environment(\.locale,Locale(identifier:language))
+            .environment(\.timeZone,TimeZone(identifier:"Asia/Kolkata")!)
             .tint(.chettinadPrimary)
             .font(Typography.bodyLarge)
             .preferredColorScheme(.light)

@@ -3,14 +3,19 @@ import ChettinadCore
 
 struct DoctorQueueView: View {
     @StateObject private var viewModel = DoctorQueueViewModel()
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
-                AppHeader(title: "Command Center")
+                AppHeader(title: "Doctor Queue")
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: StitchSpacing.xl) {
+                        if let error = viewModel.errorMessage {
+                            StitchErrorState(message: error) { Task { await viewModel.fetchQueue() } }
+                                .padding(.horizontal, StitchSpacing.lg)
+                        }
                         
                         // Welcome
                         VStack(alignment: .leading, spacing: 4) {
@@ -37,7 +42,7 @@ struct DoctorQueueView: View {
                                 }
                                 .padding(.horizontal, 16)
                             }
-                        } else {
+                        } else if viewModel.isLoading {
                             ProgressView().padding()
                         }
                         
@@ -47,11 +52,11 @@ struct DoctorQueueView: View {
                                 .textStyle(Typography.titleMedium, color: .chettinadPrimary)
                                 .padding(.horizontal, 16)
                             
-                            if viewModel.isLoading {
+                            if viewModel.isLoading && !viewModel.hasLoaded {
                                 ProgressView()
                                     .frame(maxWidth: .infinity)
                                     .padding()
-                            } else if viewModel.queue.isEmpty {
+                            } else if viewModel.hasLoaded && viewModel.queue.isEmpty {
                                 VStack(spacing: StitchSpacing.md) {
                                     Image(systemName: "person.3.sequence").font(.system(size: 40)).foregroundColor(.secondary)
                                     Text("No patients currently waiting").font(Typography.titleMedium)
@@ -87,14 +92,19 @@ struct DoctorQueueView: View {
 
 struct NurseTriageView: View {
     @StateObject private var viewModel = NurseTriageViewModel()
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 AppHeader(title: "Nurse Triage")
                 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: StitchSpacing.xl) {
+                        if let error = viewModel.errorMessage {
+                            StitchErrorState(message: error) { Task { await viewModel.fetchQueue() } }
+                                .padding(.horizontal, StitchSpacing.lg)
+                        }
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Awaiting Triage")
                                 .textStyle(Typography.titleMedium, color: .chettinadSecondary)
@@ -120,18 +130,18 @@ struct NurseTriageView: View {
                                 }
                                 .padding(.horizontal, 16)
                             }
-                        } else {
+                        } else if viewModel.isLoading {
                             ProgressView().padding()
                         }
 
 
 
                         
-                        if viewModel.isLoading {
+                        if viewModel.isLoading && !viewModel.hasLoaded {
                             ProgressView()
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                        } else if viewModel.queue.isEmpty {
+                        } else if viewModel.hasLoaded && viewModel.queue.isEmpty {
                             VStack(spacing: StitchSpacing.md) {
                                 Image(systemName: "cross.case.fill").font(.system(size: 40)).foregroundColor(.secondary)
                                 Text("No patients to triage").font(Typography.titleMedium)
@@ -173,15 +183,10 @@ struct QueueCard: View {
                     Text(entry.patient_name)
                         .textStyle(Typography.titleMedium, color: .chettinadPrimary)
                     
-                    Text(entry.status)
-                        .textStyle(Typography.labelSmall, color: entry.status == "WAITING" ? .chettinadWarning : .chettinadSuccess)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(entry.status == "WAITING" ? Color.chettinadWarningContainer : Color.chettinadSuccessContainer)
-                        .cornerRadius(8)
+                    StitchStatusChip(status: entry.status)
                 }
                 
-                Text("Encounter ID: \(entry.id.prefix(8))")
+                Text("Token \(entry.token) · \(entry.wait_minutes.map { "Waiting \($0) min" } ?? "Wait unavailable")")
                     .textStyle(Typography.bodySmall, color: .chettinadSecondary)
             }
             
@@ -217,15 +222,18 @@ class StaffPatientTrendsViewModel: ObservableObject {
     
     func fetchTimeline() async {
         isLoading = true
+        defer { isLoading = false }
         trendsError = nil
         do {
             async let timelineTask: [AdherenceResponseDTO] = try await apiClient.execute(endpoint: GetTimelineEndpoint(patientId: patientId))
             async let selfRecordsTask: [PatientSelfRecord] = try await apiClient.execute(endpoint: PatientSelfRecordsEndpoint(patientId: patientId))
             
             let (fetchedTimeline, fetchedSelfRecords) = try await (timelineTask, selfRecordsTask)
+            guard !Task.isCancelled else { return }
             self.timeline = fetchedTimeline
             self.selfRecords = fetchedSelfRecords
         } catch {
+            guard !Task.isCancelled else { return }
             trendsError = error.localizedDescription
         }
         isLoading = false
@@ -241,10 +249,10 @@ struct StaffPatientTrendsView: View {
     }
     @StateObject var viewModel: StaffPatientTrendsViewModel
     @State private var timeRange: Int = 30 // Days
+    @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 24) {
                     Picker("Time Range", selection: $timeRange) {
                         Text("7 Days").tag(7)
@@ -275,15 +283,12 @@ struct StaffPatientTrendsView: View {
             }
             .navigationTitle("History & Trends")
             .background(Color(UIColor.systemGroupedBackground))
-            .task {
-                if viewModel.timeline.isEmpty {
-                    await viewModel.fetchTimeline()
-                }
+            .task(id: scenePhase) {
+                if scenePhase == .active { await viewModel.fetchTimeline() }
             }
             .refreshable {
                 await viewModel.fetchTimeline()
             }
-        }
     }
     
     // MARK: - Filter Logic

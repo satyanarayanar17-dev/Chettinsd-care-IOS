@@ -9,6 +9,10 @@ configs:
   Debug: debug
   Staging: release
   Release: release
+settings:
+  base:
+    DEVELOPMENT_TEAM: 47797T9SLZ
+    CC_PILOT_ENDPOINT_APPROVED: NO
 targets:
   ChettinadCore:
     type: framework
@@ -17,6 +21,7 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        SWIFT_EMIT_LOC_STRINGS: YES
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
@@ -30,6 +35,7 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        SWIFT_EMIT_LOC_STRINGS: YES
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
@@ -37,17 +43,12 @@ targets:
   ChettinadCarePatient:
     type: application
     platform: iOS
-    sources: [ChettinadCarePatient]
+    sources: [ChettinadCarePatient, SharedResources]
     preBuildScripts:
-      - name: Enforce HTTPS for Production
+      - name: Validate backend environment
         basedOnDependencyAnalysis: false
         script: |
-          if [ "$CONFIGURATION" = "Release" ]; then
-            if [[ ! "$CC_API_BASE_URL" == https* ]]; then
-              echo "error: Release build must use an HTTPS backend URL. Found: $CC_API_BASE_URL"
-              exit 1
-            fi
-          fi
+          /usr/bin/swift -sdk "$(/usr/bin/xcrun --sdk macosx --show-sdk-path)" "$SRCROOT/scripts/validate-environment.swift"
     info:
       path: ChettinadCarePatient/Info.plist
       properties:
@@ -57,6 +58,7 @@ targets:
         NSLocalNetworkUsageDescription: "Connect to the Chettinad Care backend."
         CC_API_BASE_URL: "$(CC_API_BASE_URL)"
         APP_ENV: "$(APP_ENV)"
+        CFBundleDisplayName: "$(CC_APP_NAME)"
     dependencies:
       - target: ChettinadCore
     settings:
@@ -65,17 +67,21 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 47797T9SLZ
         SWIFT_VERSION: 6.0
+        SWIFT_EMIT_LOC_STRINGS: YES
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
       configs:
         Debug:
+          CC_APP_NAME: "Care Demo"
           CC_API_BASE_URL: "https://chettinad-care-api.onrender.com"
           APP_ENV: "local"
         Staging:
-          CC_API_BASE_URL: "https://staging-api.chettinad.care"
+          CC_APP_NAME: "Chettinad Care"
+          CC_API_BASE_URL: "https://chettinad-pilot-api.onrender.com"
           APP_ENV: "staging"
         Release:
-          CC_API_BASE_URL: "https://api.chettinad.care"
+          CC_APP_NAME: "Chettinad Care"
+          CC_API_BASE_URL: "https://chettinad-pilot-api.onrender.com"
           APP_ENV: "production"
 
   ChettinadCarePatientTests:
@@ -87,6 +93,7 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        SWIFT_EMIT_LOC_STRINGS: YES
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
@@ -94,17 +101,12 @@ targets:
   ChettinadCareStaff:
     type: application
     platform: iOS
-    sources: [ChettinadCareStaff]
+    sources: [ChettinadCareStaff, SharedResources]
     preBuildScripts:
-      - name: Enforce HTTPS for Production
+      - name: Validate backend environment
         basedOnDependencyAnalysis: false
         script: |
-          if [ "$CONFIGURATION" = "Release" ]; then
-            if [[ ! "$CC_API_BASE_URL" == https* ]]; then
-              echo "error: Release build must use an HTTPS backend URL. Found: $CC_API_BASE_URL"
-              exit 1
-            fi
-          fi
+          /usr/bin/swift -sdk "$(/usr/bin/xcrun --sdk macosx --show-sdk-path)" "$SRCROOT/scripts/validate-environment.swift"
     info:
       path: ChettinadCareStaff/Info.plist
       properties:
@@ -114,6 +116,7 @@ targets:
         NSLocalNetworkUsageDescription: "Connect to the Chettinad Care backend."
         CC_API_BASE_URL: "$(CC_API_BASE_URL)"
         APP_ENV: "$(APP_ENV)"
+        CFBundleDisplayName: "$(CC_APP_NAME)"
     dependencies:
       - target: ChettinadCore
     settings:
@@ -122,17 +125,21 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 47797T9SLZ
         SWIFT_VERSION: 6.0
+        SWIFT_EMIT_LOC_STRINGS: YES
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
       configs:
         Debug:
+          CC_APP_NAME: "Staff Demo"
           CC_API_BASE_URL: "https://chettinad-care-api.onrender.com"
           APP_ENV: "local"
         Staging:
-          CC_API_BASE_URL: "https://staging-api.chettinad.care"
+          CC_APP_NAME: "Chettinad Staff"
+          CC_API_BASE_URL: "https://chettinad-pilot-api.onrender.com"
           APP_ENV: "staging"
         Release:
-          CC_API_BASE_URL: "https://api.chettinad.care"
+          CC_APP_NAME: "Chettinad Staff"
+          CC_API_BASE_URL: "https://chettinad-pilot-api.onrender.com"
           APP_ENV: "production"
 
   ChettinadCareStaffTests:
@@ -144,9 +151,35 @@ targets:
     settings:
       base:
         SWIFT_VERSION: 6.0
+        SWIFT_EMIT_LOC_STRINGS: YES
         TARGETED_DEVICE_FAMILY: 1,2,6
         SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
+
+  ChettinadCareStaffUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [ChettinadCareStaffUITests]
+    dependencies: [{target: ChettinadCareStaff}]
+    settings:
+      base:
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: YES
+        SUPPORTS_MACCATALYST: YES
+        DEVELOPMENT_TEAM: 47797T9SLZ
+        CODE_SIGN_STYLE: Automatic
+  ChettinadCarePatientUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [ChettinadCarePatientUITests]
+    dependencies: [{target: ChettinadCarePatient}]
+    settings:
+      base:
+        SWIFT_VERSION: 6.0
+        GENERATE_INFOPLIST_FILE: YES
+        SUPPORTS_MACCATALYST: YES
+        DEVELOPMENT_TEAM: 47797T9SLZ
+        CODE_SIGN_STYLE: Automatic
 
 schemes:
   ChettinadCarePatient:
@@ -157,6 +190,7 @@ schemes:
     test:
       targets:
         - ChettinadCarePatientTests
+        - ChettinadCarePatientUITests
         - ChettinadCoreTests
   ChettinadCareStaff:
     build:
@@ -166,6 +200,7 @@ schemes:
     test:
       targets:
         - ChettinadCareStaffTests
+        - ChettinadCareStaffUITests
         - ChettinadCoreTests
   ChettinadCore:
     build:
