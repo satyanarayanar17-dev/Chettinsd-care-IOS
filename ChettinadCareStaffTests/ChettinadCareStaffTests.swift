@@ -245,7 +245,7 @@ final class StaffWorkflowTests: XCTestCase {
 // These tests only mutate the explicitly configured disposable local fixture.
 @MainActor
 final class PatientStaffIntegrationTests: XCTestCase {
-    private let baseURL = URL(string: "http://127.0.0.1:3011")!
+    private var baseURL = URL(string: "http://127.0.0.1:3011")!
     private let session = URLSession(configuration: .ephemeral)
 
     override func setUpWithError() throws {
